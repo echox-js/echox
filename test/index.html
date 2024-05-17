@@ -9,13 +9,17 @@
   });
   const options = Object.keys(apps).map(createOption);
   select.append(...options);
+  document.body.appendChild(select);
+
+  const container = document.createElement("div");
+  container.style.margin = "0.5em 0";
+  document.body.appendChild(container);
 
   // Init app name.
   const initialValue = new URL(location).searchParams.get("name");
   if (apps[initialValue]) select.value = initialValue;
 
   let preClear = null;
-  let preNode = null;
   render();
 
   function createSelect(onchange) {
@@ -56,10 +60,10 @@
 
   async function render() {
     if (typeof preClear === "function") preClear();
-    if (preNode && preNode.remove) preNode.remove();
+    container.innerHTML = "";
     const fn = apps[select.value];
     const clear = (d) => (preClear = d);
-    preNode = await fn(clear);
-    document.body.appendChild(preNode);
+    const node = await fn(clear);
+    container.appendChild(node);
   }
 </script>
