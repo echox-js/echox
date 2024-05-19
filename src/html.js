@@ -1,6 +1,5 @@
 import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, TYPE_ROOT} from "./constants.js";
 import {Attribute} from "./attribute.js";
-import {observe} from "./observe.js";
 
 function renderHtml(string) {
   const template = document.createElement("template");
@@ -23,6 +22,29 @@ function bind(f, global) {
 
 function isNode(node) {
   return node instanceof Node;
+}
+
+function observe(target, descriptors, global) {
+  const states = new Map(descriptors[DATA_STATE]);
+  return new Proxy(target, {
+    get(target, key) {
+      if (!states.has(key)) return target[key];
+      const state = states.get(key);
+      const effect = global.effect;
+      if (effect) {
+        state.effects.push(effect);
+        global.effect = null;
+      }
+      return state.val;
+    },
+    set(target, key, value) {
+      if (!states.has(key)) return (target[key] = value), true;
+      const state = states.get(key);
+      state.val = value;
+      setTimeout(() => state.effects.forEach((f) => f()));
+      return true;
+    },
+  });
 }
 
 export function html({raw: strings}) {
