@@ -65,8 +65,8 @@ export function html({raw: strings}) {
           const {name, value: currentValue} = attributes[i];
           if (/^::/.test(currentValue)) {
             const value = arguments[+currentValue.slice(2)];
-            if (name.startsWith("on")) {
-              node.addEventListener(name.slice(2), (...params) => value(data, ...params));
+            if (name.startsWith("@")) {
+              node.addEventListener(name.slice(1), (...params) => value(data, ...params));
               node.removeAttribute(name);
             } else {
               if (typeof value !== "function") node.setAttribute(name, value);
