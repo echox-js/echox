@@ -1,6 +1,21 @@
 import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, TYPE_ROOT} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
+const queue = [];
+const active = new Set();
+let flushing = false;
+
+function flush() {
+  if (flushing) return;
+  flushing = true;
+  requestAnimationFrame(() => {
+    queue.forEach((effect) => effect());
+    active.clear();
+    queue.length = 0;
+    flushing = false;
+  });
+}
+
 function renderHtml(string) {
   const template = document.createElement("template");
   template.innerHTML = string;
@@ -26,20 +41,6 @@ function isNode(node) {
 
 function observe(target, descriptors, global) {
   const states = new Map(descriptors[DATA_STATE]);
-  const queue = [];
-  const active = new Set();
-  let flushing = false;
-
-  const flush = () => {
-    if (flushing) return;
-    flushing = true;
-    requestAnimationFrame(() => {
-      queue.forEach((effect) => effect());
-      active.clear();
-      queue.length = 0;
-      flushing = false;
-    });
-  };
 
   return new Proxy(target, {
     get(target, key) {
