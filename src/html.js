@@ -18,7 +18,7 @@ function postprocess(fragment) {
 
 function bind(f, global) {
   global.effect = f;
-  f();
+  return f();
 }
 
 function isNode(node) {
@@ -37,6 +37,7 @@ export function html({raw: strings}) {
   const global = {effect: null};
   const root = renderHtml(string);
   const walker = document.createTreeWalker(root);
+  const removeNodes = [];
 
   while (walker.nextNode()) {
     const node = walker.currentNode;
@@ -45,17 +46,17 @@ export function html({raw: strings}) {
       case TYPE_ROOT: {
         const {attributes} = node;
         const descriptors = {[DATA_STATE]: []};
+        const removeAttributes = [];
         for (let i = 0, n = attributes.length, value; i < n; i++) {
           const {name, value: currentValue} = attributes[i];
           if (/^::/.test(currentValue) && (value = arguments[+currentValue.slice(2)]) instanceof Attribute) {
-            if (!node.parentElement && value instanceof Attribute) {
-              const {t, v} = value;
-              descriptors[t].push([name, {val: v, effects: []}]);
-              node.removeAttribute(name);
-            }
+            const {t, v} = value;
+            descriptors[t].push([name, {val: v, effects: []}]);
+            removeAttributes.push(name);
           }
         }
         data = observe({}, descriptors, global);
+        removeAttributes.forEach((name) => node.removeAttribute(name));
         break;
       }
       case TYPE_ELEMENT: {
@@ -79,30 +80,62 @@ export function html({raw: strings}) {
         const {textContent: rawContent} = node;
         const textContent = rawContent.trim();
         if (/^::/.test(textContent)) {
+          const nodeof = (node) => (isNode(node) ? node : document.createTextNode(node));
+          const updateLastNodeRef = (ref, node) => ref && ((ref.current = node), (node.__ref__ = ref));
           const parent = node.parentNode;
-          node.remove();
-          const value = arguments[+textContent.slice(2)];
-          const set = (value) => {
-            const oldNodes = parent.childNodes;
-            const newNodes = Array.isArray(value) ? value : [value];
-            for (let i = 0, n = Math.max(oldNodes.length, newNodes.length); i < n; i++) {
-              const oldNode = oldNodes[i];
-              const newNode = newNodes[i];
-              const nodeof = (node) => (isNode(node) ? node : document.createTextNode(node));
-              if (oldNode !== newNode) {
-                if (oldNode === undefined) parent.appendChild(nodeof(newNode));
-                else if (newNode === undefined) parent.removeChild(oldNode);
-                else parent.replaceChild(nodeof(newNode), oldNode);
-              }
+          const values = textContent
+            .split(/(::\d+)/)
+            .filter((d) => d !== "" && d !== " ")
+            .map((value) => (/^::\d+$/.test(value) ? arguments[+value.slice(2)] : value))
+            .flat(Infinity);
+
+          for (let i = 0, n = values.length, prevLastNodeRef; i < n; i++) {
+            const value = values[i];
+            if (typeof value !== "function") {
+              const n = nodeof(value);
+              parent.insertBefore(n, node);
+              updateLastNodeRef(prevLastNodeRef, n);
+            } else {
+              const firstNodeRef = {current: null}; // Inclusive
+              const lastNodeRef = {current: node}; // Exclusive
+              const prevRef = {current: prevLastNodeRef};
+              bind(() => {
+                const fragments = value(data);
+                const values = Array.isArray(fragments) ? fragments : [fragments];
+                const newNodes = values.map(nodeof);
+                const lastNode = lastNodeRef.current.parentElement ? lastNodeRef.current : null;
+                const m = newNodes.length;
+                let oldNode = firstNodeRef.current;
+                for (let i = 0; i < m; i++) {
+                  const newNode = newNodes[i];
+                  if (oldNode === null) parent.insertBefore(newNode, lastNode);
+                  else {
+                    // TODO: Apply mutations instead of replacing the node.
+                    parent.replaceChild(newNode, oldNode);
+                    if (i === 0 && oldNode.__ref__) oldNode.__ref__.current = newNode;
+                    oldNode = newNode.nextSibling;
+                  }
+                }
+                while (oldNode && oldNode !== lastNode) {
+                  const next = oldNode.nextSibling;
+                  oldNode.remove();
+                  oldNode = next;
+                }
+                firstNodeRef.current = newNodes[0] ?? null;
+                updateLastNodeRef(prevRef.current, firstNodeRef.current);
+              }, global);
+              prevLastNodeRef = lastNodeRef;
             }
-          };
-          if (typeof value !== "function") set(value);
-          else bind(() => set(value(data)), global);
+          }
+
+          removeNodes.push(node);
         }
         break;
       }
     }
   }
+
+  removeNodes.forEach((node) => node.remove());
 
   return postprocess(root);
 }
