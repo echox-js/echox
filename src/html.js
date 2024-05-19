@@ -26,6 +26,21 @@ function isNode(node) {
 
 function observe(target, descriptors, global) {
   const states = new Map(descriptors[DATA_STATE]);
+  const queue = [];
+  const active = new Set();
+  let flushing = false;
+
+  const flush = () => {
+    if (flushing) return;
+    flushing = true;
+    requestAnimationFrame(() => {
+      queue.forEach((effect) => effect());
+      active.clear();
+      queue.length = 0;
+      flushing = false;
+    });
+  };
+
   return new Proxy(target, {
     get(target, key) {
       if (!states.has(key)) return target[key];
@@ -40,8 +55,12 @@ function observe(target, descriptors, global) {
     set(target, key, value) {
       if (!states.has(key)) return (target[key] = value), true;
       const state = states.get(key);
+      if (state.val !== value && !active.has(state)) {
+        queue.push(...state.effects);
+        active.add(state);
+        flush();
+      }
       state.val = value;
-      setTimeout(() => state.effects.forEach((f) => f()));
       return true;
     },
   });
