@@ -1,8 +1,8 @@
 import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, TYPE_ROOT} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
-const queue = [];
-const active = new Set();
+let active = new Set();
+let queue = new Set();
 let flushing = false;
 
 function flush() {
@@ -10,8 +10,8 @@ function flush() {
   flushing = true;
   requestAnimationFrame(() => {
     queue.forEach((effect) => effect());
-    active.clear();
-    queue.length = 0;
+    active = new Set();
+    queue = new Set();
     flushing = false;
   });
 }
@@ -35,8 +35,12 @@ function bind(f, global) {
   return f();
 }
 
-function isNode(node) {
-  return node instanceof Node;
+function isNode(d) {
+  return d instanceof Node;
+}
+
+function isString(d) {
+  return typeof d === "string";
 }
 
 function observe(target, descriptors, global) {
@@ -47,17 +51,14 @@ function observe(target, descriptors, global) {
       if (!states.has(key)) return target[key];
       const state = states.get(key);
       const effect = global.effect;
-      if (effect) {
-        state.effects.push(effect);
-        global.effect = null;
-      }
+      if (effect) state.effects.add(effect);
       return state.val;
     },
     set(target, key, value) {
       if (!states.has(key)) return (target[key] = value), true;
       const state = states.get(key);
       if (state.val !== value && !active.has(state)) {
-        queue.push(...state.effects);
+        queue = queue.union(state.effects);
         active.add(state);
         flush();
       }
@@ -80,10 +81,16 @@ export function html({raw: strings}) {
   const root = renderHtml(string);
   const walker = document.createTreeWalker(root);
   const removeNodes = [];
+  const valuesof = (string) =>
+    string
+      .split(/(::\d+)/)
+      .filter((d) => d !== "" && d !== " ")
+      .map((value) => (/^::\d+$/.test(value) ? arguments[+value.slice(2)] : value))
+      .flat(Infinity);
 
   while (walker.nextNode()) {
     const node = walker.currentNode;
-    const nodeType = !node.parentElement ? TYPE_ROOT : node.nodeType;
+    const nodeType = !node.parentElement && node.nodeName === "FRAGMENT" ? TYPE_ROOT : node.nodeType;
     switch (nodeType) {
       case TYPE_ROOT: {
         const {attributes} = node;
@@ -93,7 +100,7 @@ export function html({raw: strings}) {
           const {name, value: currentValue} = attributes[i];
           if (/^::/.test(currentValue) && (value = arguments[+currentValue.slice(2)]) instanceof Attribute) {
             const {t, v} = value;
-            descriptors[t].push([name, {val: v, effects: []}]);
+            descriptors[t].push([name, {val: v, effects: new Set()}]);
             removeAttributes.push(name);
           }
         }
@@ -105,14 +112,15 @@ export function html({raw: strings}) {
         const {attributes} = node;
         for (let i = 0, n = attributes.length; i < n; i++) {
           const {name, value: currentValue} = attributes[i];
-          if (/^::/.test(currentValue)) {
-            const value = arguments[+currentValue.slice(2)];
+          if (/::\d+/.test(currentValue)) {
             if (name.startsWith("@")) {
+              const value = arguments[+currentValue.slice(2)];
               node.addEventListener(name.slice(1), (...params) => value(data, ...params));
               node.removeAttribute(name);
             } else {
-              if (typeof value !== "function") node.setAttribute(name, value);
-              else bind(() => node.setAttribute(name, value(data)), global);
+              const values = valuesof(currentValue);
+              if (values.every(isString)) node.setAttribute(name, values.join(""));
+              else bind(() => node.setAttribute(name, values.map((d) => (isString(d) ? d : d(data))).join("")), global);
             }
           }
         }
@@ -125,11 +133,7 @@ export function html({raw: strings}) {
           const nodeof = (node) => (isNode(node) ? node : document.createTextNode(node));
           const updateLastNodeRef = (ref, node) => ref && ((ref.current = node), (node.__ref__ = ref));
           const parent = node.parentNode;
-          const values = textContent
-            .split(/(::\d+)/)
-            .filter((d) => d !== "" && d !== " ")
-            .map((value) => (/^::\d+$/.test(value) ? arguments[+value.slice(2)] : value))
-            .flat(Infinity);
+          const values = valuesof(textContent);
 
           for (let i = 0, n = values.length, prevLastNodeRef; i < n; i++) {
             const value = values[i];
