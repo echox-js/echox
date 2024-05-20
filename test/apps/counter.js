@@ -5,10 +5,13 @@ export function counter() {
     <button @click=${(d) => d.count++}>👍</button>
     <button @click=${(d) => d.count--}>👎</button>
     <span
-      style=${(d) => {
+      style="
+        margin-left: 0.25em;
+        background:${(d) => {
         const v = 255 - Math.abs(d.count * 10);
-        return `background: rgb(${v}, ${v}, ${v})`;
+        return `rgb(${v}, ${v}, ${v})`;
       }}
+      "
     >
       ${(d) => d.count}
     </span>
