@@ -5,42 +5,36 @@ let active = new Set();
 let queue = new Set();
 let flushing = false;
 
-function flush() {
-  if (flushing) return;
-  flushing = true;
-  requestAnimationFrame(() => {
-    queue.forEach((effect) => effect());
-    active = new Set();
-    queue = new Set();
-    flushing = false;
-  });
-}
-
-function renderHtml(string) {
-  const template = document.createElement("template");
-  template.innerHTML = string;
-  return document.importNode(template.content, true);
-}
-
-function postprocess(fragment) {
-  if (fragment.firstChild === null) return null;
-  if (fragment.firstChild === fragment.lastChild) return fragment.removeChild(fragment.firstChild);
-  const span = document.createElement("span");
-  span.appendChild(fragment);
-  return span;
-}
-
-function bind(f, global) {
-  global.effect = f;
-  return f();
-}
-
 function isNode(d) {
   return d instanceof Node;
 }
 
 function isString(d) {
   return typeof d === "string";
+}
+
+function valuesof(string, args) {
+  return string
+    .split(/(::\d+)/)
+    .filter((d) => d !== "" && d !== " ")
+    .map((value) => (/^::\d+$/.test(value) ? args[+value.slice(2)] : value));
+}
+
+function nodeof(value) {
+  return isNode(value) ? value : document.createTextNode(value);
+}
+
+function bind(f, global) {
+  (global.effect = f), f(), (global.effect = null);
+}
+
+function flush() {
+  if (flushing) return;
+  flushing = true;
+  requestAnimationFrame(() => {
+    queue.forEach((effect) => effect());
+    (active = new Set()), (queue = new Set()), (flushing = false);
+  });
 }
 
 function observe(target, descriptors, global) {
@@ -68,29 +62,30 @@ function observe(target, descriptors, global) {
   });
 }
 
-export function html({raw: strings}) {
-  let string = "";
-  for (let j = 0, m = arguments.length; j < m; j++) {
-    const input = strings[j];
-    if (j > 0) string += "::" + j;
-    string += input;
-  }
+function postprocess(fragment) {
+  if (fragment.firstChild === null) return null;
+  if (fragment.firstChild === fragment.lastChild) return fragment.removeChild(fragment.firstChild);
+  const span = document.createElement("span");
+  span.appendChild(fragment);
+  return span;
+}
 
+function renderHtml(string) {
+  const template = document.createElement("template");
+  template.innerHTML = string;
+  return document.importNode(template.content, true);
+}
+
+function hydrate(root, args) {
   let data;
   const global = {effect: null};
-  const root = renderHtml(string);
   const walker = document.createTreeWalker(root);
   const removeNodes = [];
-  const valuesof = (string) =>
-    string
-      .split(/(::\d+)/)
-      .filter((d) => d !== "" && d !== " ")
-      .map((value) => (/^::\d+$/.test(value) ? arguments[+value.slice(2)] : value))
-      .flat(Infinity);
 
   while (walker.nextNode()) {
     const node = walker.currentNode;
     const nodeType = !node.parentElement && node.nodeName === "FRAGMENT" ? TYPE_ROOT : node.nodeType;
+
     switch (nodeType) {
       case TYPE_ROOT: {
         const {attributes} = node;
@@ -98,7 +93,7 @@ export function html({raw: strings}) {
         const removeAttributes = [];
         for (let i = 0, n = attributes.length, value; i < n; i++) {
           const {name, value: currentValue} = attributes[i];
-          if (/^::/.test(currentValue) && (value = arguments[+currentValue.slice(2)]) instanceof Attribute) {
+          if (/^::/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
             const {t, v} = value;
             descriptors[t].push([name, {val: v, effects: new Set()}]);
             removeAttributes.push(name);
@@ -114,11 +109,11 @@ export function html({raw: strings}) {
           const {name, value: currentValue} = attributes[i];
           if (/::\d+/.test(currentValue)) {
             if (name.startsWith("@")) {
-              const value = arguments[+currentValue.slice(2)];
+              const value = args[+currentValue.slice(2)];
               node.addEventListener(name.slice(1), (...params) => value(data, ...params));
               node.removeAttribute(name);
             } else {
-              const values = valuesof(currentValue);
+              const values = valuesof(currentValue, args);
               if (values.every(isString)) node.setAttribute(name, values.join(""));
               else bind(() => node.setAttribute(name, values.map((d) => (isString(d) ? d : d(data))).join("")), global);
             }
@@ -130,58 +125,40 @@ export function html({raw: strings}) {
         const {textContent: rawContent} = node;
         const textContent = rawContent.trim();
         if (/^::/.test(textContent)) {
-          const nodeof = (node) => (isNode(node) ? node : document.createTextNode(node));
-          const updateLastNodeRef = (ref, node) => ref && ((ref.current = node), (node.__ref__ = ref));
           const parent = node.parentNode;
-          const values = valuesof(textContent);
-
-          for (let i = 0, n = values.length, prevLastNodeRef; i < n; i++) {
+          const values = valuesof(textContent, args);
+          for (let i = 0, n = values.length; i < n; i++) {
             const value = values[i];
             if (typeof value !== "function") {
               const n = nodeof(value);
               parent.insertBefore(n, node);
-              updateLastNodeRef(prevLastNodeRef, n);
             } else {
-              const firstNodeRef = {current: null}; // Inclusive
-              const lastNodeRef = {current: node}; // Exclusive
-              const prevRef = {current: prevLastNodeRef};
+              const actualParent = n === 1 ? parent : parent.insertBefore(document.createElement("span"));
               bind(() => {
+                actualParent.innerHTML = "";
                 const fragments = value(data);
                 const values = Array.isArray(fragments) ? fragments : [fragments];
-                const newNodes = values.map(nodeof);
-                const lastNode = lastNodeRef.current.parentElement ? lastNodeRef.current : null;
-                const m = newNodes.length;
-                let oldNode = firstNodeRef.current;
-                for (let i = 0; i < m; i++) {
-                  const newNode = newNodes[i];
-                  if (oldNode === null) parent.insertBefore(newNode, lastNode);
-                  else {
-                    // TODO: Apply mutations instead of replacing the node.
-                    parent.replaceChild(newNode, oldNode);
-                    if (i === 0 && oldNode.__ref__) oldNode.__ref__.current = newNode;
-                    oldNode = newNode.nextSibling;
-                  }
-                }
-                while (oldNode && oldNode !== lastNode) {
-                  const next = oldNode.nextSibling;
-                  oldNode.remove();
-                  oldNode = next;
-                }
-                firstNodeRef.current = newNodes[0] ?? null;
-                updateLastNodeRef(prevRef.current, firstNodeRef.current);
+                actualParent.append(...values.map(nodeof));
               }, global);
-              prevLastNodeRef = lastNodeRef;
             }
           }
-
           removeNodes.push(node);
         }
         break;
       }
     }
   }
-
   removeNodes.forEach((node) => node.remove());
+}
 
+export function html({raw: strings}) {
+  let string = "";
+  for (let j = 0, m = arguments.length; j < m; j++) {
+    const input = strings[j];
+    if (j > 0) string += "::" + j;
+    string += input;
+  }
+  const root = renderHtml(string);
+  hydrate(root, arguments);
   return postprocess(root);
 }
