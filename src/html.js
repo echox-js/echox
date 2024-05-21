@@ -1,4 +1,4 @@
-import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, TYPE_ROOT} from "./constants.js";
+import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, TYPE_ROOT, TYPE_FOR} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
 let active = new Set();
@@ -24,8 +24,8 @@ function nodeof(value) {
   return isNode(value) ? value : document.createTextNode(value);
 }
 
-function bind(f, global) {
-  (global.effect = f), f(), (global.effect = null);
+function bind(f, ref) {
+  (ref.effect = f), f(), (ref.effect = null);
 }
 
 function flush() {
@@ -37,14 +37,13 @@ function flush() {
   });
 }
 
-function observe(target, descriptors, global) {
+function observe(target, descriptors, ref) {
   const states = new Map(descriptors[DATA_STATE]);
-
   return new Proxy(target, {
     get(target, key) {
       if (!states.has(key)) return target[key];
       const state = states.get(key);
-      const effect = global.effect;
+      const effect = ref.effect;
       if (effect) state.effects.add(effect);
       return state.val;
     },
@@ -62,29 +61,24 @@ function observe(target, descriptors, global) {
   });
 }
 
-function postprocess(fragment) {
-  if (fragment.firstChild === null) return null;
-  if (fragment.firstChild === fragment.lastChild) return fragment.removeChild(fragment.firstChild);
-  const span = document.createElement("span");
-  span.appendChild(fragment);
-  return span;
-}
-
 function renderHtml(string) {
   const template = document.createElement("template");
   template.innerHTML = string;
   return document.importNode(template.content, true);
 }
 
-function hydrate(root, args) {
-  let data;
-  const global = {effect: null};
-  const walker = document.createTreeWalker(root);
+function hydrate(root, ref, args) {
   const removeNodes = [];
+  const walker = document.createTreeWalker(root);
 
-  while (walker.nextNode()) {
+  while (root) {
     const node = walker.currentNode;
-    const nodeType = !node.parentElement && node.nodeName === "FRAGMENT" ? TYPE_ROOT : node.nodeType;
+    const nodeType =
+      !node.parentElement && node.nodeName === "FRAGMENT"
+        ? TYPE_ROOT
+        : node.nodeName === "FOR"
+        ? TYPE_FOR
+        : node.nodeType;
 
     switch (nodeType) {
       case TYPE_ROOT: {
@@ -99,8 +93,33 @@ function hydrate(root, args) {
             removeAttributes.push(name);
           }
         }
-        data = observe({}, descriptors, global);
+        ref.data = observe({}, descriptors, ref);
         removeAttributes.forEach((name) => node.removeAttribute(name));
+        break;
+      }
+      case TYPE_FOR: {
+        walker.nextSibling();
+        const each = node.attributes["each"].value;
+        let value;
+        if (/::\d+/.test(each) && typeof (value = args[+each.slice(2)]) === "function") {
+          const array = value(ref.data);
+          const children = [...node.children];
+          for (let i = 0, n = array.length; i < n; i++) {
+            const item = array[i];
+            ref.data.$item = item;
+            ref.data.$index = i;
+            ref.data.$array = array;
+            for (let j = 0, m = children.length; j < m; j++) {
+              const child = children[j];
+              const clone = child.cloneNode(true);
+              hydrate(clone, ref, args);
+              node.appendChild(clone);
+            }
+          }
+          children.forEach((d) => d.remove());
+          node.removeAttribute("each");
+        }
+        walker.previousNode();
         break;
       }
       case TYPE_ELEMENT: {
@@ -110,12 +129,17 @@ function hydrate(root, args) {
           if (/::\d+/.test(currentValue)) {
             if (name.startsWith("@")) {
               const value = args[+currentValue.slice(2)];
-              node.addEventListener(name.slice(1), (...params) => value(data, ...params));
+              node.addEventListener(name.slice(1), (...params) => value(ref.data, ...params));
               node.removeAttribute(name);
             } else {
               const values = valuesof(currentValue, args);
               if (values.every(isString)) node.setAttribute(name, values.join(""));
-              else bind(() => node.setAttribute(name, values.map((d) => (isString(d) ? d : d(data))).join("")), global);
+              else {
+                bind(() => {
+                  const string = values.map((d) => (isString(d) ? d : d(ref.data))).join("");
+                  node.setAttribute(name, string);
+                }, ref);
+              }
             }
           }
         }
@@ -133,13 +157,13 @@ function hydrate(root, args) {
               const n = nodeof(value);
               parent.insertBefore(n, node);
             } else {
-              const actualParent = n === 1 ? parent : parent.insertBefore(document.createElement("span"));
+              const actualParent = parent.insertBefore(document.createElement("fragment"), node);
               bind(() => {
                 actualParent.innerHTML = "";
-                const fragments = value(data);
+                const fragments = value(ref.data);
                 const values = Array.isArray(fragments) ? fragments : [fragments];
                 actualParent.append(...values.map(nodeof));
-              }, global);
+              }, ref);
             }
           }
           removeNodes.push(node);
@@ -147,7 +171,10 @@ function hydrate(root, args) {
         break;
       }
     }
+
+    root = walker.nextNode();
   }
+
   removeNodes.forEach((node) => node.remove());
 }
 
@@ -159,6 +186,7 @@ export function html({raw: strings}) {
     string += input;
   }
   const root = renderHtml(string);
-  hydrate(root, arguments);
-  return postprocess(root);
+  const ref = {data: null, effect: null};
+  hydrate(root, ref, arguments);
+  return root;
 }
