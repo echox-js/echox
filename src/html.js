@@ -1,8 +1,7 @@
 import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, TYPE_ROOT, TYPE_FOR} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
-let active = new Set();
-let queue = new Set();
+const active = new Set();
 let flushing = false;
 
 function isNode(d) {
@@ -11,6 +10,10 @@ function isNode(d) {
 
 function isString(d) {
   return typeof d === "string";
+}
+
+function isFunction(d) {
+  return typeof d === "function";
 }
 
 function valuesof(string, args) {
@@ -25,15 +28,16 @@ function nodeof(value) {
 }
 
 function bind(f, ref) {
-  (ref.effect = f), f(), (ref.effect = null);
+  ref.effects.push(f), f(), ref.effects.pop();
 }
 
-function flush() {
+function flush(state) {
+  active.add(state);
   if (flushing) return;
   flushing = true;
   requestAnimationFrame(() => {
-    queue.forEach((effect) => effect());
-    (active = new Set()), (queue = new Set()), (flushing = false);
+    active.forEach((state) => state.effects.forEach((f) => f()));
+    active.clear(), (flushing = false);
   });
 }
 
@@ -41,21 +45,20 @@ function observe(target, descriptors, ref) {
   const states = new Map(descriptors[DATA_STATE]);
   return new Proxy(target, {
     get(target, key) {
-      if (!states.has(key)) return target[key];
+      if (!states.has(key)) return Reflect.get(target, key);
       const state = states.get(key);
-      const effect = ref.effect;
+      if (isFunction(state.val) && !state.rawVal) {
+        state.rawVal = state.val;
+        bind(() => (ref.data[key] = state.rawVal(ref.data)), ref);
+      }
+      const effect = ref.effects[ref.effects.length - 1];
       if (effect) state.effects.add(effect);
       return state.val;
     },
     set(target, key, value) {
-      if (!states.has(key)) return (target[key] = value), true;
+      if (!states.has(key)) return Reflect.set(target, key, value);
       const state = states.get(key);
-      if (state.val !== value && !active.has(state)) {
-        queue = queue.union(state.effects);
-        active.add(state);
-        flush();
-      }
-      state.val = value;
+      if (state.val !== value) (state.val = value), flush(state);
       return true;
     },
   });
@@ -101,7 +104,7 @@ function hydrate(root, ref, args) {
         walker.nextSibling();
         const each = node.attributes["each"].value;
         let value;
-        if (/::\d+/.test(each) && typeof (value = args[+each.slice(2)]) === "function") {
+        if (/::\d+/.test(each) && isFunction((value = args[+each.slice(2)]))) {
           const array = value(ref.data);
           const children = [...node.children];
           for (let i = 0, n = array.length; i < n; i++) {
@@ -136,7 +139,7 @@ function hydrate(root, ref, args) {
               if (values.every(isString)) node.setAttribute(name, values.join(""));
               else {
                 bind(() => {
-                  const string = values.map((d) => (isString(d) ? d : d(ref.data))).join("");
+                  const string = values.map((d) => (isFunction(d) ? d(ref.data) : d)).join("");
                   node.setAttribute(name, string);
                 }, ref);
               }
@@ -148,12 +151,12 @@ function hydrate(root, ref, args) {
       case TYPE_TEXT: {
         const {textContent: rawContent} = node;
         const textContent = rawContent.trim();
-        if (/^::/.test(textContent)) {
+        if (/::\d+/.test(textContent)) {
           const parent = node.parentNode;
           const values = valuesof(textContent, args);
           for (let i = 0, n = values.length; i < n; i++) {
             const value = values[i];
-            if (typeof value !== "function") {
+            if (!isFunction(value)) {
               const n = nodeof(value);
               parent.insertBefore(n, node);
             } else {
@@ -186,7 +189,7 @@ export function html({raw: strings}) {
     string += input;
   }
   const root = renderHtml(string);
-  const ref = {data: null, effect: null};
+  const ref = {data: null, effects: []};
   hydrate(root, ref, arguments);
   return root;
 }
