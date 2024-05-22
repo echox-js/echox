@@ -1,4 +1,4 @@
-import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, TYPE_ROOT, TYPE_FOR} from "./constants.js";
+import {TYPE_ELEMENT, TYPE_TEXT, TYPE_ROOT, TYPE_FOR, DATA_STATE, DATA_PROP} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
 const active = new Set();
@@ -42,7 +42,7 @@ function flush(state) {
 }
 
 function observe(target, descriptors, ref) {
-  const states = new Map(descriptors[DATA_STATE]);
+  const states = new Map(descriptors);
   return new Proxy(target, {
     get(target, key) {
       if (!states.has(key)) return Reflect.get(target, key);
@@ -86,14 +86,28 @@ function hydrate(root, ref, args) {
     switch (nodeType) {
       case TYPE_ROOT: {
         const {attributes} = node;
-        const descriptors = {[DATA_STATE]: []};
+        const descriptors = [];
         const removeAttributes = [];
-        for (let i = 0, n = attributes.length, value; i < n; i++) {
+        for (let i = 0, n = attributes.length; i < n; i++) {
           const {name, value: currentValue} = attributes[i];
-          if (/^::/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
-            const {t, v} = value;
-            descriptors[t].push([name, {val: v, effects: new Set()}]);
-            removeAttributes.push(name);
+          if (/^::/.test(currentValue)) {
+            const value = args[+currentValue.slice(2)];
+            if (name === "components") {
+              for (const [n, c] of Object.entries(value)) ref.components.set(n.toUpperCase(), c);
+              removeAttributes.push(name);
+            } else if (value instanceof Attribute) {
+              const {t, v} = value;
+              switch (t) {
+                case DATA_STATE:
+                  descriptors.push([name, {val: v, effects: new Set()}]);
+                  break;
+                case DATA_PROP: {
+                  descriptors.push([name, {val: ref.props[name] ? () => ref.props[name] : v, effects: new Set()}]);
+                  break;
+                }
+              }
+              removeAttributes.push(name);
+            }
           }
         }
         ref.data = observe({}, descriptors, ref);
@@ -103,6 +117,7 @@ function hydrate(root, ref, args) {
       case TYPE_FOR: {
         walker.nextSibling();
         const each = node.attributes["each"].value;
+        const parent = node.parentNode;
         let value;
         if (/::\d+/.test(each) && isFunction((value = args[+each.slice(2)]))) {
           const array = value(ref.data);
@@ -116,35 +131,60 @@ function hydrate(root, ref, args) {
               const child = children[j];
               const clone = child.cloneNode(true);
               hydrate(clone, ref, args);
-              node.appendChild(clone);
+              parent.insertBefore(clone, node);
             }
           }
           children.forEach((d) => d.remove());
           node.removeAttribute("each");
+          removeNodes.push(node);
         }
         walker.previousNode();
         break;
       }
       case TYPE_ELEMENT: {
         const {attributes} = node;
+        const propsRef = {val: {}};
+        const isComponent = ref.components.has(node.nodeName);
+        const set = isComponent
+          ? (_, name, value) => (propsRef.val[name] = value)
+          : (node, name, value) => node.setAttribute(name, value);
+        const listen = isComponent
+          ? (node, name, value) => set(node, name, (...params) => value(ref.data, ...params))
+          : (node, name, value) => {
+              let listener;
+              bind(() => {
+                if (listener) node.removeEventListener(name, listener);
+                listener = (...params) => value(ref.data, ...params);
+                node.addEventListener(name, listener);
+              }, ref);
+            };
         for (let i = 0, n = attributes.length; i < n; i++) {
           const {name, value: currentValue} = attributes[i];
           if (/::\d+/.test(currentValue)) {
             if (name.startsWith("@")) {
               const value = args[+currentValue.slice(2)];
-              node.addEventListener(name.slice(1), (...params) => value(ref.data, ...params));
-              node.removeAttribute(name);
+              listen(node, name.slice(1), value);
             } else {
               const values = valuesof(currentValue, args);
-              if (values.every(isString)) node.setAttribute(name, values.join(""));
+              if (values.every(isString)) set(node, name, values.join(""));
               else {
                 bind(() => {
                   const string = values.map((d) => (isFunction(d) ? d(ref.data) : d)).join("");
-                  node.setAttribute(name, string);
+                  set(node, name, string);
                 }, ref);
               }
             }
           }
+        }
+        if (isComponent) {
+          const descriptors = Object.entries(propsRef.val).map(([name, value]) => [
+            name,
+            {val: value, effects: new Set()},
+          ]);
+          propsRef.val = observe({}, descriptors, ref);
+          const subnode = render(propsRef.val, ref.effects, ref.components.get(node.nodeName));
+          node.parentNode.insertBefore(subnode, node);
+          removeNodes.push(node);
         }
         break;
       }
@@ -156,10 +196,8 @@ function hydrate(root, ref, args) {
           const values = valuesof(textContent, args);
           for (let i = 0, n = values.length; i < n; i++) {
             const value = values[i];
-            if (!isFunction(value)) {
-              const n = nodeof(value);
-              parent.insertBefore(n, node);
-            } else {
+            if (!isFunction(value)) parent.insertBefore(nodeof(value), node);
+            else {
               const actualParent = parent.insertBefore(document.createElement("fragment"), node);
               bind(() => {
                 actualParent.innerHTML = "";
@@ -181,15 +219,20 @@ function hydrate(root, ref, args) {
   removeNodes.forEach((node) => node.remove());
 }
 
-export function html({raw: strings}) {
+function render(props, effects, args) {
+  const [{raw: strings}] = args;
   let string = "";
-  for (let j = 0, m = arguments.length; j < m; j++) {
+  for (let j = 0, m = args.length; j < m; j++) {
     const input = strings[j];
     if (j > 0) string += "::" + j;
     string += input;
   }
   const root = renderHtml(string);
-  const ref = {data: null, effects: []};
-  hydrate(root, ref, arguments);
+  const ref = {data: null, effects, components: new Map(), props};
+  hydrate(root, ref, args);
   return root;
+}
+
+export function html() {
+  return render({}, [], arguments);
 }
