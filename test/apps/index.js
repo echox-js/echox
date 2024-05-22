@@ -5,3 +5,4 @@ export {todolist} from "./todolist.js";
 export {blocks} from "./blocks.js";
 export {forElement} from "./for-element.js";
 export {computedState} from "./computed-state.js";
+export {counters} from "./counters.js";
