@@ -1,8 +1,10 @@
-import {TYPE_ELEMENT, TYPE_TEXT, TYPE_ROOT, TYPE_FOR, DATA_STATE, DATA_PROP} from "./constants.js";
+import {TYPE_ELEMENT, TYPE_TEXT, TYPE_ROOT, TYPE_FOR, TYPE_IF, DATA_STATE, DATA_PROP} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
 const active = new Set();
 let flushing = false;
+
+function noop() {}
 
 function isNode(d) {
   return d instanceof Node;
@@ -81,6 +83,8 @@ function hydrate(root, ref, args) {
         ? TYPE_ROOT
         : node.nodeName === "FOR"
         ? TYPE_FOR
+        : node.nodeName === "IF"
+        ? TYPE_IF
         : node.nodeType;
 
     switch (nodeType) {
@@ -118,6 +122,7 @@ function hydrate(root, ref, args) {
         walker.nextSibling();
         const each = node.attributes["each"].value;
         const parent = node.parentNode;
+        const actualParent = parent.insertBefore(document.createElement("fragment"), node);
         let value;
         if (/::\d+/.test(each) && isFunction((value = args[+each.slice(2)]))) {
           const array = value(ref.data);
@@ -128,16 +133,51 @@ function hydrate(root, ref, args) {
             ref.data.$index = i;
             ref.data.$array = array;
             for (let j = 0, m = children.length; j < m; j++) {
-              const child = children[j];
-              const clone = child.cloneNode(true);
+              const clone = children[j].cloneNode(true);
               hydrate(clone, ref, args);
-              parent.insertBefore(clone, node);
+              actualParent.appendChild(clone);
             }
           }
           children.forEach((d) => d.remove());
           node.removeAttribute("each");
           removeNodes.push(node);
         }
+        walker.previousNode();
+        break;
+      }
+      case TYPE_IF: {
+        let current = node;
+        const names = new Set(["IF", "ELIF", "ELSE"]);
+        const white = (node) => node.nodeType === 3 && !node.textContent.trim();
+        const conditions = [];
+        while (current && (names.has(current.nodeName) || white(current))) {
+          removeNodes.push(current);
+          if (white(current)) noop();
+          else if (current.nodeName === "ELSE") conditions.push([() => true, current]);
+          else {
+            removeNodes.push(current);
+            const expr = current.attributes["expr"].value;
+            let value;
+            if (/::\d+/.test(expr) && isFunction((value = args[+expr.slice(2)]))) conditions.push([value, current]);
+          }
+          current = walker.nextSibling();
+        }
+        let prevI = 0;
+        const parent = node.parentNode.insertBefore(document.createElement("fragment"), node);
+        bind(() => {
+          for (let i = 0, n = conditions.length; i < n; i++) {
+            const [condition, node] = conditions[i];
+            if (condition(ref.data) && prevI !== i) {
+              (prevI = i), (parent.innerHTML = "");
+              for (let j = 0, cloned = [...node.children], m = cloned.length; j < m; j++) {
+                const clone = cloned[j].cloneNode(true);
+                hydrate(clone, ref, args);
+                parent.appendChild(clone);
+              }
+              break;
+            }
+          }
+        }, ref);
         walker.previousNode();
         break;
       }
@@ -164,6 +204,7 @@ function hydrate(root, ref, args) {
             if (name.startsWith("@")) {
               const value = args[+currentValue.slice(2)];
               listen(node, name.slice(1), value);
+              node.removeAttribute(name);
             } else {
               const values = valuesof(currentValue, args);
               if (values.every(isString)) set(node, name, values.join(""));
@@ -198,6 +239,7 @@ function hydrate(root, ref, args) {
             const value = values[i];
             if (!isFunction(value)) parent.insertBefore(nodeof(value), node);
             else {
+              // TODO: Remove fragment for parent with only one child.
               const actualParent = parent.insertBefore(document.createElement("fragment"), node);
               bind(() => {
                 actualParent.innerHTML = "";
