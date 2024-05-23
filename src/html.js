@@ -22,6 +22,10 @@ function isDefined(d) {
   return d !== undefined;
 }
 
+function lastof(array) {
+  return array[array.length - 1];
+}
+
 function valuesof(string, args) {
   return string
     .split(/(::\d+)/)
@@ -37,6 +41,15 @@ function valueof(props, name, defaultValue) {
 
 function nodeof(value) {
   return isNode(value) ? value : document.createTextNode(value);
+}
+
+function templateof(template) {
+  if (template.children.length) return [template, Array.from(template.children)];
+  if (template.textContent) {
+    const text = document.createTextNode(template.textContent);
+    return [text, [text]];
+  }
+  return [template, [document.createTextNode("")]]; // Create a empty text node to remember the position.
 }
 
 function bind(f, ref) {
@@ -63,7 +76,7 @@ function observe(target, descriptors, ref) {
         state.rawVal = state.val;
         bind(() => (ref.data[key] = state.rawVal(ref.data)), ref);
       }
-      const effect = ref.effects[ref.effects.length - 1];
+      const effect = lastof(ref.effects);
       if (effect) state.effects.add(effect);
       return state.val;
     },
@@ -74,6 +87,28 @@ function observe(target, descriptors, ref) {
       return true;
     },
   });
+}
+
+function insertBefore(parent, node) {
+  const temp = parent.insertBefore(document.createElement("fragment"), node);
+  const prevNodes = [temp];
+  return (template) => {
+    const [root, children] = templateof(template);
+    const last = lastof(prevNodes);
+    const actualParent = last.parentElement; // The ordinal parent may have changed.
+    actualParent.insertBefore(root, last.nextSibling);
+    prevNodes.forEach((node) => node.remove());
+    prevNodes.length = 0;
+    prevNodes.push(...children);
+  };
+}
+
+function postprocess(node) {
+  const template = document.createDocumentFragment();
+  const fragment = node.firstChild;
+  if (fragment.nodeName !== "FRAGMENT") return node;
+  template.append(...fragment.childNodes);
+  return template;
 }
 
 function renderHtml(string) {
@@ -109,24 +144,17 @@ function hydrateRoot(walker, node, removeNodes, ref, args) {
 function hydrateFor(walker, node, removeNodes, ref, args) {
   walker.nextSibling();
   const each = node.attributes["each"].value;
-  const parent = node.parentNode;
-  const actualParent = parent.insertBefore(document.createElement("fragment"), node);
   let value;
   if (/::\d+/.test(each) && isFunction((value = args[+each.slice(2)]))) {
     const array = value(ref.data);
-    const children = [...node.children];
+    const template = document.createDocumentFragment();
+    template.append(...node.children);
     for (let i = 0, n = array.length; i < n; i++) {
-      const item = array[i];
-      ref.data.$item = item;
-      ref.data.$index = i;
-      ref.data.$array = array;
-      for (let j = 0, m = children.length; j < m; j++) {
-        const clone = children[j].cloneNode(true);
-        hydrate(clone, ref, args);
-        actualParent.appendChild(clone);
-      }
+      [ref.data.$item, ref.data.$index, ref.data.$array] = [array[i], i, array];
+      const cloned = template.cloneNode(true);
+      hydrate(cloned, ref, args);
+      node.parentNode.insertBefore(cloned, node);
     }
-    children.forEach((d) => d.remove());
     node.removeAttribute("each");
     removeNodes.push(node);
   }
@@ -143,25 +171,23 @@ function hydrateIf(walker, node, removeNodes, ref, args) {
     if (white(current)) noop();
     else if (current.nodeName === "ELSE") conditions.push([() => true, current]);
     else {
-      removeNodes.push(current);
       const expr = current.attributes["expr"].value;
       let value;
       if (/::\d+/.test(expr) && isFunction((value = args[+expr.slice(2)]))) conditions.push([value, current]);
     }
     current = walker.nextSibling();
   }
+  const insert = insertBefore(node.parentNode, node);
   let prevI = 0;
-  const parent = node.parentNode.insertBefore(document.createElement("fragment"), node);
   bind(() => {
     for (let i = 0, n = conditions.length; i < n; i++) {
       const [condition, node] = conditions[i];
       if (condition(ref.data) && prevI !== i) {
-        (prevI = i), (parent.innerHTML = "");
-        for (let j = 0, cloned = [...node.children], m = cloned.length; j < m; j++) {
-          const clone = cloned[j].cloneNode(true);
-          hydrate(clone, ref, args);
-          parent.appendChild(clone);
-        }
+        prevI = i;
+        const template = document.createDocumentFragment();
+        template.append(...node.cloneNode(true).children);
+        hydrate(template, ref, args);
+        insert(template);
         break;
       }
     }
@@ -179,8 +205,8 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
     : (node, name, value) => node.setAttribute(name, value);
   const listen = isComponent
     ? (node, name, value) => {
-        const listener = (...params) => value(ref.data, ...params);
-        set(node, name, () => listener);
+        const method = (...params) => value(ref.data, ...params);
+        set(node, name, () => method);
       }
     : (node, name, value) => {
         let listener;
@@ -230,13 +256,13 @@ function hydrateText(walker, node, removeNodes, ref, args) {
       const value = values[i];
       if (!isFunction(value)) parent.insertBefore(nodeof(value), node);
       else {
-        // TODO: Remove fragment for parent with only one child.
-        const actualParent = parent.insertBefore(document.createElement("fragment"), node);
+        const insert = insertBefore(node.parentNode, node);
         bind(() => {
-          actualParent.innerHTML = "";
           const fragments = value(ref.data);
           const values = Array.isArray(fragments) ? fragments : [fragments];
-          actualParent.append(...values.map(nodeof));
+          const template = document.createDocumentFragment();
+          template.append(...values.map(nodeof));
+          insert(template);
         }, ref);
       }
     }
@@ -271,7 +297,7 @@ function render(props, effects, args) {
   const root = renderHtml(string);
   const ref = {data: null, effects, components: new Map(), props};
   hydrate(root, ref, args);
-  return root;
+  return postprocess(root);
 }
 
 export function html() {
