@@ -1,8 +1,7 @@
 import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, DATA_PROP} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
-const active = new Set();
-let flushing = false;
+let active;
 
 function noop() {}
 
@@ -20,6 +19,10 @@ function isFunction(d) {
 
 function isDefined(d) {
   return d !== undefined;
+}
+
+function isConnected(d) {
+  return d._dom.parentNode;
 }
 
 function lastof(array) {
@@ -52,38 +55,46 @@ function templateof(template) {
   return [template, [document.createTextNode("")]]; // Create a empty text node to remember the position.
 }
 
-function bind(f, ref) {
-  ref.effects.push(f), f(), ref.effects.pop();
+function track(f, ref, node = {parentNode: true}) {
+  const effect = () => (ref.effects.push(effect), f(), ref.effects.pop());
+  effect._dom = node;
+  effect();
 }
 
-function flush(state) {
-  active.add(state);
-  if (flushing) return;
-  flushing = true;
-  requestAnimationFrame(() => {
-    active.forEach((state) => state.effects.forEach((f) => f()));
-    active.clear(), (flushing = false);
-  });
+function schedule(state) {
+  active = (active ?? (requestAnimationFrame(execute), new Set())).add(state);
+}
+
+function execute() {
+  for (const state of active) {
+    state.effects = filter(state.effects, isConnected);
+    state.effects.forEach((e) => e());
+  }
+  active = undefined;
+}
+
+function filter(set, callback) {
+  return new Set(Array.from(set).filter(callback));
 }
 
 function observe(target, descriptors, ref) {
   const states = new Map(descriptors);
   return new Proxy(target, {
     get(target, key) {
-      if (!states.has(key)) return Reflect.get(target, key);
-      const state = states.get(key);
+      let state;
+      if (!(state = states.get(key))) return Reflect.get(target, key);
       if (isFunction(state.val) && !state.rawVal) {
         state.rawVal = state.val;
-        bind(() => (ref.data[key] = state.rawVal(ref.data)), ref);
+        track(() => (ref.data[key] = state.rawVal(ref.data)), ref);
       }
       const effect = lastof(ref.effects);
-      if (effect) state.effects.add(effect);
+      if (effect) (state.effects = filter(state.effects, isConnected)).add(effect);
       return state.val;
     },
     set(target, key, value) {
-      if (!states.has(key)) return Reflect.set(target, key, value);
-      const state = states.get(key);
-      if (state.val !== value) (state.val = value), flush(state);
+      let state;
+      if (!(state = states.get(key))) return Reflect.set(target, key, value);
+      if (state.val !== value) (state.val = value), schedule(state);
       return true;
     },
   });
@@ -179,7 +190,7 @@ function hydrateIf(walker, node, removeNodes, ref, args) {
   }
   const insert = insertBefore(node.parentNode, node);
   let prevI = 0;
-  bind(() => {
+  track(() => {
     for (let i = 0, n = conditions.length; i < n; i++) {
       const [condition, node] = conditions[i];
       if (condition(ref.data) && prevI !== i) {
@@ -209,12 +220,8 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
         set(node, name, () => method);
       }
     : (node, name, value) => {
-        let listener;
-        bind(() => {
-          if (listener) node.removeEventListener(name, listener);
-          listener = (...params) => value(ref.data, ...params);
-          node.addEventListener(name, listener);
-        }, ref);
+        const listener = (...params) => value(ref.data, ...params);
+        node.addEventListener(name, listener);
       };
   for (let i = 0, n = attributes.length; i < n; i++) {
     const {name, value: currentValue} = attributes[i];
@@ -227,16 +234,18 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
         const values = valuesof(currentValue, args);
         if (values.every(isString)) set(node, name, values.join(""));
         else {
-          bind(() => {
+          const n = isComponent ? undefined : node;
+          const f = () => {
             const string = values.map((d) => (isFunction(d) ? d(ref.data) : d)).join("");
-            set(node, name, string);
-          }, ref);
+            set(n, name, string);
+          };
+          track(f, ref, n);
         }
       }
     }
   }
   if (isComponent) {
-    const descriptors = Object.entries(propsRef.val).map(([name, value]) => [name, {val: value, effects: new Set()}]);
+    const descriptors = Object.entries(propsRef.val).map(([n, val]) => [n, {val, effects: new Set()}]);
     propsRef.val = observe({}, descriptors, ref);
     const subnode = render(propsRef.val, ref.effects, ref.components.get(node.nodeName));
     node.parentNode.insertBefore(subnode, node);
@@ -257,7 +266,7 @@ function hydrateText(walker, node, removeNodes, ref, args) {
       if (!isFunction(value)) parent.insertBefore(nodeof(value), node);
       else {
         const insert = insertBefore(node.parentNode, node);
-        bind(() => {
+        track(() => {
           const fragments = value(ref.data);
           const values = Array.isArray(fragments) ? fragments : [fragments];
           const template = document.createDocumentFragment();
