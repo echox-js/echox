@@ -4,3 +4,6 @@ export {prop} from "./prop.js";
 export {component} from "./component.js";
 export {effect} from "./effect.js";
 export {render} from "./render.js";
+export {use} from "./use.js";
+export {method} from "./method.js";
+export {composition} from "./composition.js";

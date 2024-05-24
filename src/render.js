@@ -1,4 +1,12 @@
-import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, DATA_PROP, DATA_EFFECT} from "./constants.js";
+import {
+  TYPE_ELEMENT,
+  TYPE_TEXT,
+  DATA_STATE,
+  DATA_PROP,
+  DATA_EFFECT,
+  DATA_METHOD,
+  DATA_COMPOSITION,
+} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
 let active;
@@ -170,17 +178,26 @@ function observe(root) {
   Object.assign(root, {_observer: observer});
 }
 
-function renderHtml(string) {
+function renderHtml(args) {
+  const [{raw: strings}] = args;
+  let string = "";
+  for (let j = 0, m = args.length; j < m; j++) {
+    const input = strings[j];
+    if (j > 0) string += "::" + j;
+    string += input;
+  }
   const template = document.createElement("template");
   template.innerHTML = string;
   return document.importNode(template.content, true);
 }
 
-function hydrateRoot(walker, node, removeNodes, ref, args) {
+function setup(node, ref, args) {
   const {attributes} = node;
   const descriptors = [];
   const removeAttributes = [];
   const effectKeys = [];
+  const methods = [];
+  const compositions = [];
   for (let i = 0, n = attributes.length; i < n; i++) {
     const {name, value: currentValue} = attributes[i];
     let value;
@@ -199,14 +216,26 @@ function hydrateRoot(walker, node, removeNodes, ref, args) {
         const {t, v} = value;
         if (t === DATA_STATE) descriptors.push([name, {val: v, effects: new Set()}]);
         else if (t === DATA_PROP) descriptors.push([name, {val: valueof(ref.props, name, v), effects: new Set()}]);
+        else if (t === DATA_METHOD) methods.push([name, (...params) => v(ref.data, ...params)]);
+        else if (t === DATA_COMPOSITION) {
+          compositions.push([name, setup(renderHtml(v).firstChild, {data: null, effects: ref.effects}, v)]);
+        }
         removeAttributes.push(name);
       }
     }
   }
-  ref.data = watch({}, descriptors, ref);
-  effectKeys.forEach((key) => ref.data[key]);
-  ref.sentinel._clear = () => effectKeys.forEach((key) => ref.data[key]?.());
+  const data = (ref.data = watch({}, descriptors, ref));
+  const clear = () => (effectKeys.forEach((key) => data[key]?.()), compositions.forEach(([, [, clear]]) => clear()));
+  methods.forEach(([name, value]) => (data[name] = value));
+  compositions.forEach(([name, [value]]) => (data[name] = value));
+  effectKeys.forEach((key) => data[key]);
   removeAttributes.forEach((name) => node.removeAttribute(name));
+  return [data, clear];
+}
+
+function hydrateRoot(walker, node, removeNodes, ref, args) {
+  const [, clear] = setup(node, ref, args);
+  ref.sentinel._clear = clear;
   return walker.nextNode();
 }
 
@@ -357,14 +386,7 @@ function hydrate(root, ref, args) {
 }
 
 function h(props, effects, args) {
-  const [{raw: strings}] = args;
-  let string = "";
-  for (let j = 0, m = args.length; j < m; j++) {
-    const input = strings[j];
-    if (j > 0) string += "::" + j;
-    string += input;
-  }
-  const root = renderHtml(string);
+  const root = renderHtml(args);
   const sentinel = document.createTextNode("");
   const ref = {data: null, effects, components: new Map(), props, sentinel};
   hydrate(root, ref, args);
