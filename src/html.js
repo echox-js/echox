@@ -139,7 +139,7 @@ function insertBefore(parent, node) {
 function postprocess(node, sentinel) {
   const template = document.createDocumentFragment();
   const fragment = node.firstChild;
-  if (fragment.nodeName !== "FRAGMENT") template.append(sentinel, node);
+  if (fragment.nodeName !== "DEFINE") template.append(sentinel, node);
   else template.append(sentinel, ...fragment.childNodes);
   return template;
 }
@@ -346,7 +346,7 @@ function hydrate(root, ref, args) {
   const walker = document.createTreeWalker(root);
   while (root) {
     const node = walker.currentNode;
-    if (!node.parentElement && node.nodeName === "FRAGMENT") root = hydrateRoot(walker, node, removeNodes, ref, args);
+    if (!node.parentElement && node.nodeName === "DEFINE") root = hydrateRoot(walker, node, removeNodes, ref, args);
     else if (node.nodeName === "FOR") root = hydrateFor(walker, node, removeNodes, ref, args);
     else if (node.nodeName === "IF") root = hydrateIf(walker, node, removeNodes, ref, args);
     else if (node.nodeType === TYPE_ELEMENT) root = hydrateElement(walker, node, removeNodes, ref, args);

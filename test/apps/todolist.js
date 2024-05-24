@@ -1,7 +1,7 @@
 import {html, state} from "../../src/index.js";
 
 export function todolist() {
-  return html`<fragment list=${state(["read book"])} input=${state("")}>
+  return html`<define list=${state(["read book"])} input=${state("")}>
     <input placeholder="Add todo" value=${(d) => d.input} @input=${(d, e) => (d.input = e.target.value)} />
     <button
       @click=${(d) => {
@@ -28,5 +28,5 @@ export function todolist() {
             </li>`
         )}
     </ul>
-  </fragment>`;
+  </define>`;
 }

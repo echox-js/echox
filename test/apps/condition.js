@@ -1,7 +1,7 @@
 import {html, state} from "../../src/index.js";
 
 export function condition() {
-  return html`<fragment count=${state(0)} dark=${state(false)} background=${state((d) => (d.dark ? "#aaa" : "#fff"))}>
+  return html`<define count=${state(0)} dark=${state(false)} background=${state((d) => (d.dark ? "#aaa" : "#fff"))}>
     <button @click=${(d) => (d.dark = !d.dark)}>Toggle</button>
     <button @click=${(d) => d.count++}>👍</button>
     <span>${(d) => d.count}</span>
@@ -14,5 +14,5 @@ export function condition() {
     <else>
       <span style="background: ${(d) => d.background}">A</span>
     </else>
-  </fragment>`;
+  </define>`;
 }
