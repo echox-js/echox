@@ -1,7 +1,7 @@
 import {html, state} from "../../src/index.js";
 
 export function counter() {
-  return html`<fragment count=${state(0)}>
+  return html`<define count=${state(0)}>
     <button @click=${(d) => d.count++}>👍</button>
     <button @click=${(d) => d.count--}>👎</button>
     <span
@@ -15,5 +15,5 @@ export function counter() {
     >
       ${(d) => d.count}
     </span>
-  </fragment>`;
+  </define>`;
 }

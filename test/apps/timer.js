@@ -4,7 +4,7 @@ function f(d) {
   return ("0" + d).slice(-2);
 }
 
-const time = component`<fragment
+const time = component`<define
   date=${state(new Date())}
   ${effect(() => console.log(`I'm a new time component.`))}
   ${effect((d) => console.log(+d.date))}
@@ -14,13 +14,13 @@ const time = component`<fragment
   })}
   >
   <span>${({date}) => `${f(date.getHours())}:${f(date.getMinutes())}:${f(date.getSeconds())}`}</span>
-</fragment>`;
+</define>`;
 
 export function timer() {
-  return html`<fragment components=${{time}} show=${state(true)}>
+  return html`<define components=${{time}} show=${state(true)}>
     <button @click=${(d) => (d.show = !d.show)}>Toggle</button>
     <if expr=${(d) => d.show}>
       <time></time>
     </if>
-  </fragment>`;
+  </define>`;
 }

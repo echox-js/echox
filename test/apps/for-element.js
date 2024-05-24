@@ -1,7 +1,7 @@
 import {html, state} from "../../src/index.js";
 
 export function forElement() {
-  return html`<fragment dark=${state(false)} blocks=${state([1, 2, 3])}>
+  return html`<define dark=${state(false)} blocks=${state([1, 2, 3])}>
     <button @click=${(d) => (d.dark = !d.dark)}>Toggle</button>
     <span>${(d) => (d.dark ? "Dark" : "Light")}</span>
     <for each=${(d) => d.blocks}>
@@ -17,5 +17,5 @@ export function forElement() {
         ${(d) => d.$item}
       </div>
     </for>
-  </fragment>`;
+  </define>`;
 }
