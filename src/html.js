@@ -1,4 +1,4 @@
-import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, DATA_PROP} from "./constants.js";
+import {TYPE_ELEMENT, TYPE_TEXT, DATA_STATE, DATA_PROP, DATA_EFFECT} from "./constants.js";
 import {Attribute} from "./attribute.js";
 
 let active;
@@ -22,7 +22,15 @@ function isDefined(d) {
 }
 
 function isConnected(d) {
-  return d._dom.parentNode;
+  return d._dom.isConnected;
+}
+
+function isEffect(state) {
+  return isFunction(state.val) && state.val._effect && !state.rawVal;
+}
+
+function isComputed(state) {
+  return isFunction(state.val) && !state.rawVal;
 }
 
 function lastof(array) {
@@ -47,18 +55,24 @@ function nodeof(value) {
 }
 
 function templateof(template) {
-  if (template.children.length) return [template, Array.from(template.children)];
+  if (template.childNodes.length) return [template, Array.from(template.childNodes)];
   if (template.textContent) {
     const text = document.createTextNode(template.textContent);
     return [text, [text]];
   }
-  return [template, [document.createTextNode("")]]; // Create a empty text node to remember the position.
+  // Create a empty text node to remember the position.
+  const sentinel = document.createTextNode("");
+  template.append(sentinel);
+  return [template, [sentinel]];
 }
 
-function track(f, ref, node = {parentNode: true}) {
+function track(f, ref, node = {isConnected: true}) {
   const effect = () => (ref.effects.push(effect), f(), ref.effects.pop());
   effect._dom = node;
+  ref.init = true;
   effect();
+  ref.init = false;
+  return effect;
 }
 
 function schedule(state) {
@@ -67,28 +81,36 @@ function schedule(state) {
 
 function execute() {
   for (const state of active) {
-    state.effects = filter(state.effects, isConnected);
+    state.effects = cleanup(state.effects);
     state.effects.forEach((e) => e());
   }
   active = undefined;
 }
 
-function filter(set, callback) {
-  return new Set(Array.from(set).filter(callback));
+function cleanup(effects) {
+  return new Set([...effects].filter(isConnected));
 }
 
-function observe(target, descriptors, ref) {
+function watchComputed(state, ref, key) {
+  state.rawVal = state.val;
+  track(() => (ref.data[key] = state.rawVal(ref.data)), ref);
+}
+
+function watchEffect(state, ref) {
+  (state.rawVal = state.val), (state.val = null);
+  track(() => (state.val?.(), (state.val = state.rawVal(ref.data))), ref);
+}
+
+function watch(target, descriptors, ref) {
   const states = new Map(descriptors);
   return new Proxy(target, {
     get(target, key) {
       let state;
       if (!(state = states.get(key))) return Reflect.get(target, key);
-      if (isFunction(state.val) && !state.rawVal) {
-        state.rawVal = state.val;
-        track(() => (ref.data[key] = state.rawVal(ref.data)), ref);
-      }
+      if (isEffect(state)) watchEffect(state, ref);
+      else if (isComputed(state)) watchComputed(state, ref, key);
       const effect = lastof(ref.effects);
-      if (effect) (state.effects = filter(state.effects, isConnected)).add(effect);
+      if (effect) (state.effects = ref.init ? state.effects : cleanup(state.effects, isConnected)).add(effect);
       return state.val;
     },
     set(target, key, value) {
@@ -114,12 +136,38 @@ function insertBefore(parent, node) {
   };
 }
 
-function postprocess(node) {
+function postprocess(node, sentinel) {
   const template = document.createDocumentFragment();
   const fragment = node.firstChild;
-  if (fragment.nodeName !== "FRAGMENT") return node;
-  template.append(...fragment.childNodes);
+  if (fragment.nodeName !== "FRAGMENT") template.append(sentinel, node);
+  else template.append(sentinel, ...fragment.childNodes);
   return template;
+}
+
+function observable(template) {
+  if (template.childNodes.length === 1) return template.firstChild;
+  const div = document.createElement("div");
+  div.append(...template.childNodes);
+  return div;
+}
+
+function destroy(root) {
+  const walker = document.createTreeWalker(root);
+  root._observer.disconnect();
+  root.remove();
+  while ((root = walker.nextNode()) && (root._clear?.(), true));
+}
+
+function observe(root) {
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.removedNodes) {
+        node._clear?.();
+      }
+    }
+  });
+  observer.observe(root, {childList: true, subtree: true});
+  Object.assign(root, {_observer: observer});
 }
 
 function renderHtml(string) {
@@ -132,10 +180,18 @@ function hydrateRoot(walker, node, removeNodes, ref, args) {
   const {attributes} = node;
   const descriptors = [];
   const removeAttributes = [];
+  const effectKeys = [];
   for (let i = 0, n = attributes.length; i < n; i++) {
     const {name, value: currentValue} = attributes[i];
-    if (/^::/.test(currentValue)) {
-      const value = args[+currentValue.slice(2)];
+    let value;
+    if (/^::\d+/.test(name) && (value = args[+name.slice(2)]) instanceof Attribute && value.t === DATA_EFFECT) {
+      const key = "_effect_" + name.slice(2);
+      const v = value.v;
+      v._effect = true;
+      descriptors.push([key, {val: value.v, effects: new Set()}]);
+      effectKeys.push(key);
+      removeAttributes.push(name);
+    } else if (/^::\d+/.test(currentValue) && ((value = args[+currentValue.slice(2)]), true)) {
       if (name === "components") {
         for (const [n, c] of Object.entries(value)) ref.components.set(n.toUpperCase(), c);
         removeAttributes.push(name);
@@ -147,7 +203,9 @@ function hydrateRoot(walker, node, removeNodes, ref, args) {
       }
     }
   }
-  ref.data = observe({}, descriptors, ref);
+  ref.data = watch({}, descriptors, ref);
+  effectKeys.forEach((key) => ref.data[key]);
+  ref.sentinel._clear = () => effectKeys.forEach((key) => ref.data[key]?.());
   removeAttributes.forEach((name) => node.removeAttribute(name));
   return walker.nextNode();
 }
@@ -159,7 +217,7 @@ function hydrateFor(walker, node, removeNodes, ref, args) {
   if (/::\d+/.test(each) && isFunction((value = args[+each.slice(2)]))) {
     const array = value(ref.data);
     const template = document.createDocumentFragment();
-    template.append(...node.children);
+    template.append(...node.childNodes);
     for (let i = 0, n = array.length; i < n; i++) {
       [ref.data.$item, ref.data.$index, ref.data.$array] = [array[i], i, array];
       const cloned = template.cloneNode(true);
@@ -189,19 +247,21 @@ function hydrateIf(walker, node, removeNodes, ref, args) {
     current = walker.nextSibling();
   }
   const insert = insertBefore(node.parentNode, node);
-  let prevI = 0;
+  let prevI = null;
   track(() => {
+    let match = false;
     for (let i = 0, n = conditions.length; i < n; i++) {
       const [condition, node] = conditions[i];
       if (condition(ref.data) && prevI !== i) {
-        prevI = i;
+        (prevI = i), (match = true);
         const template = document.createDocumentFragment();
-        template.append(...node.cloneNode(true).children);
+        template.append(...node.cloneNode(true).childNodes);
         hydrate(template, ref, args);
         insert(template);
         break;
       }
     }
+    if (!match) (prevI = null), insert(document.createDocumentFragment());
   }, ref);
   return walker.currentNode;
 }
@@ -234,6 +294,7 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
         const values = valuesof(currentValue, args);
         if (values.every(isString)) set(node, name, values.join(""));
         else {
+          // TODO: Should track this mock node?
           const n = isComponent ? undefined : node;
           const f = () => {
             const string = values.map((d) => (isFunction(d) ? d(ref.data) : d)).join("");
@@ -246,7 +307,7 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
   }
   if (isComponent) {
     const descriptors = Object.entries(propsRef.val).map(([n, val]) => [n, {val, effects: new Set()}]);
-    propsRef.val = observe({}, descriptors, ref);
+    propsRef.val = watch({}, descriptors, ref);
     const subnode = render(propsRef.val, ref.effects, ref.components.get(node.nodeName));
     node.parentNode.insertBefore(subnode, node);
     removeNodes.push(node);
@@ -304,11 +365,15 @@ function render(props, effects, args) {
     string += input;
   }
   const root = renderHtml(string);
-  const ref = {data: null, effects, components: new Map(), props};
+  const sentinel = document.createTextNode("");
+  const ref = {data: null, effects, components: new Map(), props, sentinel};
   hydrate(root, ref, args);
-  return postprocess(root);
+  return postprocess(root, sentinel);
 }
 
 export function html() {
-  return render({}, [], arguments);
+  const node = render({}, [], arguments);
+  const root = observable(node);
+  observe(root);
+  return Object.assign(root, {destroy: () => destroy(root)});
 }

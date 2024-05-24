@@ -7,3 +7,4 @@ export {forElement} from "./for-element.js";
 export {computedState} from "./computed-state.js";
 export {counters} from "./counters.js";
 export {condition} from "./condition.js";
+export {timer} from "./timer.js";
