@@ -4,7 +4,7 @@ function f(d) {
   return ("0" + d).slice(-2);
 }
 
-const time = component`<define
+const Timer = component`<define
   date=${state(new Date())}
   ${effect(() => console.log(`I'm a new time component.`))}
   ${effect((d) => console.log(+d.date))}
@@ -17,10 +17,10 @@ const time = component`<define
 </define>`;
 
 export function timer() {
-  return html`<define components=${{time}} show=${state(true)}>
+  return html`<define components=${{Timer}} show=${state(true)}>
     <button @click=${(d) => (d.show = !d.show)}>Toggle</button>
     <if expr=${(d) => d.show}>
-      <time></time>
+      <timer></timer>
     </if>
   </define>`;
 }
