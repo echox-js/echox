@@ -7,3 +7,4 @@ export {render} from "./render.js";
 export {method} from "./method.js";
 export {composable} from "./composable.js";
 export {store} from "./store.js";
+export {ref} from "./ref.js";

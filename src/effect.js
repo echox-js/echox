@@ -1,4 +1,4 @@
-import {ATTR_EFFECT} from "./constants.js";
+import {ATTR_EFFECT} from "./render.js";
 import {Attribute} from "./attribute.js";
 
 export function effect(callback) {

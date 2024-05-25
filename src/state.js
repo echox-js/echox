@@ -1,4 +1,4 @@
-import {ATTR_STATE} from "./constants.js";
+import {ATTR_STATE} from "./render.js";
 import {Attribute} from "./attribute.js";
 
 export function state(value) {

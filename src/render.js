@@ -1,15 +1,16 @@
-import {
-  TYPE_ELEMENT,
-  TYPE_TEXT,
-  ATTR_STATE,
-  ATTR_PROP,
-  ATTR_EFFECT,
-  ATTR_METHOD,
-  ATTR_COMPOSABLE,
-  ATTR_COMPONENT,
-  ATTR_STORE,
-} from "./constants.js";
 import {Attribute} from "./attribute.js";
+
+export const TYPE_ELEMENT = 1;
+export const TYPE_TEXT = 3;
+export const TYPE_COMPONENT = -1;
+export const ATTR_STATE = 1;
+export const ATTR_PROP = 2;
+export const ATTR_EFFECT = 3;
+export const ATTR_COMPOSABLE = 4;
+export const ATTR_METHOD = 5;
+export const ATTR_COMPONENT = 6;
+export const ATTR_STORE = 7;
+export const ATTR_REF = 8;
 
 let active;
 let init;
@@ -66,6 +67,10 @@ function nodeof(value) {
   return isNode(value) ? value : document.createTextNode(value);
 }
 
+function maybeFunction(value) {
+  return isFunction(value) ? value : undefined;
+}
+
 function templateof(template) {
   if (template.childNodes.length) return [template, Array.from(template.childNodes)];
   if (template.textContent) {
@@ -109,7 +114,7 @@ function watchComputed(state, data, key) {
 
 function watchEffect(state, data) {
   (state.rawVal = state.val), (state.val = null);
-  track(() => (state.val?.(), (state.val = state.rawVal(data))));
+  track(() => (state.val?.(), (state.val = maybeFunction(state.rawVal(data)))));
 }
 
 function watch(target, descriptors) {
@@ -163,29 +168,34 @@ function observable(template) {
   return div;
 }
 
-function destroy(root) {
+function walk(root, callback) {
   const walker = document.createTreeWalker(root);
+  while ((root = walker.nextNode()) && (callback(root), true));
+}
+
+function destroy(root) {
   root._observer.disconnect();
   root.remove();
-  while ((root = walker.nextNode()) && (root._clear?.(), true));
+  walk(root, (node) => node._clear?.());
 }
 
 function observe(root) {
   const observer = new MutationObserver((mutations) => {
-    for (const {removedNodes} of mutations) {
-      for (const node of removedNodes) {
-        node._clear?.();
-      }
+    for (const {removedNodes, addedNodes} of mutations) {
+      for (const node of removedNodes) node._clear?.();
+      for (const node of addedNodes) node._ref?.();
     }
   });
   observer.observe(root, {childList: true, subtree: true});
   Object.assign(root, {_observer: observer});
+  let timer = setInterval(() => root.isConnected && (walk(root, (node) => node._ref?.()), clearInterval(timer)), 0);
 }
 
 function hydrateRoot(walker, node, removeNodes, ref, args) {
-  const {data, components, clear} = setup(node, ref.props, args);
+  const {data, components, clear, refs} = setup(node, ref.props, args);
   ref.data = data;
   ref.components = components;
+  ref.refs = refs;
   ref.sentinel._clear = clear;
   return walker.nextNode();
 }
@@ -284,6 +294,12 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
           }, n);
         }
       }
+    } else if (name === "ref" && !isComponent) {
+      // TODO: Add support for refs in components.
+      const preRef = node._ref;
+      node._ref = () => preRef?.();
+      ref.refs.get(currentValue)?.(node);
+      removeAttributes.push(name);
     }
   }
   if (isComponent) {
@@ -364,6 +380,7 @@ export function setup(node, props, args) {
   const descriptors = [];
   const removeAttributes = [];
   const effectKeys = [];
+  const refKeys = [];
   const methods = [];
   const composables = [];
   const components = new Map();
@@ -380,17 +397,19 @@ export function setup(node, props, args) {
       else if (t === ATTR_COMPOSABLE) composables.push([name, setup(renderHtml(v), {}, v)]);
       else if (t === ATTR_STORE) stores.push([name, v]);
       else if (t === ATTR_EFFECT) (v._effect = true), descriptors.push([name, v]), effectKeys.push(name);
-      removeAttributes.push(name);
+      else if (t === ATTR_REF) descriptors.push([name, null]), refKeys.push(name);
+      removeAttributes.push(t === ATTR_EFFECT ? currentValue : name);
     }
   }
   const data = watch({}, descriptors);
   const clear = () => (effectKeys.forEach((key) => data[key]?.()), composables.forEach(([, {clear}]) => clear()));
+  const refs = new Map(refKeys.map((key) => [key, (node) => (data[key] = node)]));
   methods.forEach(([name, value]) => (data[name] = (...p) => value(data, ...p)));
   composables.forEach(([name, {data: d}]) => (data[name] = d));
   stores.forEach(([name, value]) => (data[name] = value));
   effectKeys.forEach((key) => data[key]);
   removeAttributes.forEach((name) => node.removeAttribute(name));
-  return {data, components, clear};
+  return {data, components, clear, refs};
 }
 
 export function render({v: args}) {
