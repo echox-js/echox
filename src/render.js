@@ -6,6 +6,7 @@ import {
   ATTR_EFFECT,
   ATTR_METHOD,
   ATTR_COMPOSABLE,
+  ATTR_COMPONENT,
 } from "./constants.js";
 import {Attribute} from "./attribute.js";
 
@@ -208,20 +209,16 @@ function setup(node, ref, args) {
       descriptors.push([key, {val: value.v, effects: new Set()}]);
       effectKeys.push(key);
       removeAttributes.push(name);
-    } else if (/^::\d+/.test(currentValue) && ((value = args[+currentValue.slice(2)]), true)) {
-      if (name === "components") {
-        for (const [n, c] of Object.entries(value)) ref.components.set(n.toUpperCase(), c);
-        removeAttributes.push(name);
-      } else if (value instanceof Attribute) {
-        const {t, v} = value;
-        if (t === ATTR_STATE) descriptors.push([name, {val: v, effects: new Set()}]);
-        else if (t === ATTR_PROP) descriptors.push([name, {val: valueof(ref.props, name, v), effects: new Set()}]);
-        else if (t === ATTR_METHOD) methods.push([name, (...p) => v(ref.data, ...p)]);
-        else if (t === ATTR_COMPOSABLE) {
-          composables.push([name, setup(renderHtml(v).firstChild, {data: null, effects: ref.effects}, v)]);
-        }
-        removeAttributes.push(name);
+    } else if (/^::\d+/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
+      const {t, v} = value;
+      if (t === ATTR_STATE) descriptors.push([name, {val: v, effects: new Set()}]);
+      else if (t === ATTR_PROP) descriptors.push([name, {val: valueof(ref.props, name, v), effects: new Set()}]);
+      else if (t === ATTR_METHOD) methods.push([name, (...p) => v(ref.data, ...p)]);
+      else if (t === ATTR_COMPONENT) ref.components.set(name.toUpperCase(), v);
+      else if (t === ATTR_COMPOSABLE) {
+        composables.push([name, setup(renderHtml(v).firstChild, {data: null, effects: ref.effects}, v)]);
       }
+      removeAttributes.push(name);
     }
   }
   const data = (ref.data = watch({}, descriptors, ref));
@@ -393,7 +390,7 @@ function h(props, effects, args) {
   return postprocess(root, sentinel);
 }
 
-export function render(args) {
+export function render({v: args}) {
   const node = h({}, [], args);
   const root = observable(node);
   observe(root);

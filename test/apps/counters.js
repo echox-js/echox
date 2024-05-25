@@ -9,7 +9,7 @@ const Counter = component`<define value=${prop(10)} clear=${prop()} count=${stat
 </define>`;
 
 export function counters() {
-  return html`<define components=${{Counter}} init=${state(2)}>
+  return html`<define counter=${Counter} init=${state(2)}>
     <button @click=${(d) => (d.init = 0)} style="margin-bottom: 0.5em">Clear</button>
     <span>${(d) => d.init}</span>
     <br />
