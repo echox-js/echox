@@ -17,7 +17,7 @@ const Timer = component`<define
 </define>`;
 
 export function timer() {
-  return html`<define components=${{Timer}} show=${state(true)}>
+  return html`<define timer=${Timer} show=${state(true)}>
     <button @click=${(d) => (d.show = !d.show)}>Toggle</button>
     <if expr=${(d) => d.show}>
       <timer></timer>
