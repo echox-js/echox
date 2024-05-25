@@ -1,4 +1,4 @@
-import {ATTR_COMPONENT} from "./constants.js";
+import {ATTR_COMPONENT} from "./render.js";
 import {Attribute} from "./attribute.js";
 
 export function component() {

@@ -1,4 +1,4 @@
-import {ATTR_COMPOSABLE} from "./constants.js";
+import {ATTR_COMPOSABLE} from "./render.js";
 import {Attribute} from "./attribute.js";
 
 export function composable() {

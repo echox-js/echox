@@ -1,6 +1,5 @@
 import {Attribute} from "./attribute.js";
-import {ATTR_STORE} from "./constants.js";
-import {setup, renderHtml} from "./render.js";
+import {setup, renderHtml, ATTR_STORE} from "./render.js";
 
 export function store() {
   let data;

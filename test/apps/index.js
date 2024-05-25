@@ -11,3 +11,4 @@ export {condition} from "./condition.js";
 export {timer} from "./timer.js";
 export {app} from "./app.js";
 export {mouse} from "./mouse.js";
+export {refs} from "./refs.js";
