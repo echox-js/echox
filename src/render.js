@@ -1,11 +1,11 @@
 import {
   TYPE_ELEMENT,
   TYPE_TEXT,
-  DATA_STATE,
-  DATA_PROP,
-  DATA_EFFECT,
-  DATA_METHOD,
-  DATA_COMPOSITION,
+  ATTR_STATE,
+  ATTR_PROP,
+  ATTR_EFFECT,
+  ATTR_METHOD,
+  ATTR_COMPOSABLE,
 } from "./constants.js";
 import {Attribute} from "./attribute.js";
 
@@ -197,11 +197,11 @@ function setup(node, ref, args) {
   const removeAttributes = [];
   const effectKeys = [];
   const methods = [];
-  const compositions = [];
+  const composables = [];
   for (let i = 0, n = attributes.length; i < n; i++) {
     const {name, value: currentValue} = attributes[i];
     let value;
-    if (/^::\d+/.test(name) && (value = args[+name.slice(2)]) instanceof Attribute && value.t === DATA_EFFECT) {
+    if (/^::\d+/.test(name) && (value = args[+name.slice(2)]) instanceof Attribute && value.t === ATTR_EFFECT) {
       const key = "_effect_" + name.slice(2);
       const v = value.v;
       v._effect = true;
@@ -214,20 +214,20 @@ function setup(node, ref, args) {
         removeAttributes.push(name);
       } else if (value instanceof Attribute) {
         const {t, v} = value;
-        if (t === DATA_STATE) descriptors.push([name, {val: v, effects: new Set()}]);
-        else if (t === DATA_PROP) descriptors.push([name, {val: valueof(ref.props, name, v), effects: new Set()}]);
-        else if (t === DATA_METHOD) methods.push([name, (...params) => v(ref.data, ...params)]);
-        else if (t === DATA_COMPOSITION) {
-          compositions.push([name, setup(renderHtml(v).firstChild, {data: null, effects: ref.effects}, v)]);
+        if (t === ATTR_STATE) descriptors.push([name, {val: v, effects: new Set()}]);
+        else if (t === ATTR_PROP) descriptors.push([name, {val: valueof(ref.props, name, v), effects: new Set()}]);
+        else if (t === ATTR_METHOD) methods.push([name, (...p) => v(ref.data, ...p)]);
+        else if (t === ATTR_COMPOSABLE) {
+          composables.push([name, setup(renderHtml(v).firstChild, {data: null, effects: ref.effects}, v)]);
         }
         removeAttributes.push(name);
       }
     }
   }
   const data = (ref.data = watch({}, descriptors, ref));
-  const clear = () => (effectKeys.forEach((key) => data[key]?.()), compositions.forEach(([, [, clear]]) => clear()));
+  const clear = () => (effectKeys.forEach((key) => data[key]?.()), composables.forEach(([, [, clear]]) => clear()));
   methods.forEach(([name, value]) => (data[name] = value));
-  compositions.forEach(([name, [value]]) => (data[name] = value));
+  composables.forEach(([name, [value]]) => (data[name] = value));
   effectKeys.forEach((key) => data[key]);
   removeAttributes.forEach((name) => node.removeAttribute(name));
   return [data, clear];
