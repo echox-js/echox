@@ -11,6 +11,8 @@ import {
 import {Attribute} from "./attribute.js";
 
 let active;
+let init;
+const effects = [];
 
 function noop() {}
 
@@ -75,13 +77,12 @@ function templateof(template) {
   return [template, [sentinel]];
 }
 
-function track(f, ref, node = {isConnected: true}) {
-  const effect = () => (ref.effects.push(effect), f(), ref.effects.pop());
+function track(f, node = {isConnected: true}) {
+  const effect = () => (effects.push(effect), f(), effects.pop());
   effect._dom = node;
-  ref.init = true;
+  init = true;
   effect();
-  ref.init = false;
-  return effect;
+  init = false;
 }
 
 function schedule(state) {
@@ -100,26 +101,26 @@ function cleanup(effects) {
   return new Set([...effects].filter(isConnected));
 }
 
-function watchComputed(state, ref, key) {
+function watchComputed(state, data, key) {
   state.rawVal = state.val;
-  track(() => (ref.data[key] = state.rawVal(ref.data)), ref);
+  track(() => (data[key] = state.rawVal(data)));
 }
 
-function watchEffect(state, ref) {
+function watchEffect(state, data) {
   (state.rawVal = state.val), (state.val = null);
-  track(() => (state.val?.(), (state.val = state.rawVal(ref.data))), ref);
+  track(() => (state.val?.(), (state.val = state.rawVal(data))));
 }
 
-function watch(target, descriptors, ref) {
-  const states = new Map(descriptors);
-  return new Proxy(target, {
+function watch(target, descriptors) {
+  const states = new Map(descriptors.map(([n, val]) => [n, {val, effects: new Set()}]));
+  const data = new Proxy(target, {
     get(target, key) {
       let state;
       if (!(state = states.get(key))) return Reflect.get(target, key);
-      if (isEffect(state)) watchEffect(state, ref);
-      else if (isComputed(state)) watchComputed(state, ref, key);
-      const effect = lastof(ref.effects);
-      if (effect) (state.effects = ref.init ? state.effects : cleanup(state.effects, isConnected)).add(effect);
+      if (isEffect(state)) watchEffect(state, data);
+      else if (isComputed(state)) watchComputed(state, data, key);
+      const effect = lastof(effects);
+      if (effect) (state.effects = init ? state.effects : cleanup(state.effects, isConnected)).add(effect);
       return state.val;
     },
     set(target, key, value) {
@@ -129,6 +130,7 @@ function watch(target, descriptors, ref) {
       return true;
     },
   });
+  return data;
 }
 
 function insertBefore(parent, node) {
@@ -169,8 +171,8 @@ function destroy(root) {
 
 function observe(root) {
   const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.removedNodes) {
+    for (const {removedNodes} of mutations) {
+      for (const node of removedNodes) {
         node._clear?.();
       }
     }
@@ -192,46 +194,41 @@ function renderHtml(args) {
   return document.importNode(template.content, true);
 }
 
-function setup(node, ref, args) {
+function setup(node, props, args) {
   const {attributes} = node;
   const descriptors = [];
   const removeAttributes = [];
   const effectKeys = [];
   const methods = [];
   const composables = [];
-  for (let i = 0, n = attributes.length; i < n; i++) {
-    const {name, value: currentValue} = attributes[i];
-    let value;
-    if (/^::\d+/.test(name) && (value = args[+name.slice(2)]) instanceof Attribute && value.t === ATTR_EFFECT) {
-      const key = "_effect_" + name.slice(2);
-      const v = value.v;
-      v._effect = true;
-      descriptors.push([key, {val: value.v, effects: new Set()}]);
-      effectKeys.push(key);
-      removeAttributes.push(name);
-    } else if (/^::\d+/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
+  const components = new Map();
+  for (let i = 0, value, n = attributes.length; i < n; i++) {
+    let {name, value: currentValue} = attributes[i];
+    if (/^::\d+/.test(name)) (currentValue = name), (name = "_e_" + name.slice(2));
+    if (/^::\d+/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
       const {t, v} = value;
-      if (t === ATTR_STATE) descriptors.push([name, {val: v, effects: new Set()}]);
-      else if (t === ATTR_PROP) descriptors.push([name, {val: valueof(ref.props, name, v), effects: new Set()}]);
-      else if (t === ATTR_METHOD) methods.push([name, (...p) => v(ref.data, ...p)]);
-      else if (t === ATTR_COMPONENT) ref.components.set(name.toUpperCase(), v);
-      else if (t === ATTR_COMPOSABLE) {
-        composables.push([name, setup(renderHtml(v).firstChild, {data: null, effects: ref.effects}, v)]);
-      }
+      if (t === ATTR_STATE) descriptors.push([name, v]);
+      else if (t === ATTR_PROP) descriptors.push([name, valueof(props, name, v)]);
+      else if (t === ATTR_METHOD) methods.push([name, v]);
+      else if (t === ATTR_COMPONENT) components.set(name.toUpperCase(), v);
+      else if (t === ATTR_COMPOSABLE) composables.push([name, setup(renderHtml(v).firstChild, {}, v)]);
+      else if (t === ATTR_EFFECT) (v._effect = true), descriptors.push([name, v]), effectKeys.push(name);
       removeAttributes.push(name);
     }
   }
-  const data = (ref.data = watch({}, descriptors, ref));
-  const clear = () => (effectKeys.forEach((key) => data[key]?.()), composables.forEach(([, [, clear]]) => clear()));
-  methods.forEach(([name, value]) => (data[name] = value));
-  composables.forEach(([name, [value]]) => (data[name] = value));
+  const data = watch({}, descriptors);
+  const clear = () => (effectKeys.forEach((key) => data[key]?.()), composables.forEach(([, {clear}]) => clear()));
+  methods.forEach(([name, value]) => (data[name] = (...p) => value(data, ...p)));
+  composables.forEach(([name, {data: d}]) => (data[name] = d));
   effectKeys.forEach((key) => data[key]);
   removeAttributes.forEach((name) => node.removeAttribute(name));
-  return [data, clear];
+  return {data, components, clear};
 }
 
 function hydrateRoot(walker, node, removeNodes, ref, args) {
-  const [, clear] = setup(node, ref, args);
+  const {data, components, clear} = setup(node, ref.props, args);
+  ref.data = data;
+  ref.components = components;
   ref.sentinel._clear = clear;
   return walker.nextNode();
 }
@@ -288,7 +285,7 @@ function hydrateIf(walker, node, removeNodes, ref, args) {
       }
     }
     if (!match) (prevI = null), insert(document.createDocumentFragment());
-  }, ref);
+  });
   return walker.currentNode;
 }
 
@@ -303,7 +300,9 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
   const listen = isComponent
     ? (node, name, value) => {
         const method = (...params) => value(ref.data, ...params);
-        set(node, name, () => method);
+        // TODO: Simplify this.
+        // A computed state that returns a computed state.
+        set(node, name, () => () => method);
       }
     : (node, name, value) => {
         const listener = (...params) => value(ref.data, ...params);
@@ -322,19 +321,18 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
         else {
           // TODO: Should track this mock node?
           const n = isComponent ? undefined : node;
-          const f = () => {
+          track(() => {
             const string = values.map((d) => (isFunction(d) ? d(ref.data) : d)).join("");
             set(n, name, string);
-          };
-          track(f, ref, n);
+          }, n);
         }
       }
     }
   }
   if (isComponent) {
-    const descriptors = Object.entries(propsRef.val).map(([n, val]) => [n, {val, effects: new Set()}]);
+    const descriptors = Object.entries(propsRef.val);
     propsRef.val = watch({}, descriptors, ref);
-    const subnode = h(propsRef.val, ref.effects, ref.components.get(node.nodeName));
+    const subnode = h(propsRef.val, ref.components.get(node.nodeName));
     node.parentNode.insertBefore(subnode, node);
     removeNodes.push(node);
   }
@@ -359,7 +357,7 @@ function hydrateText(walker, node, removeNodes, ref, args) {
           const template = document.createDocumentFragment();
           template.append(...values.map(nodeof));
           insert(template);
-        }, ref);
+        });
       }
     }
     removeNodes.push(node);
@@ -382,16 +380,16 @@ function hydrate(root, ref, args) {
   removeNodes.forEach((node) => node.remove());
 }
 
-function h(props, effects, args) {
+function h(props, args) {
   const root = renderHtml(args);
   const sentinel = document.createTextNode("");
-  const ref = {data: null, effects, components: new Map(), props, sentinel};
+  const ref = {data: null, components: new Map(), props, sentinel};
   hydrate(root, ref, args);
   return postprocess(root, sentinel);
 }
 
 export function render({v: args}) {
-  const node = h({}, [], args);
+  const node = h({}, args);
   const root = observable(node);
   observe(root);
   return Object.assign(root, {destroy: () => destroy(root)});
