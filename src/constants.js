@@ -7,3 +7,4 @@ export const ATTR_EFFECT = 3;
 export const ATTR_COMPOSABLE = 4;
 export const ATTR_METHOD = 5;
 export const ATTR_COMPONENT = 6;
+export const ATTR_STORE = 7;
