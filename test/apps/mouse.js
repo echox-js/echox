@@ -1,6 +1,6 @@
-import {html, state, use, method, composition, effect} from "../../src/index.js";
+import {html, state, method, composable, effect} from "../../src/index.js";
 
-const useMouse = use`<define 
+const useMouse = composable`<define 
   x=${state(0)} 
   y=${state(0)}
   log=${method((d) => console.log(d.x, d.y))} 
@@ -12,7 +12,7 @@ const useMouse = use`<define
 </define>`;
 
 export function mouse() {
-  return html`<define mouse=${composition(useMouse)}>
+  return html`<define mouse=${useMouse}>
     <button @click=${(d) => d.mouse.log()}>Log</button>
     <span>${(d) => `(${d.mouse.x}, ${d.mouse.y})`}</span>
   </define>`;

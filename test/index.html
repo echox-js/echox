@@ -62,8 +62,8 @@
     if (typeof preClear === "function") preClear();
     container.innerHTML = "";
     const fn = apps[select.value];
-    const clear = (d) => (preClear = d);
-    const node = await fn(clear);
+    const node = await fn();
+    preClear = node.destroy;
     container.appendChild(node);
   }
 </script>
