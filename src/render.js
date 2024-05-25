@@ -155,9 +155,8 @@ function insertBefore(parent, node) {
 
 function postprocess(node, sentinel) {
   const template = document.createDocumentFragment();
-  const fragment = node.firstChild;
-  if (fragment.nodeName !== "DEFINE") template.append(sentinel, node);
-  else template.append(sentinel, ...fragment.childNodes);
+  if (node.nodeName !== "DEFINE") template.append(sentinel, node);
+  else template.append(sentinel, ...node.childNodes);
   return template;
 }
 
@@ -189,6 +188,57 @@ function observe(root) {
   observer.observe(root, {childList: true, subtree: true});
   Object.assign(root, {_observer: observer});
   let timer = setInterval(() => root.isConnected && (walk(root, (node) => node._ref?.()), clearInterval(timer)), 0);
+}
+
+export function renderHtml(args) {
+  const [{raw: strings}] = args;
+  let string = "";
+  for (let j = 0, m = args.length; j < m; j++) {
+    const input = strings[j];
+    if (j > 0) string += "::" + j;
+    string += input;
+  }
+  const template = document.createElement("template");
+  template.innerHTML = string;
+  const node = document.importNode(template.content, true);
+  return node.firstChild;
+}
+
+export function setup(node, props, args) {
+  const {attributes} = node;
+  const descriptors = [];
+  const removeAttributes = [];
+  const effectKeys = [];
+  const refKeys = [];
+  const methods = [];
+  const composables = [];
+  const components = new Map();
+  const stores = [];
+  for (let i = 0, value, n = attributes.length; i < n; i++) {
+    let {name, value: currentValue} = attributes[i];
+    if (/^::\d+/.test(name)) (currentValue = name), (name = "_e_" + name.slice(2));
+    if (/^::\d+/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
+      const {t, v} = value;
+      if (t === ATTR_STATE) descriptors.push([name, v]);
+      else if (t === ATTR_PROP) descriptors.push([name, valueof(props, name, v)]);
+      else if (t === ATTR_METHOD) methods.push([name, v]);
+      else if (t === ATTR_COMPONENT) components.set(name.toUpperCase(), v);
+      else if (t === ATTR_COMPOSABLE) composables.push([name, setup(renderHtml(v), {}, v)]);
+      else if (t === ATTR_STORE) stores.push([name, v]);
+      else if (t === ATTR_EFFECT) (v._effect = true), descriptors.push([name, v]), effectKeys.push(name);
+      else if (t === ATTR_REF) descriptors.push([name, null]), refKeys.push(name);
+      removeAttributes.push(t === ATTR_EFFECT ? currentValue : name);
+    }
+  }
+  const data = watch({}, descriptors);
+  const clear = () => (effectKeys.forEach((key) => data[key]?.()), composables.forEach(([, {clear}]) => clear()));
+  const refs = new Map(refKeys.map((key) => [key, (node) => (data[key] = node)]));
+  methods.forEach(([name, value]) => (data[name] = (...p) => value(data, ...p)));
+  composables.forEach(([name, {data: d}]) => (data[name] = d));
+  stores.forEach(([name, value]) => (data[name] = value));
+  effectKeys.forEach((key) => data[key]);
+  removeAttributes.forEach((name) => node.removeAttribute(name));
+  return {data, components, clear, refs};
 }
 
 function hydrateRoot(walker, node, removeNodes, ref, args) {
@@ -359,57 +409,6 @@ function h(props, args) {
   const ref = {data: null, components: new Map(), props, sentinel};
   hydrate(root, ref, args);
   return postprocess(root, sentinel);
-}
-
-export function renderHtml(args) {
-  const [{raw: strings}] = args;
-  let string = "";
-  for (let j = 0, m = args.length; j < m; j++) {
-    const input = strings[j];
-    if (j > 0) string += "::" + j;
-    string += input;
-  }
-  const template = document.createElement("template");
-  template.innerHTML = string;
-  const node = document.importNode(template.content, true);
-  return node.firstChild;
-}
-
-export function setup(node, props, args) {
-  const {attributes} = node;
-  const descriptors = [];
-  const removeAttributes = [];
-  const effectKeys = [];
-  const refKeys = [];
-  const methods = [];
-  const composables = [];
-  const components = new Map();
-  const stores = [];
-  for (let i = 0, value, n = attributes.length; i < n; i++) {
-    let {name, value: currentValue} = attributes[i];
-    if (/^::\d+/.test(name)) (currentValue = name), (name = "_e_" + name.slice(2));
-    if (/^::\d+/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
-      const {t, v} = value;
-      if (t === ATTR_STATE) descriptors.push([name, v]);
-      else if (t === ATTR_PROP) descriptors.push([name, valueof(props, name, v)]);
-      else if (t === ATTR_METHOD) methods.push([name, v]);
-      else if (t === ATTR_COMPONENT) components.set(name.toUpperCase(), v);
-      else if (t === ATTR_COMPOSABLE) composables.push([name, setup(renderHtml(v), {}, v)]);
-      else if (t === ATTR_STORE) stores.push([name, v]);
-      else if (t === ATTR_EFFECT) (v._effect = true), descriptors.push([name, v]), effectKeys.push(name);
-      else if (t === ATTR_REF) descriptors.push([name, null]), refKeys.push(name);
-      removeAttributes.push(t === ATTR_EFFECT ? currentValue : name);
-    }
-  }
-  const data = watch({}, descriptors);
-  const clear = () => (effectKeys.forEach((key) => data[key]?.()), composables.forEach(([, {clear}]) => clear()));
-  const refs = new Map(refKeys.map((key) => [key, (node) => (data[key] = node)]));
-  methods.forEach(([name, value]) => (data[name] = (...p) => value(data, ...p)));
-  composables.forEach(([name, {data: d}]) => (data[name] = d));
-  stores.forEach(([name, value]) => (data[name] = value));
-  effectKeys.forEach((key) => data[key]);
-  removeAttributes.forEach((name) => node.removeAttribute(name));
-  return {data, components, clear, refs};
 }
 
 export function render({v: args}) {
