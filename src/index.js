@@ -413,6 +413,13 @@ function h(props, args) {
   return postprocess(root, sentinel);
 }
 
+function render(args) {
+  const node = h({}, args);
+  const root = observable(node);
+  observe(root);
+  return Object.assign(root, {destroy: () => destroy(root)});
+}
+
 export function effect(callback) {
   return new Attribute(ATTR_EFFECT, callback);
 }
@@ -447,13 +454,6 @@ export function store() {
   return () => new Attribute(ATTR_STORE, (data = data ?? setup(renderHtml(args), {}, args).data));
 }
 
-export function render({v: args}) {
-  const node = h({}, args);
-  const root = observable(node);
-  observe(root);
-  return Object.assign(root, {destroy: () => destroy(root)});
-}
-
-export function html() {
-  return render({v: arguments});
+export function html({v: args}) {
+  return args ? render(args) : render(arguments);
 }

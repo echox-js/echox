@@ -1,4 +1,4 @@
-import {render, component, state} from "../../src/index.js";
+import {html, component, state} from "../../src/index.js";
 
 const App = component`<define count=${state(0)}>
   <button @click=${(d) => d.count++}>👍</button>
@@ -10,5 +10,5 @@ const App = component`<define count=${state(0)}>
 `;
 
 export function app() {
-  return render(App);
+  return html(App);
 }
