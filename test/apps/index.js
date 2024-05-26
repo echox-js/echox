@@ -13,3 +13,4 @@ export {app} from "./app.js";
 export {mouse} from "./mouse.js";
 export {refs} from "./refs.js";
 export {style} from "./style.js";
+export {names} from "./names.js";

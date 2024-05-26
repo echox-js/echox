@@ -55,6 +55,10 @@ function kebabCase(string) {
   return string.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, "$1-$2").toLowerCase();
 }
 
+function camelcase(string) {
+  return string.replace(/-([a-z])/g, (_, d) => d.toUpperCase());
+}
+
 function valuesof(string, args) {
   return string
     .split(/(::\d+)/)
@@ -229,6 +233,7 @@ function setup(node, props, args) {
     if (/^::\d+/.test(name)) (currentValue = name), (name = "_e_" + name.slice(2));
     if (/^::\d+/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
       const {t, v} = value;
+      name = t === ATTR_COMPONENT ? name : camelcase(name);
       if (t === ATTR_STATE) descriptors.push([name, v]);
       else if (t === ATTR_PROP) descriptors.push([name, valueof(props, name, v)]);
       else if (t === ATTR_METHOD) methods.push([name, v]);
