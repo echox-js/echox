@@ -43,8 +43,16 @@ function isComputed(state) {
   return isFunction(state.val) && !state.rawVal;
 }
 
+function isPlainObject(d) {
+  return d && d.constructor === Object;
+}
+
 function lastof(array) {
   return array[array.length - 1];
+}
+
+function kebabCase(string) {
+  return string.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, "$1-$2").toLowerCase();
 }
 
 function valuesof(string, args) {
@@ -418,6 +426,28 @@ function render(args) {
   const root = observable(node);
   observe(root);
   return Object.assign(root, {destroy: () => destroy(root)});
+}
+
+export function cx(...names) {
+  return names
+    .flatMap((d) =>
+      isPlainObject(d)
+        ? Object.entries(d)
+            .filter(([, v]) => v)
+            .map(([k]) => k)
+        : d
+    )
+    .filter((d) => isString(d) && !!d)
+    .join(" ");
+}
+
+export function css(...styles) {
+  return styles
+    .reverse()
+    .filter(isPlainObject)
+    .flatMap(Object.entries)
+    .map(([k, v]) => `${kebabCase(k)}: ${v}`)
+    .join("; ");
 }
 
 export function effect(callback) {
