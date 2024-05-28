@@ -184,7 +184,7 @@ function walk(root, callback) {
 function destroy(root) {
   root._observer.disconnect();
   root.remove();
-  walk(root, (node) => node._clear?.());
+  walk(root, (node) => (node._clear?.(), node.destroy?.()));
 }
 
 function observe(root) {
@@ -270,15 +270,21 @@ function hydrateFor(walker, node, removeNodes, ref, args) {
   const each = node.attributes["each"].value;
   let value;
   if (/::\d+/.test(each) && isFunction((value = args[+each.slice(2)]))) {
-    const array = value(ref.data);
     const template = document.createDocumentFragment();
     template.append(...node.childNodes);
-    for (let i = 0, n = array.length; i < n; i++) {
-      [ref.data.$item, ref.data.$index, ref.data.$array] = [array[i], i, array];
-      const cloned = template.cloneNode(true);
-      hydrate(cloned, ref, args);
-      node.parentNode.insertBefore(cloned, node);
-    }
+    const insert = insertBefore(node.parentNode, node);
+    // TODO: Memoize this.
+    track(() => {
+      const array = value(ref.data);
+      const parent = document.createDocumentFragment();
+      for (let i = 0, n = array.length; i < n; i++) {
+        [ref.data.$item, ref.data.$index, ref.data.$array] = [array[i], i, array];
+        const cloned = template.cloneNode(true);
+        hydrate(cloned, ref, args);
+        parent.append(cloned);
+      }
+      insert(parent);
+    });
     node.removeAttribute("each");
     removeNodes.push(node);
   }
@@ -302,13 +308,15 @@ function hydrateIf(walker, node, removeNodes, ref, args) {
     current = walker.nextSibling();
   }
   const insert = insertBefore(node.parentNode, node);
-  let prevI = null;
+  // TODO: Memoize this use prevI.
+  // let prevI = null;
   track(() => {
     let match = false;
     for (let i = 0, n = conditions.length; i < n; i++) {
       const [condition, node] = conditions[i];
-      if (condition(ref.data) && prevI !== i) {
-        (prevI = i), (match = true);
+      if (condition(ref.data)) {
+        // prevI = i;
+        match = true;
         const template = document.createDocumentFragment();
         template.append(...node.cloneNode(true).childNodes);
         hydrate(template, ref, args);
@@ -316,7 +324,9 @@ function hydrateIf(walker, node, removeNodes, ref, args) {
         break;
       }
     }
-    if (!match) (prevI = null), insert(document.createDocumentFragment());
+    if (!match)
+      // prevI = null;
+      insert(document.createDocumentFragment());
   });
   return walker.currentNode;
 }
@@ -354,8 +364,10 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
           // TODO: Should track this mock node?
           const n = isComponent ? undefined : node;
           track(() => {
-            const string = values.map((d) => (isFunction(d) ? d(ref.data) : d)).join("");
-            set(n, name, string);
+            // TODO: Refactor this.
+            const evaluated = values.map((d) => (isFunction(d) ? d(ref.data) : d));
+            const value = isComponent ? evaluated[0] : evaluated.join("");
+            set(n, name, value);
           }, n);
         }
       }
