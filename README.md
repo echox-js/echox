@@ -1,4 +1,4 @@
-# EcoJS
+# EchoJS
 
 > WIP
 
@@ -8,10 +8,14 @@ The fast, reactive UI framework with a size of 3 KB.
 - Small - 3KB (gzip)
 - Simple - similar to HTML
 
-```js
-import * as eco from "ecojs";
+```bash
+$ npm install echo-x
+```
 
-const node = eco.html`<define count=${eco.state(0)}>
+```js
+import * as echo from "echo-x";
+
+const node = echo.html`<define count=${echo.state(0)}>
   <button @click=${(d) => d.count++}>👍</button>
   <button @click=${(d) => d.count--}>👎</button>
   <span>${(d) => d.count}</span>
