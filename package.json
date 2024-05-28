@@ -1,6 +1,12 @@
 {
   "name": "ecojs",
+  "version": "0.0.1-beta.0",
   "type": "module",
+  "main": "src/index.js",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "dev": "vite dev",
     "build": "rm -rf dist && rollup -c"
