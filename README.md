@@ -1,4 +1,4 @@
-# EchoJS
+# EchoX
 
 > WIP
 
@@ -9,13 +9,13 @@ The fast, reactive UI framework with a size of 3 KB.
 - Simple - similar to HTML
 
 ```bash
-$ npm install echo-x
+$ npm install echox
 ```
 
 ```js
-import * as echo from "echo-x";
+import * as X from "echox";
 
-const node = echo.html`<define count=${echo.state(0)}>
+const node = X.html`<define count=${X.state(0)}>
   <button @click=${(d) => d.count++}>👍</button>
   <button @click=${(d) => d.count--}>👎</button>
   <span>${(d) => d.count}</span>
