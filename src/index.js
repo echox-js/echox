@@ -452,7 +452,7 @@ export function cx(...names) {
         ? Object.entries(d)
             .filter(([, v]) => v)
             .map(([k]) => k)
-        : d
+        : d,
     )
     .filter((d) => isString(d) && !!d)
     .join(" ");
