@@ -25,7 +25,7 @@ export function todolist() {
               >
                 ❌
               </button>
-            </li>`
+            </li>`,
         )}
     </ul>
   </define>`;
