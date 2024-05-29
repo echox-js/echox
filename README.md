@@ -2,7 +2,7 @@
 
 > WIP
 
-The fast, reactive UI framework with a size of 3 KB.
+The fast, reactive JavaScript UI framework with a size of 3 KB, inspired by [Hypertext Literal](https://github.com/observablehq/htl).
 
 - Fast - no virtual DOM
 - Small - 3KB (gzip)
