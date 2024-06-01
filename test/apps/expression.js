@@ -1,7 +1,7 @@
-import {html, state} from "../../src/index.js";
+import * as X from "echox";
 
 export function expression() {
-  return html`<define text=${state("hello world")}>
+  return X.html`<define text=${X.state("hello world")}>
     <span>${(d) => d.text}</span>
   </define>`;
 }
