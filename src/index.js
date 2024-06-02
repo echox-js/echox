@@ -164,16 +164,8 @@ function insertBefore(parent, node) {
 
 function postprocess(node, sentinel) {
   const template = document.createDocumentFragment();
-  if (node.nodeName !== "DEFINE") template.append(sentinel, node);
-  else template.append(sentinel, ...node.childNodes);
+  template.append(sentinel, node);
   return template;
-}
-
-function observable(template) {
-  if (template.childNodes.length === 1) return template.firstChild;
-  const div = document.createElement("div");
-  div.append(...template.childNodes);
-  return div;
 }
 
 function walk(root, callback) {
@@ -231,8 +223,14 @@ function setup(node, props, args) {
   for (let i = 0, value, n = attributes.length; i < n; i++) {
     let {name, value: currentValue} = attributes[i];
     if (/^::\d+/.test(name)) (currentValue = name), (name = "_e_" + name.slice(2));
-    if (/^::\d+/.test(currentValue) && (value = args[+currentValue.slice(2)]) instanceof Attribute) {
+    if (
+      name.startsWith("x-") &&
+      /^::\d+/.test(currentValue) &&
+      (value = args[+currentValue.slice(2)]) instanceof Attribute
+    ) {
       const {t, v} = value;
+      removeAttributes.push(t === ATTR_EFFECT ? currentValue : name);
+      name = name.slice(2);
       name = t === ATTR_COMPONENT ? name : camelcase(name);
       if (t === ATTR_STATE) descriptors.push([name, v]);
       else if (t === ATTR_PROP) descriptors.push([name, valueof(props, name, v)]);
@@ -242,7 +240,6 @@ function setup(node, props, args) {
       else if (t === ATTR_STORE) stores.push([name, v]);
       else if (t === ATTR_EFFECT) (v._effect = true), descriptors.push([name, v]), effectKeys.push(name);
       else if (t === ATTR_REF) descriptors.push([name, null]), refKeys.push(name);
-      removeAttributes.push(t === ATTR_EFFECT ? currentValue : name);
     }
   }
   const data = watch({}, descriptors);
@@ -262,7 +259,8 @@ function hydrateRoot(walker, node, removeNodes, ref, args) {
   ref.components = components;
   ref.refs = refs;
   ref.sentinel._clear = clear;
-  return walker.nextNode();
+  node._root = false;
+  return node;
 }
 
 function hydrateFor(walker, node, removeNodes, ref, args) {
@@ -420,7 +418,7 @@ function hydrate(root, ref, args) {
   const walker = document.createTreeWalker(root);
   while (root) {
     const node = walker.currentNode;
-    if (!node.parentElement && node.nodeName === "DEFINE") root = hydrateRoot(walker, node, removeNodes, ref, args);
+    if (node._root) root = hydrateRoot(walker, node, removeNodes, ref, args);
     else if (node.nodeName === "FOR") root = hydrateFor(walker, node, removeNodes, ref, args);
     else if (node.nodeName === "IF") root = hydrateIf(walker, node, removeNodes, ref, args);
     else if (node.nodeType === TYPE_ELEMENT) root = hydrateElement(walker, node, removeNodes, ref, args);
@@ -432,6 +430,7 @@ function hydrate(root, ref, args) {
 
 function h(props, args) {
   const root = renderHtml(args);
+  Object.assign(root, {_root: true});
   const sentinel = document.createTextNode("");
   const ref = {data: null, components: new Map(), props, sentinel};
   hydrate(root, ref, args);
@@ -440,7 +439,7 @@ function h(props, args) {
 
 function render(args) {
   const node = h({}, args);
-  const root = observable(node);
+  const root = node.firstElementChild;
   observe(root);
   return Object.assign(root, {destroy: () => destroy(root)});
 }
