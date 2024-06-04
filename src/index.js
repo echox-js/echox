@@ -437,13 +437,6 @@ function h(props, args) {
   return postprocess(root, sentinel);
 }
 
-function render(args) {
-  const node = h({}, args);
-  const root = node.firstElementChild;
-  observe(root);
-  return Object.assign(root, {destroy: () => destroy(root)});
-}
-
 export function cx(...names) {
   return names
     .flatMap((d) =>
@@ -500,6 +493,9 @@ export function store() {
   return () => new Attribute(ATTR_STORE, (data = data ?? setup(renderHtml(args), {}, args).data));
 }
 
-export function html({v: args}) {
-  return args ? render(args) : render(arguments);
+export function html() {
+  const node = h({}, arguments);
+  const root = node.firstElementChild;
+  observe(root);
+  return Object.assign(root, {destroy: () => destroy(root)});
 }
