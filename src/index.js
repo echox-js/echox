@@ -66,7 +66,11 @@ function valuesof(string, args) {
     .map((value) => (/^::\d+$/.test(value) ? args[+value.slice(2)] : value));
 }
 
-function valueof(props, name, defaultValue) {
+function valueof(values) {
+  return values.length === 1 ? values[0] : values.join("");
+}
+
+function propof(props, name, defaultValue) {
   const prop = props[name];
   if (isDefined(prop)) return isFunction(prop) ? prop : () => props[name];
   return defaultValue;
@@ -105,9 +109,10 @@ function schedule(state) {
 }
 
 function execute() {
+  const executed = new Set();
   for (const state of active) {
     state.effects = cleanup(state.effects);
-    state.effects.forEach((e) => e());
+    state.effects.forEach((e) => !executed.has(e) && (executed.add(e), e()));
   }
   active = undefined;
 }
@@ -117,8 +122,10 @@ function cleanup(effects) {
 }
 
 function watchComputed(state, data, key) {
-  state.rawVal = state.val;
-  track(() => (data[key] = state.rawVal(data)));
+  track(() => {
+    if (!state.rawVal) (state.rawVal = state.val), (state.val = state.rawVal(data));
+    else data[key] = state.rawVal(data);
+  });
 }
 
 function watchEffect(state, data) {
@@ -233,7 +240,7 @@ function setup(node, props, args) {
       name = name.slice(2);
       name = t === ATTR_COMPONENT ? name : camelcase(name);
       if (t === ATTR_STATE) descriptors.push([name, v]);
-      else if (t === ATTR_PROP) descriptors.push([name, valueof(props, name, v)]);
+      else if (t === ATTR_PROP) descriptors.push([name, propof(props, name, v)]);
       else if (t === ATTR_METHOD) methods.push([name, v]);
       else if (t === ATTR_COMPONENT) components.set(name.toUpperCase(), v);
       else if (t === ATTR_COMPOSABLE) composables.push([name, setup(renderHtml(v), {}, v)]);
@@ -351,22 +358,18 @@ function hydrateElement(walker, node, removeNodes, ref, args) {
   for (let i = 0, n = attributes.length; i < n; i++) {
     const {name, value: currentValue} = attributes[i];
     if (/::\d+/.test(currentValue)) {
-      if (name.startsWith("@")) {
+      if (name.startsWith("$")) {
         const value = args[+currentValue.slice(2)];
         listen(node, name.slice(1), value);
         removeAttributes.push(name);
       } else {
         const values = valuesof(currentValue, args);
-        if (values.every(isString)) set(node, name, values.join(""));
+        if (!values.some(isFunction)) set(node, name, valueof(values));
         else {
-          // TODO: Should track this mock node?
-          const n = isComponent ? undefined : node;
           track(() => {
-            // TODO: Refactor this.
             const evaluated = values.map((d) => (isFunction(d) ? d(ref.data) : d));
-            const value = isComponent ? evaluated[0] : evaluated.join("");
-            set(n, name, value);
-          }, n);
+            set(node, name, valueof(evaluated));
+          }, node);
         }
       }
     } else if (name === "ref" && !isComponent) {
@@ -405,7 +408,7 @@ function hydrateText(walker, node, removeNodes, ref, args) {
           const template = document.createDocumentFragment();
           template.append(...values.map(nodeof));
           insert(template);
-        });
+        }, node.parentNode);
       }
     }
     removeNodes.push(node);

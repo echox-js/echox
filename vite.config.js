@@ -4,7 +4,6 @@ import path from "path";
 export default defineConfig({
   root: "./test",
   test: {
-    globals: true,
     environment: "jsdom",
   },
   resolve: {

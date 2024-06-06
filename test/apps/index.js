@@ -6,7 +6,7 @@ export {expression} from "./expression.js";
 // export {todolist} from "./todolist.js";
 // export {blocks} from "./blocks.js";
 // export {forElement} from "./for-element.js";
-// export {computedState} from "./computed-state.js";
+export {computed} from "./computed.js";
 // export {condition} from "./condition.js";
 // export {timer} from "./timer.js";
 // export {app} from "./app.js";
