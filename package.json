@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "dev": "vite dev",
-    "test": "pnpm run test:lint && pnpm run test:format && pnpm run test:js",
+    "test": "pnpm run test:js && pnpm run test:lint && pnpm run test:format",
     "test:js": "vitest",
     "test:lint": "eslint src test",
     "test:format": "prettier --check src test",
@@ -22,6 +22,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
+    "js-beautify": "^1.15.1",
     "jsdom": "^24.1.0",
     "prettier": "^3.3.0",
     "rollup": "^4.18.0",

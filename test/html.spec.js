@@ -1,3 +1,4 @@
+import {it, expect} from "vitest";
 import * as X from "echox";
 
 it("html(strings, ...values) should render static element.", () => {
