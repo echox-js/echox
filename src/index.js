@@ -502,3 +502,11 @@ export function html() {
   observe(root);
   return Object.assign(root, {destroy: () => destroy(root)});
 }
+
+export const X = new Proxy(
+  {},
+  {
+    get: (obj, k, _) => obj[k] ?? ((p) => Object.assign((_ = (...c) => ((_.c = c), _)), {p, k})),
+    set: (obj, k, v) => (obj[k] = v),
+  },
+);
