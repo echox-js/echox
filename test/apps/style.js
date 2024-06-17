@@ -1,4 +1,4 @@
-import {html, state, css, cx} from "../../src/index.js";
+import {html, css, cx} from "../../src/index.js";
 
 export function style() {
   return html`<define>
