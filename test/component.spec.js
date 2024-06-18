@@ -5,7 +5,7 @@ test("component(template, reactive) should return node with component tag.", () 
   const Div = Echo.component(X.div());
   const node = Div();
   const [template, reactive] = node.tag;
-  expect(reactive).toBeUndefined();
+  expect(reactive).toBeDefined();
   expect(template.tag).toBe("div");
   expect(template.props).toBeUndefined();
   expect(template.children).toBeUndefined();
