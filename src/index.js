@@ -1,21 +1,44 @@
-const cache = {};
 const protoOf = Object.getPrototypeOf;
 const strProto = protoOf("");
+const funcProto = protoOf(protoOf);
 const isStr = (d) => protoOf(d) === strProto;
+const isFunc = (d) => protoOf(d) === funcProto && !d.tag;
+const cache = {};
+
+export function reactive() {
+  const defaults = {};
+  let props, pctx;
+  const states = {};
+  const ctx = new Proxy(Object.create(null), {
+    get: (t, k) => {
+      const prop = props?.[k] ?? defaults[k];
+      if (k in defaults) return isFunc(prop) ? prop(pctx) : prop;
+      if (k in states) return states[k];
+      return t[k];
+    },
+  });
+  const _ = (p, c) => (((props = p), (pctx = c)), ctx);
+  return Object.assign(_, {
+    prop: (k, v) => ((defaults[k] = v?.()), _),
+    state: (k, v) => ((states[k] = v()), _),
+  });
+}
 
 const setterOf = (proto, k) => proto && (Object.getOwnPropertyDescriptor(proto, k) ?? setterOf(protoOf(proto), k));
 
-function render(node) {
+function render(node, ctx = {}) {
   if (isStr(node)) return [document.createTextNode(node)];
+  if (isFunc(node)) return [document.createTextNode(node(ctx))];
   const {tag, ns, props = {}, children = []} = node;
-  if (!isStr(tag)) return render(tag[0]);
+  if (!isStr(tag)) return render(tag[0], tag[1](props, ctx));
   const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
-    const prop = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
-    const event = (v) => el.addEventListener(k.slice(1), v);
-    (k.startsWith("$") ? event : prop)(v);
+    const setter = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
+    const event = (v) => el.addEventListener(k.slice(1), (e) => v(e, ctx));
+    const attr = (v) => setter(v(ctx));
+    (k.startsWith("$") ? event : isFunc(v) ? attr : setter)(v);
   }
-  for (const child of children) el.append(...render(child));
+  for (const child of children) el.append(...render(child, ctx));
   return [el];
 }
 
@@ -25,8 +48,8 @@ const handler = (ns) => ({get: (_, tag) => node(tag, ns)});
 
 export const X = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
 
-export const component = (...args) => node(args);
+export const component = (template, join = reactive()) => node([template, join]);
 
 export const mount = (el, node) => el.append(...render(node));
 
-export default {X, component, mount};
+export default {X, component, mount, reactive};
