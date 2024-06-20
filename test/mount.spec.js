@@ -35,7 +35,7 @@ test("mount(component) should render HTML template with event listener.", () => 
     Echo.mount(el, App());
     el.querySelector("button").click();
     expect($click).toHaveBeenCalledTimes(1);
-    expect($click).toHaveBeenCalledWith(expect.any(MouseEvent));
+    expect($click).toHaveBeenCalledWith(expect.any(MouseEvent), expect.any(Object));
     expect(el.innerHTML).toBe(`<button>Click me!</button>`);
   });
 });
