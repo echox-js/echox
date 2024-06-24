@@ -34,9 +34,14 @@ function render(node, ctx = {}) {
   const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
     const setter = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
-    const event = (v) => el.addEventListener(k.slice(1), (e) => v(e, ctx));
+    let old;
+    const event = (v) => {
+      const name = k.slice(2);
+      el.removeEventListener(name, old);
+      el.addEventListener(name, (old = v(ctx)));
+    };
     const attr = (v) => setter(v(ctx));
-    (k.startsWith("$") ? event : isFunc(v) ? attr : setter)(v);
+    (k.startsWith("on") ? event : isFunc(v) ? attr : setter)(v);
   }
   for (const child of children) el.append(...render(child, ctx));
   return [el];

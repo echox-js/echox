@@ -30,12 +30,15 @@ test("mount(component) should render string.", () => {
 
 test("mount(component) should render HTML template with event listener.", () => {
   withContainer((el) => {
-    const $click = vi.fn();
-    const App = Echo.component(X.button({$click})("Click me!"));
+    const onclick = vi.fn();
+    const attr = vi.fn(() => onclick);
+    const App = Echo.component(X.button({onclick: attr})("Click me!"));
     Echo.mount(el, App());
     el.querySelector("button").click();
-    expect($click).toHaveBeenCalledTimes(1);
-    expect($click).toHaveBeenCalledWith(expect.any(MouseEvent), expect.any(Object));
+    expect(onclick).toHaveBeenCalledTimes(1);
+    expect(attr).toHaveBeenCalledTimes(1);
+    expect(attr).toHaveBeenCalledWith(expect.any(Object));
+    expect(onclick).toHaveBeenCalledWith(expect.any(MouseEvent));
     expect(el.innerHTML).toBe(`<button>Click me!</button>`);
   });
 });
