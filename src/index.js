@@ -30,7 +30,7 @@ function render(node, ctx = {}) {
   if (isStr(node)) return [document.createTextNode(node)];
   if (isFunc(node)) return [document.createTextNode(node(ctx))];
   const {tag, ns, props = {}, children = []} = node;
-  if (!isStr(tag)) return render(tag[0], tag[1](props, ctx));
+  if (!isStr(tag)) return render(tag[1], tag[0](props, ctx));
   const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
     const setter = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
@@ -48,7 +48,7 @@ const handler = (ns) => ({get: (_, tag) => node(tag, ns)});
 
 export const X = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
 
-export const component = (template, join = reactive()) => node([template, join]);
+export const component = (...params) => node(params[1] ? params : [reactive(), params[0]]);
 
 export const mount = (el, node) => el.append(...render(node));
 
