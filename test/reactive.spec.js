@@ -1,13 +1,8 @@
 import Echo from "echox";
 import {test, expect} from "vitest";
 
-test("reactive() should a join function", () => {
-  const join = Echo.reactive();
-  expect(join).toBeTypeOf("function");
-});
-
-test("reactive()() should return defaults reactive", () => {
-  const ctx = Echo.reactive()();
+test("reactive().join() should return defaults reactive", () => {
+  const ctx = Echo.reactive().join();
   expect(ctx).toEqual({});
 });
 

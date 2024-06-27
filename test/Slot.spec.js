@@ -4,7 +4,7 @@ import {withContainer} from "./container.js";
 
 test("Slot should render children", () => {
   withContainer((el) => {
-    const Div = Echo.component(X.div()(Echo.Slot()));
+    const Div = Echo.component(X.div()(Echo.Slot({from: (d) => d.children})));
     const App = Echo.component(Div()(X.h1()("Hello, World!"), Div()(X.p()("This is a test."))));
     Echo.mount(el, App());
     expect(el.innerHTML).toBe(`<div><h1>Hello, World!</h1><div><p>This is a test.</p></div></div>`);
@@ -13,7 +13,7 @@ test("Slot should render children", () => {
 
 test("Slot should render default slot", () => {
   withContainer((el) => {
-    const Div = Echo.component(X.div()(Echo.Slot()(X.h1()("Hello, World!"))));
+    const Div = Echo.component(X.div()(Echo.Slot({from: (d) => d.children})(X.h1()("Hello, World!"))));
     const App = Echo.component(Div());
     Echo.mount(el, App());
     expect(el.innerHTML).toBe(`<div><h1>Hello, World!</h1></div>`);

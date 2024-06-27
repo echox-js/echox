@@ -1,43 +1,55 @@
-const protoOf = Object.getPrototypeOf;
 const assign = Object.assign;
 const entries = Object.entries;
-const strProto = protoOf("");
-const funcProto = protoOf(protoOf);
-const isStr = (d) => protoOf(d) === strProto;
-const isFunc = (d) => protoOf(d) === funcProto && !d.tag;
+const protoOf = Object.getPrototypeOf;
+const isStr = (d) => typeof d === "string";
+const isFunc = (d) => typeof d === "function";
+const isExpr = (d) => isFunc(d) && !d.tag && !d.cf;
+const isNode = (d) => isFunc(d) && d.tag;
+const isControl = (d) => isFunc(d) && d.cf;
 const isDef = (d) => d !== undefined;
 const cache = {};
 
 const from = (obj, callback) => Object.fromEntries(entries(obj).map(([k, v]) => [k, callback(v, k)]));
 
-export function reactive() {
-  const _defaults = {children: () => []};
-  const _states = {};
-  const _ = (props, pctx) => {
-    const defaults = from(_defaults, (v) => v?.());
-    const states = from(_states, (v) => v());
+class Reactive {
+  constructor() {
+    this._defaults = {children: () => []};
+    this._states = {};
+  }
+  prop(k, v) {
+    this._defaults[k] = v;
+    return this;
+  }
+  state(k, v) {
+    this._states[k] = v;
+    return this;
+  }
+  join(props) {
+    const defaults = from(this._defaults, (v) => v?.());
+    const states = from(this._states, (v) => v());
     return new Proxy(Object.create(null), {
       get: (t, k) => {
         const prop = props?.[k] ?? defaults[k];
-        if (k in defaults) return prop && isFunc(prop) ? prop(pctx) : prop;
+        if (k in defaults) return isExpr(prop) ? prop() : prop;
         if (k in states) return states[k];
         return t[k];
       },
     });
-  };
-  return assign(_, {
-    prop: (k, v) => ((_defaults[k] = v), _),
-    state: (k, v) => ((_states[k] = v), _),
-  });
+  }
+}
+
+export function reactive() {
+  return new Reactive();
 }
 
 const setterOf = (proto, k) => proto && (Object.getOwnPropertyDescriptor(proto, k) ?? setterOf(protoOf(proto), k));
 
-function render(node, ctx = {}, bind = true) {
+function render(template, scope) {
+  const node = scope ? hydrate(template, scope) : template;
   if (!node) return [];
-  if (isStr(node)) return [document.createTextNode(node)];
-  if (isFunc(node) && node.cf) return node(ctx, render).flat(Infinity);
-  if (isFunc(node)) return [document.createTextNode(node(ctx))];
+  if (isControl(node)) return node(render).flat(Infinity);
+  if (isExpr(node)) return [document.createTextNode(node())];
+  if (!isFunc(node)) return [document.createTextNode(node)];
   if (isStr(node.tag)) {
     const {tag, ns, props, children} = node;
     const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
@@ -47,16 +59,16 @@ function render(node, ctx = {}, bind = true) {
       const event = (v) => {
         const name = k.slice(2);
         el.removeEventListener(name, old);
-        el.addEventListener(name, (old = v(ctx)));
+        el.addEventListener(name, (old = v()));
       };
-      const attr = (v) => setter(v(ctx));
-      (k.startsWith("on") ? event : isFunc(v) ? attr : setter)(v);
+      const attr = (v) => setter(v());
+      (k.startsWith("on") ? event : isExpr(v) ? attr : setter)(v);
     }
-    for (const child of children) el.append(...render(child, ctx, bind));
+    for (const child of children) el.append(...render(child));
     return [el];
   }
-  const {tag, props, children} = bind ? clone(node, ctx) : node;
-  return render(tag[1], tag[0](assign(props, {children}), ctx), bind);
+  const {tag, props, children} = node;
+  return render(tag[1], tag[0].join(assign(props, {children})));
 }
 
 const node =
@@ -66,16 +78,18 @@ const node =
     return assign(create, {props, tag, ns, children: []});
   };
 
-const clone = (d, ctx) => {
-  const bind =
-    (fn) =>
-    (...params) =>
-      fn(ctx, ...params);
-  if (isStr(d)) return d;
-  if (isFunc(d)) return bind(d);
+const bind =
+  (fn, scope) =>
+  (...params) =>
+    fn(scope, ...params);
+
+const hydrate = (d, scope) => {
+  if (isExpr(d)) return bind(d, scope);
+  if (isControl(d)) return assign(bind(d, scope), {cf: d.cf});
+  if (!isNode(d)) return d;
   const {tag, ns, props, children} = d;
-  const newProps = from(props, (v) => (isFunc(v) ? bind(v) : v));
-  return node(tag, ns)(newProps)(...children.map((d) => clone(d, ctx)));
+  const newProps = from(props, (v) => (isExpr(v) ? bind(v, scope) : v));
+  return node(tag, ns)(newProps)(...children.map((d) => hydrate(d, scope)));
 };
 
 const handler = (ns) => ({get: (_, tag) => node(tag, ns)});
@@ -89,17 +103,17 @@ export const controlFlow = (...params) => {
   return component(join, assign(template, {cf: true}));
 };
 
-export const Fragment = controlFlow((d, h) => d.children.map((child) => h(child, d, 0)));
+export const Fragment = controlFlow((d, h) => d.children.map((child) => h(child)));
 
 export const Slot = controlFlow(
-  reactive().prop("from", () => (d) => d.children),
-  (d, h, _) => ((_ = [d.from].flat(Infinity)), _.length ? _ : d.children).map((child) => h(child, d, 0)),
+  reactive().prop("from", (d) => () => d.children),
+  (d, h, _) => ((_ = [d.from].flat(Infinity)), _.length ? _ : d.children).map((child) => h(child)),
 );
 
 export const Match = controlFlow(reactive().prop("test").prop("value"), (d, h) => {
   if (isDef(d.test)) return h(d.children[+!d.test], {}, 0);
   const test = ({props: {test: _}}) => (isDef(d.value) ? _ === d.value : isFunc(_) && _());
-  return d.children.find((c) => c.tag[1]?.arm && (!c.props?.test || test(c)))?.children.map((c) => h(c, d, 0)) ?? [];
+  return d.children.find((c) => c.tag[1]?.arm && (!c.props?.test || test(c)))?.children.map((c) => h(c)) ?? [];
 });
 
 export const Arm = controlFlow(
@@ -116,7 +130,8 @@ export const For = controlFlow(
           child,
           reactive()
             .state("val", () => val)
-            .state("index", () => index)(),
+            .state("index", () => index)
+            .join(),
         ),
       ),
     ) ?? [],
