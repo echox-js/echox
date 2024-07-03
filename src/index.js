@@ -8,8 +8,37 @@ const isNode = (d) => isFunc(d) && d.tag;
 const isControl = (d) => isFunc(d) && d.cf;
 const isDef = (d) => d !== undefined;
 const cache = {};
+const unset = Symbol();
 
 const from = (obj, callback) => Object.fromEntries(entries(obj).map(([k, v]) => [k, callback(v, k)]));
+
+let updates, actives;
+
+function scheduleUpdate(state) {
+  updates = (updates ?? (setTimeout(flushUpdate), new Set())).add(state);
+}
+
+function flushUpdate() {
+  const called = new Set();
+  while (updates.size) {
+    const states = [...updates];
+    updates = new Set();
+    states.forEach(({deps}) => deps.forEach((e) => called.has(e) || (called.add(e), track(e))));
+  }
+  updates = null;
+}
+
+function track(effect) {
+  const prev = actives;
+  const cur = (actives = {setters: new Set(), getters: new Set()});
+  try {
+    effect();
+  } catch (e) {
+    console.error(e);
+  }
+  actives = prev;
+  for (const d of cur.getters) cur.setters.has(d) || d.deps.add(effect);
+}
 
 class Reactive {
   constructor() {
@@ -26,15 +55,31 @@ class Reactive {
   }
   join(props) {
     const defaults = from(this._defaults, (v) => v?.());
-    const states = from(this._states, (v) => v());
-    return new Proxy(Object.create(null), {
-      get: (t, k) => {
-        const prop = props?.[k] ?? defaults[k];
-        if (k in defaults) return isExpr(prop) ? prop() : prop;
-        if (k in states) return states[k];
-        return t[k];
+    const states = from(this._states, (v) => ({raw: v, deps: new Set(), val: unset}));
+    const scope = new Proxy(
+      {},
+      {
+        get(target, key) {
+          const prop = props?.[key] ?? defaults[key];
+          if (key in defaults) return isExpr(prop) ? prop() : prop;
+          const state = states[key];
+          if (!state) return target[key];
+          actives?.getters?.add(state);
+          if (state.val === unset) track(() => (scope[key] = state.raw(scope)));
+          return state.val;
+        },
+        set(target, key, value) {
+          if (!(key in states)) return (target[key] = value), true;
+          const state = states[key];
+          actives?.setters?.add(state);
+          if (value === state.val) return true;
+          state.val = value;
+          if (state.deps.size) scheduleUpdate(state);
+          return true;
+        },
       },
-    });
+    );
+    return scope;
   }
 }
 
@@ -62,7 +107,7 @@ function render(template, scope) {
         el.addEventListener(name, (old = v()));
       };
       const attr = (v) => setter(v());
-      (k.startsWith("on") ? event : isExpr(v) ? attr : setter)(v);
+      k.startsWith("on") ? track(() => event(v)) : isExpr(v) ? track(() => attr(v)) : setter(v);
     }
     for (const child of children) el.append(...render(child));
     return [el];
