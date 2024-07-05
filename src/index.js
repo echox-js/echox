@@ -1,6 +1,5 @@
 const assign = Object.assign;
 const entries = Object.entries;
-const protoOf = Object.getPrototypeOf;
 const isStr = (d) => typeof d === "string";
 const isFunc = (d) => typeof d === "function";
 const isExpr = (d) => isFunc(d) && !d.tag && !d.cf;
@@ -19,11 +18,10 @@ function scheduleUpdate(state) {
 }
 
 function flushUpdate() {
-  const called = new Set();
   while (updates.size) {
-    const states = [...updates];
+    const deps = Array.from(new Set([...updates].flatMap(({deps}) => [...deps])));
     updates = new Set();
-    states.forEach(({deps}) => deps.forEach((e) => called.has(e) || (called.add(e), track(e))));
+    deps.forEach(track);
   }
   updates = null;
 }
@@ -87,7 +85,7 @@ export function reactive() {
   return new Reactive();
 }
 
-const setterOf = (proto, k) => proto && (Object.getOwnPropertyDescriptor(proto, k) ?? setterOf(protoOf(proto), k));
+const setterOf = (p, k) => p && (Object.getOwnPropertyDescriptor(p, k) ?? setterOf(Object.getPrototypeOf(p), k));
 
 function render(template, scope) {
   const node = scope ? hydrate(template, scope) : template;
@@ -157,7 +155,7 @@ export const Slot = controlFlow(
 
 export const Match = controlFlow(reactive().prop("test").prop("value"), (d, h) => {
   if (isDef(d.test)) return h(d.children[+!d.test], {}, 0);
-  const test = ({props: {test: _}}) => (isDef(d.value) ? _ === d.value : isFunc(_) && _());
+  const test = ({props: {test}}) => (isDef(d.value) ? test === d.value : isFunc(test) && test());
   return d.children.find((c) => c.tag[1]?.arm && (!c.props?.test || test(c)))?.children.map((c) => h(c)) ?? [];
 });
 
