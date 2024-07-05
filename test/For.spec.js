@@ -2,16 +2,16 @@ import Echo, {X} from "echox";
 import {test, expect} from "vitest";
 import {withContainer} from "./container.js";
 
-test("For should render list children", () => {
-  withContainer((el) => {
+test("For should render list children", async () => {
+  await withContainer((el) => {
     const App = Echo.component(Echo.For({each: [1, 2, 3]})(X.h1()("Hello, World!")));
     Echo.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>Hello, World!</h1><h1>Hello, World!</h1><h1>Hello, World!</h1>`);
   });
 });
 
-test("For should render list state children", () => {
-  withContainer((el) => {
+test("For should render list state children", async () => {
+  await withContainer((el) => {
     const App = Echo.component(
       Echo.reactive().state("list", () => [1, 2, 3]),
       Echo.For({each: (d) => d.list})(X.h1()("Hello, World!")),
@@ -21,8 +21,8 @@ test("For should render list state children", () => {
   });
 });
 
-test("For should render list children with value and index", () => {
-  withContainer((el) => {
+test("For should render list children with value and index", async () => {
+  await withContainer((el) => {
     const App = Echo.component(
       Echo.reactive().state("test", () => "A"),
       Echo.For({each: [1, 2, 3]})(X.h1()((d, item) => d.test + item.val + item.index)),
@@ -32,8 +32,8 @@ test("For should render list children with value and index", () => {
   });
 });
 
-test("For should render list state children with value and index", () => {
-  withContainer((el) => {
+test("For should render list state children with value and index", async () => {
+  await withContainer((el) => {
     const App = Echo.component(
       Echo.reactive()
         .state("test", () => "A")
@@ -45,8 +45,8 @@ test("For should render list state children with value and index", () => {
   });
 });
 
-test("For should render nested list children with value and index", () => {
-  withContainer((el) => {
+test("For should render nested list children with value and index", async () => {
+  await withContainer((el) => {
     const App = Echo.component(
       Echo.reactive().state("test", () => "A"),
       Echo.For({each: [1, 2, 3]})(
@@ -62,8 +62,8 @@ test("For should render nested list children with value and index", () => {
   });
 });
 
-test("For should render nested list state children with value and index", () => {
-  withContainer((el) => {
+test("For should render nested list state children with value and index", async () => {
+  await withContainer((el) => {
     const App = Echo.component(
       Echo.reactive().state("list", () => [
         {text: "A", list: [1, 2]},
@@ -82,8 +82,8 @@ test("For should render nested list state children with value and index", () => 
   });
 });
 
-test("For and Match should work together", () => {
-  withContainer((el) => {
+test("For and Match should work together", async () => {
+  await withContainer((el) => {
     const App = Echo.component(
       Echo.reactive().state("list", () => [1, 2, 3]),
       Echo.For({each: (d) => d.list})(

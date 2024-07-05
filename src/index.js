@@ -87,33 +87,6 @@ export function reactive() {
 
 const setterOf = (p, k) => p && (Object.getOwnPropertyDescriptor(p, k) ?? setterOf(Object.getPrototypeOf(p), k));
 
-function render(template, scope) {
-  const node = scope ? hydrate(template, scope) : template;
-  if (!node) return [];
-  if (isControl(node)) return node(render).flat(Infinity);
-  if (isExpr(node)) return [document.createTextNode(node())];
-  if (!isFunc(node)) return [document.createTextNode(node)];
-  if (isStr(node.tag)) {
-    const {tag, ns, props, children} = node;
-    const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
-    for (const [k, v] of Object.entries(props)) {
-      const setter = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
-      let old;
-      const event = (v) => {
-        const name = k.slice(2);
-        el.removeEventListener(name, old);
-        el.addEventListener(name, (old = v()));
-      };
-      const attr = (v) => setter(v());
-      k.startsWith("on") ? track(() => event(v)) : isExpr(v) ? track(() => attr(v)) : setter(v);
-    }
-    for (const child of children) el.append(...render(child));
-    return [el];
-  }
-  const {tag, props, children} = node;
-  return render(tag[1], tag[0].join(assign(props, {children})));
-}
-
 const node =
   (tag, ns) =>
   (props = {}) => {
@@ -180,6 +153,32 @@ export const For = controlFlow(
     ) ?? [],
 );
 
-export const mount = (el, node) => el.append(...render(node));
+export const mount = (parent, template, scope) => {
+  const node = scope ? hydrate(template, scope) : template;
+  if (!node) return;
+  if (isControl(node)) node((child, childScope) => mount(parent, child, childScope));
+  else if (isExpr(node)) parent.append(document.createTextNode(node()));
+  else if (!isFunc(node)) parent.append(document.createTextNode(node));
+  else if (!isStr(node.tag)) {
+    const {tag, props, children} = node;
+    mount(parent, tag[1], tag[0].join(assign(props, {children})));
+  } else {
+    const {tag, ns, props, children} = node;
+    const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
+    parent.append(el);
+    for (const [k, v] of Object.entries(props)) {
+      const setter = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
+      let old;
+      const event = (v) => {
+        const name = k.slice(2);
+        el.removeEventListener(name, old);
+        el.addEventListener(name, (old = v()));
+      };
+      const attr = (v) => setter(v());
+      k.startsWith("on") ? track(() => event(v)) : isExpr(v) ? track(() => attr(v)) : setter(v);
+    }
+    for (const child of children) mount(el, child);
+  }
+};
 
 export default {X, component, mount, reactive, Fragment, Slot, Match, Arm, For};
