@@ -344,3 +344,21 @@ test("component should update props.", async () => {
     expect(el.innerHTML).toBe(`<input><span style="color: blue;">label</span>`);
   });
 });
+
+test("component should update text nodes.", async () => {
+  const text = vi.fn((d) => (d.hello ? "hello" : "world"));
+  await withContainer(async (el) => {
+    const App = Echo.component(
+      Echo.reactive().state("hello", () => true),
+      Echo.Fragment()(X.button({onclick: (d) => () => (d.hello = !d.hello)})("switch"), X.p()(text)),
+    );
+    Echo.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>switch</button><p>hello</p>`);
+
+    const button = el.querySelector("button");
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>switch</button><p>world</p>`);
+    expect(text.mock.calls.length).toBe(2);
+  });
+});
