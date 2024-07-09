@@ -38,6 +38,20 @@ function track(effect) {
   for (const d of cur.getters) cur.setters.has(d) || d.deps.add(effect);
 }
 
+function patch(parent) {
+  let prevNodes;
+  return (child) => {
+    const template = document.createDocumentFragment();
+    mount(template, child);
+    if (template.childNodes.length === 0) template.appendChild(document.createTextNode(""));
+    const childNodes = Array.from(template.childNodes);
+    if (prevNodes) prevNodes[0].replaceWith(template);
+    else parent.append(template);
+    prevNodes?.forEach((node) => node.remove());
+    prevNodes = childNodes;
+  };
+}
+
 class Reactive {
   constructor() {
     this._defaults = {children: () => []};
@@ -108,6 +122,8 @@ const hydrate = (d, scope) => {
   return node(tag, ns)(newProps)(...children.map((d) => hydrate(d, scope)));
 };
 
+const fragment = (d, parent) => d.children.forEach((child) => mount(parent, child));
+
 const handler = (ns) => ({get: (_, tag) => node(tag, ns)});
 
 export const X = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
@@ -119,7 +135,7 @@ export const controlFlow = (...params) => {
   return component(join, assign(template, {cf: true}));
 };
 
-export const Fragment = controlFlow((d, parent) => d.children.forEach((child) => mount(parent, child)));
+export const Fragment = controlFlow(fragment);
 
 export const Slot = controlFlow(
   reactive().prop("from", (d) => () => d.children),
@@ -130,17 +146,17 @@ export const Slot = controlFlow(
 );
 
 export const Match = controlFlow(reactive().prop("test").prop("value"), (d, parent) => {
-  if (isDef(d.test)) return mount(parent, d.children[+!d.test]);
   const test = ({props: {test}}) => (isDef(d.value) ? test === d.value : isFunc(test) && test());
-  return (
-    d.children.find((c) => c.tag[1]?.arm && (!c.props?.test || test(c)))?.children.map((c) => mount(parent, c)) ?? []
-  );
+  const replace = patch(parent);
+  let prev;
+  track(() => {
+    const index = isDef(d.test) ? +!d.test : d.children.findIndex((c) => c.tag[1]?.arm && (!c.props?.test || test(c)));
+    if (index !== prev) replace(d.children[index]);
+    prev = index;
+  });
 });
 
-export const Arm = controlFlow(
-  reactive().prop("test"),
-  assign(() => {}, {arm: true}),
-);
+export const Arm = controlFlow(reactive().prop("test"), assign(fragment, {arm: true}));
 
 export const For = controlFlow(
   reactive().prop("each"),
