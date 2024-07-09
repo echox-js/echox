@@ -119,17 +119,17 @@ export const controlFlow = (...params) => {
   return component(join, assign(template, {cf: true}));
 };
 
-export const Fragment = controlFlow((d, parent, mount) => d.children.forEach((child) => mount(parent, child)));
+export const Fragment = controlFlow((d, parent) => d.children.forEach((child) => mount(parent, child)));
 
 export const Slot = controlFlow(
   reactive().prop("from", (d) => () => d.children),
-  (d, parent, mount) => {
+  (d, parent) => {
     const fromNodes = [d.from].flat(Infinity);
     (fromNodes.length ? fromNodes : d.children).forEach((child) => mount(parent, child));
   },
 );
 
-export const Match = controlFlow(reactive().prop("test").prop("value"), (d, parent, mount) => {
+export const Match = controlFlow(reactive().prop("test").prop("value"), (d, parent) => {
   if (isDef(d.test)) return mount(parent, d.children[+!d.test]);
   const test = ({props: {test}}) => (isDef(d.value) ? test === d.value : isFunc(test) && test());
   return (
@@ -144,7 +144,7 @@ export const Arm = controlFlow(
 
 export const For = controlFlow(
   reactive().prop("each"),
-  (d, parent, mount) =>
+  (d, parent) =>
     d.each?.map((val, index) =>
       d.children.map((child) =>
         mount(
@@ -162,7 +162,7 @@ export const For = controlFlow(
 export const mount = (parent, template, scope) => {
   const node = scope ? hydrate(template, scope) : template;
   if (!node) return;
-  if (isControl(node)) return node(parent, mount);
+  if (isControl(node)) return node(parent);
   if (isExpr(node)) {
     let old;
     return track(() => {
