@@ -119,17 +119,22 @@ export const controlFlow = (...params) => {
   return component(join, assign(template, {cf: true}));
 };
 
-export const Fragment = controlFlow((d, h) => d.children.map((child) => h(child)));
+export const Fragment = controlFlow((d, parent, mount) => d.children.forEach((child) => mount(parent, child)));
 
 export const Slot = controlFlow(
   reactive().prop("from", (d) => () => d.children),
-  (d, h, _) => ((_ = [d.from].flat(Infinity)), _.length ? _ : d.children).map((child) => h(child)),
+  (d, parent, mount) => {
+    const fromNodes = [d.from].flat(Infinity);
+    (fromNodes.length ? fromNodes : d.children).forEach((child) => mount(parent, child));
+  },
 );
 
-export const Match = controlFlow(reactive().prop("test").prop("value"), (d, h) => {
-  if (isDef(d.test)) return h(d.children[+!d.test], {}, 0);
+export const Match = controlFlow(reactive().prop("test").prop("value"), (d, parent, mount) => {
+  if (isDef(d.test)) return mount(parent, d.children[+!d.test]);
   const test = ({props: {test}}) => (isDef(d.value) ? test === d.value : isFunc(test) && test());
-  return d.children.find((c) => c.tag[1]?.arm && (!c.props?.test || test(c)))?.children.map((c) => h(c)) ?? [];
+  return (
+    d.children.find((c) => c.tag[1]?.arm && (!c.props?.test || test(c)))?.children.map((c) => mount(parent, c)) ?? []
+  );
 });
 
 export const Arm = controlFlow(
@@ -139,10 +144,11 @@ export const Arm = controlFlow(
 
 export const For = controlFlow(
   reactive().prop("each"),
-  (d, h) =>
+  (d, parent, mount) =>
     d.each?.map((val, index) =>
       d.children.map((child) =>
-        h(
+        mount(
+          parent,
           child,
           reactive()
             .state("val", () => val)
@@ -156,7 +162,7 @@ export const For = controlFlow(
 export const mount = (parent, template, scope) => {
   const node = scope ? hydrate(template, scope) : template;
   if (!node) return;
-  if (isControl(node)) return node((child, childScope) => mount(parent, child, childScope));
+  if (isControl(node)) return node(parent, mount);
   if (isExpr(node)) {
     let old;
     return track(() => {
