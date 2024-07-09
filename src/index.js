@@ -192,5 +192,3 @@ export const mount = (parent, template, scope) => {
   }
   for (const child of children) mount(el, child);
 };
-
-export default {X, component, mount, reactive, Fragment, Slot, Match, Arm, For};
