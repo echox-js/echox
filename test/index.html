@@ -1,0 +1,22 @@
+<!--For Debugging -->
+<div id="root"></div>
+<script type="module">
+  import {component, reactive, X, Fragment, mount, For} from "echox";
+
+  const App = component(
+    reactive().state("list", () => [1, 2, 3]),
+    Fragment()(
+      X.button({
+        onclick: (d) => () => {
+          d.list.pop();
+          d.list.reverse();
+          d.list.push(4);
+          d.list = [...d.list];
+        },
+      })("change"),
+      For({each: (d) => d.list})(X.div()((d, item) => item.index + "," + item.val)),
+    ),
+  );
+
+  mount(document.getElementById("root"), App());
+</script>

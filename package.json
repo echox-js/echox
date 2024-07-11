@@ -22,6 +22,7 @@
     "jsdom": "^24.1.0",
     "prettier": "^3.3.2",
     "rollup": "^4.18.0",
+    "vite": "^5.3.3",
     "vitest": "^1.6.0"
   },
   "license": "MIT"

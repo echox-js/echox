@@ -1,6 +1,7 @@
 import * as EchoX from "echox";
 import {test, expect} from "vitest";
 import {withContainer} from "./container.js";
+import {sleep} from "./sleep.js";
 
 const {X} = EchoX;
 
@@ -98,5 +99,41 @@ test("For and Match should work together", async () => {
     );
     EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>One</h1><h1>Two</h1><h1>Three</h1>`);
+  });
+});
+
+test("For should render reactive list children", async () => {
+  await withContainer(async (el) => {
+    const App = EchoX.component(
+      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.Fragment()(
+        X.button({
+          onclick: (d) => () => {
+            d.list.pop();
+            d.list.reverse();
+            d.list.push(4);
+            d.list = [...d.list];
+          },
+        })("change"),
+        EchoX.For({each: (d) => d.list})(X.span()((d, item) => item.index + "," + item.val)),
+      ),
+    );
+    EchoX.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>change</button><span>0,1</span><span>1,2</span><span>2,3</span>`);
+
+    const button = el.querySelector("button");
+    const [span01, span12] = el.getElementsByTagName("span");
+    button.click();
+    await sleep();
+
+    expect(el.innerHTML).toBe(`<button>change</button><span>0,2</span><span>1,1</span><span>2,4</span>`);
+    const [span02, span11] = el.getElementsByTagName("span");
+    expect(span01).toBe(span11);
+    expect(span12).toBe(span02);
+
+    button.click();
+    await sleep();
+
+    expect(el.innerHTML).toBe(`<button>change</button><span>0,1</span><span>1,2</span><span>2,4</span>`)
   });
 });

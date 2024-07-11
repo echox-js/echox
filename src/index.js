@@ -38,16 +38,14 @@ function track(effect) {
   for (const d of cur.getters) cur.setters.has(d) || d.deps.add(effect);
 }
 
-function patch(parent) {
+function patch(parent, remove = true) {
   let prevNodes;
-  return (child) => {
-    const template = document.createDocumentFragment();
-    mount(template, child);
-    if (template.childNodes.length === 0) template.appendChild(document.createTextNode(""));
+  return (template) => {
+    template.appendChild(document.createTextNode(""));
     const childNodes = Array.from(template.childNodes);
-    if (prevNodes) prevNodes[0].replaceWith(template);
+    if (prevNodes) prevNodes[prevNodes.length - 1].replaceWith(template);
     else parent.append(template);
-    prevNodes?.forEach((node) => node.remove());
+    if (remove) prevNodes?.forEach((node) => node.remove());
     prevNodes = childNodes;
   };
 }
@@ -151,29 +149,81 @@ export const Match = controlFlow(reactive().prop("test").prop("value"), (d, pare
   let prev;
   track(() => {
     const index = isDef(d.test) ? +!d.test : d.children.findIndex((c) => c.tag[1]?.arm && (!c.props?.test || test(c)));
-    if (index !== prev) replace(d.children[index]);
+    if (index !== prev) {
+      const root = document.createDocumentFragment();
+      mount(root, d.children[index]);
+      replace(root);
+    }
     prev = index;
   });
 });
 
 export const Arm = controlFlow(reactive().prop("test"), assign(fragment, {arm: true}));
 
-export const For = controlFlow(
-  reactive().prop("each"),
-  (d, parent) =>
-    d.each?.map((val, index) =>
-      d.children.map((child) =>
-        mount(
-          parent,
-          child,
-          reactive()
-            .state("val", () => val)
-            .state("index", () => index)
-            .join(),
-        ),
-      ),
-    ) ?? [],
-);
+export const For = controlFlow(reactive().prop("each"), (d, parent) => {
+  const indexByDatum = new Map();
+  const nodesByIndex = new Map();
+  const scopeByDatum = new Map();
+  const replace = patch(parent, false);
+
+  track(() => {
+    const each = d.each ?? [];
+    const enter = [];
+    const move = [];
+    const exit = new Set(indexByDatum.keys());
+    const tempByIndex = new Map();
+
+    for (let i = 0; i < each.length; i++) {
+      const datum = each[i];
+      const index = indexByDatum.get(datum);
+      exit.delete(datum);
+      if (!isDef(index)) enter.push(i);
+      else if (index !== i) move.push([index, i]);
+      else if (index === i) tempByIndex.set(i, nodesByIndex.get(i));
+    }
+
+    for (const datum of exit) {
+      const index = indexByDatum.get(datum);
+      const nodes = nodesByIndex.get(index);
+      nodes.forEach((node) => node.remove());
+      nodesByIndex.delete(index);
+      indexByDatum.delete(datum);
+      scopeByDatum.delete(datum);
+    }
+
+    for (const [from, to] of move) {
+      const datum = each[to];
+      const nodes = nodesByIndex.get(from);
+      const scope = scopeByDatum.get(datum);
+      scope.index = to;
+      indexByDatum.set(datum, to);
+      tempByIndex.set(to, nodes);
+    }
+
+    for (const i of enter) {
+      const datum = each[i];
+      indexByDatum.set(datum, i);
+      const el = document.createDocumentFragment();
+      const scope = reactive()
+        .state("val", () => datum)
+        .state("index", () => i)
+        .join();
+      d.children.forEach((child) => mount(el, child, scope));
+      scopeByDatum.set(datum, scope);
+      tempByIndex.set(i, [...el.childNodes]);
+    }
+
+    const root = document.createDocumentFragment();
+    nodesByIndex.clear();
+    for (let i = 0; i < each.length; i++) {
+      const nodes = tempByIndex.get(i);
+      nodesByIndex.set(i, nodes);
+      root.append(...nodes);
+    }
+
+    replace(root);
+  });
+});
 
 export const mount = (parent, template, scope) => {
   const node = scope ? hydrate(template, scope) : template;
