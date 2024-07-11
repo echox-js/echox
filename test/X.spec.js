@@ -1,48 +1,48 @@
-import {X} from "echox";
+import {$} from "echox";
 import {test, expect} from "vitest";
 
-test("X[tag]() should return node without props and children.", () => {
-  const div = X.div();
+test(" $[tag]() should return node without props and children.", () => {
+  const div = $.div();
   expect(div.tag).toBe("div");
   expect(div.props).toEqual({});
   expect(div.children).toEqual([]);
   expect(div.ns).toBeUndefined();
 });
 
-test("X[tag]()() should return node without props and children.", () => {
-  const div = X.div()();
+test(" $[tag]()() should return node without props and children.", () => {
+  const div = $.div()();
   expect(div.tag).toBe("div");
   expect(div.props).toEqual({});
   expect(div.children).toEqual([]);
   expect(div.ns).toBeUndefined();
 });
 
-test("X[tag](props) should return node with props.", () => {
-  const div = X.div({id: "test"});
+test(" $[tag](props) should return node with props.", () => {
+  const div = $.div({id: "test"});
   expect(div.tag).toBe("div");
   expect(div.props).toEqual({id: "test"});
   expect(div.children).toEqual([]);
   expect(div.ns).toBeUndefined();
 });
 
-test("X[tag]()(...children) should return node with children.", () => {
-  const div = X.div()("hello", "world");
+test(" $[tag]()(...children) should return node with children.", () => {
+  const div = $.div()("hello", "world");
   expect(div.tag).toBe("div");
   expect(div.props).toEqual({});
   expect(div.children).toEqual(["hello", "world"]);
   expect(div.ns).toBeUndefined();
 });
 
-test("X[tag](props)(...children) should return node with props and children.", () => {
-  const div = X.div({id: "test"})("hello", "world");
+test(" $[tag](props)(...children) should return node with props and children.", () => {
+  const div = $.div({id: "test"})("hello", "world");
   expect(div.tag).toBe("div");
   expect(div.props).toEqual({id: "test"});
   expect(div.children).toEqual(["hello", "world"]);
   expect(div.ns).toBeUndefined();
 });
 
-test("X[tag] should build nested nodes.", () => {
-  const div = X.div({id: "app"})(X.h1()("Hello, World!"), X.p()("This is a test."));
+test(" $[tag] should build nested nodes.", () => {
+  const div = $.div({id: "app"})($.h1()("Hello, World!"), $.p()("This is a test."));
   expect(div.tag).toBe("div");
   expect(div.props).toEqual({id: "app"});
   expect(div.children.length).toBe(2);
@@ -54,9 +54,9 @@ test("X[tag] should build nested nodes.", () => {
   expect(div.children[1].children).toEqual(["This is a test."]);
 });
 
-test("X(namespace)[tag] should return node with namespace.", () => {
+test(" $(namespace)[tag] should return node with namespace.", () => {
   const ns = "http://www.w3.org/2000/svg";
-  const svg = X(ns);
+  const svg = $(ns);
   const circle = svg.circle({id: "test"})(svg.title()("Test"));
   expect(circle.tag).toBe("circle");
   expect(circle.ns).toBe(ns);

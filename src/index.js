@@ -124,7 +124,7 @@ const fragment = (d, parent) => d.children.forEach((child) => mount(parent, chil
 
 const handler = (ns) => ({get: (_, tag) => node(tag, ns)});
 
-export const X = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
+export const $ = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
 
 export const component = (...params) => node(params[1] ? params : [reactive(), params[0]]);
 
