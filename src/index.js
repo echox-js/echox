@@ -9,6 +9,8 @@ const isDef = (d) => d !== undefined;
 const cache = {};
 const unset = Symbol();
 
+const placeholder = () => document.createTextNode("");
+
 const from = (obj, callback) => Object.fromEntries(entries(obj).map(([k, v]) => [k, callback(v, k)]));
 
 let updates, actives;
@@ -38,15 +40,29 @@ function track(effect) {
   for (const d of cur.getters) cur.setters.has(d) || d.deps.add(effect);
 }
 
-function patch(parent, remove = true) {
+function patch(parent) {
   let prevNodes;
-  return (template) => {
-    template.appendChild(document.createTextNode(""));
-    const childNodes = Array.from(template.childNodes);
-    if (prevNodes) prevNodes[prevNodes.length - 1].replaceWith(template);
-    else parent.append(template);
-    if (remove) prevNodes?.forEach((node) => node.remove());
-    prevNodes = childNodes;
+  return (nodes) => {
+    if (nodes.length === 0) nodes.push(placeholder());
+    if (!prevNodes) return parent.append(...(prevNodes = nodes));
+    prevNodes = prevNodes.filter((d) => d.isConnected);
+    const n = prevNodes.length;
+    const m = nodes.length;
+    const tempByElement = new Map();
+    for (let i = Math.max(n, m) - 1; i >= 0; i--) {
+      let prev = prevNodes[i];
+      if (tempByElement.has(prev)) prev = tempByElement.get(prev);
+      const cur = nodes[i];
+      if (i >= m) prev.remove();
+      else if (i >= n) parent.append(cur);
+      else if (prev !== cur) {
+        const temp = placeholder();
+        cur.replaceWith(temp);
+        tempByElement.set(cur, temp);
+        prev.replaceWith(cur);
+      }
+    }
+    prevNodes = nodes;
   };
 }
 
@@ -152,7 +168,7 @@ export const Match = controlFlow(reactive().prop("test").prop("value"), (d, pare
     if (index !== prev) {
       const root = document.createDocumentFragment();
       mount(root, d.children[index]);
-      replace(root);
+      replace([...root.childNodes]);
     }
     prev = index;
   });
@@ -162,16 +178,15 @@ export const Arm = controlFlow(reactive().prop("test"), assign(fragment, {arm: t
 
 export const For = controlFlow(reactive().prop("each"), (d, parent) => {
   const indexByDatum = new Map();
-  const nodesByIndex = new Map();
   const scopeByDatum = new Map();
-  const replace = patch(parent, false);
-
+  let prevNodes = [];
+  const replace = patch(parent);
   track(() => {
     const each = d.each ?? [];
     const enter = [];
     const move = [];
     const exit = new Set(indexByDatum.keys());
-    const tempByIndex = new Map();
+    const newNodes = [];
 
     for (let i = 0; i < each.length; i++) {
       const datum = each[i];
@@ -179,25 +194,23 @@ export const For = controlFlow(reactive().prop("each"), (d, parent) => {
       exit.delete(datum);
       if (!isDef(index)) enter.push(i);
       else if (index !== i) move.push([index, i]);
-      else if (index === i) tempByIndex.set(i, nodesByIndex.get(i));
+      else if (index === i) newNodes[i] = prevNodes[i];
     }
 
     for (const datum of exit) {
       const index = indexByDatum.get(datum);
-      const nodes = nodesByIndex.get(index);
+      const nodes = prevNodes[index];
       nodes.forEach((node) => node.remove());
-      nodesByIndex.delete(index);
-      indexByDatum.delete(datum);
-      scopeByDatum.delete(datum);
+      indexByDatum.delete(datum), scopeByDatum.delete(datum);
     }
 
     for (const [from, to] of move) {
       const datum = each[to];
-      const nodes = nodesByIndex.get(from);
+      const nodes = prevNodes[from];
       const scope = scopeByDatum.get(datum);
       scope.index = to;
       indexByDatum.set(datum, to);
-      tempByIndex.set(to, nodes);
+      newNodes[to] = nodes;
     }
 
     for (const i of enter) {
@@ -210,18 +223,10 @@ export const For = controlFlow(reactive().prop("each"), (d, parent) => {
         .join();
       d.children.forEach((child) => mount(el, child, scope));
       scopeByDatum.set(datum, scope);
-      tempByIndex.set(i, [...el.childNodes]);
+      newNodes[i] = [...el.childNodes];
     }
 
-    const root = document.createDocumentFragment();
-    nodesByIndex.clear();
-    for (let i = 0; i < each.length; i++) {
-      const nodes = tempByIndex.get(i);
-      nodesByIndex.set(i, nodes);
-      root.append(...nodes);
-    }
-
-    replace(root);
+    replace((prevNodes = newNodes).flat(Infinity));
   });
 });
 
