@@ -2,6 +2,7 @@ import * as ex from "echox";
 import {test, expect} from "vitest";
 import {withContainer} from "./container.js";
 import {sleep} from "./sleep.js";
+import {createPromise} from "./promise.js";
 
 const {$} = ex;
 
@@ -136,5 +137,110 @@ test("For should render reactive list children", async () => {
     await sleep();
 
     expect(el.innerHTML).toBe(`<button>change</button><span>0,1</span><span>1,2</span><span>2,4</span>`);
+  });
+});
+
+test("For should append elements", async () => {
+  await withContainer(async (el) => {
+    const App = ex.component(
+      ex.reactive().state("list", () => [1, 2, 3]),
+      ex.Fragment()(
+        $.button({
+          onclick: (d) => () => {
+            d.list.push(4);
+            d.list = [...d.list];
+          },
+        })("change"),
+        ex.For({each: (d) => d.list})($.span()((d, item) => item.index + "," + item.val)),
+      ),
+    );
+    ex.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>change</button><span>0,1</span><span>1,2</span><span>2,3</span>`);
+
+    const button = el.querySelector("button");
+    const [span0, span1, span2] = el.getElementsByTagName("span");
+    button.click();
+    await sleep();
+
+    const [span01, span11, span21] = el.getElementsByTagName("span");
+    expect(el.innerHTML).toBe(
+      `<button>change</button><span>0,1</span><span>1,2</span><span>2,3</span><span>3,4</span>`,
+    );
+    expect(span0).toBe(span01);
+    expect(span1).toBe(span11);
+    expect(span2).toBe(span21);
+  });
+});
+
+test("For should remove elements", async () => {
+  await withContainer(async (el) => {
+    const App = ex.component(
+      ex.reactive().state("list", () => [1, 2, 3]),
+      ex.Fragment()(
+        $.button({
+          onclick: (d) => () => {
+            d.list.shift();
+            d.list = [...d.list];
+          },
+        })("change"),
+        ex.For({each: (d) => d.list})($.span()((d, item) => item.index + "," + item.val)),
+      ),
+    );
+    ex.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>change</button><span>0,1</span><span>1,2</span><span>2,3</span>`);
+
+    const [promise, resolve] = createPromise();
+    const observer = new MutationObserver((mutations) => {
+      expect(mutations[0].removedNodes.length).toBe(1);
+      expect(mutations[0].addedNodes.length).toBe(0);
+      resolve();
+    });
+    observer.observe(el, {childList: true, subtree: true});
+
+    const button = el.querySelector("button");
+    const [, span1, span2] = el.getElementsByTagName("span");
+    button.click();
+    await sleep();
+
+    const [span11, span21] = el.getElementsByTagName("span");
+    expect(el.innerHTML).toBe(`<button>change</button><span>0,2</span><span>1,3</span>`);
+    expect(span1).toBe(span11);
+    expect(span2).toBe(span21);
+
+    await promise;
+  });
+});
+
+test("For should toggle elements", async () => {
+  await withContainer(async (el) => {
+    const App = ex.component(
+      ex.reactive().state("list", () => [1, 2, 3]),
+      ex.Fragment()(
+        $.button({
+          onclick: (d) => () => {
+            if (d.list.length) d.list = [];
+            else d.list = [1, 2, 3];
+          },
+        })("change"),
+        $.h1()("Hello"),
+        ex.For({each: (d) => d.list})($.span()((d, item) => item.index + "," + item.val)),
+        $.h1()("World"),
+      ),
+    );
+    ex.mount(el, App());
+    expect(el.innerHTML).toBe(
+      `<button>change</button><h1>Hello</h1><span>0,1</span><span>1,2</span><span>2,3</span><h1>World</h1>`,
+    );
+
+    const button = el.querySelector("button");
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>change</button><h1>Hello</h1><h1>World</h1>`);
+
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(
+      `<button>change</button><h1>Hello</h1><span>0,1</span><span>1,2</span><span>2,3</span><h1>World</h1>`,
+    );
   });
 });

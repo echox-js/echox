@@ -8,13 +8,13 @@
     Fragment()(
       $.button({
         onclick: (d) => () => {
-          d.list.pop();
-          d.list.reverse();
-          d.list.push(4);
-          d.list = [...d.list];
+          if (d.list.length) d.list = [];
+          else d.list = [1, 2, 3];
         },
       })("change"),
-      For({each: (d) => d.list})($.div()((d, item) => item.index + "," + item.val)),
+      $.h1()("Hello"),
+      For({each: (d) => d.list})($.span()((d, item) => item.index + "," + item.val)),
+      $.h1()("World"),
     ),
   );
 

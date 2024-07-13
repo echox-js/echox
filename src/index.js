@@ -43,18 +43,19 @@ function track(effect) {
 function patch(parent) {
   let prevNodes;
   return (nodes) => {
-    if (nodes.length === 0) nodes.push(placeholder());
+    nodes.push(placeholder());
     if (!prevNodes) return parent.append(...(prevNodes = nodes));
     prevNodes = prevNodes.filter((d) => d.isConnected);
     const n = prevNodes.length;
     const m = nodes.length;
     const tempByElement = new Map();
-    for (let i = Math.max(n, m) - 1; i >= 0; i--) {
+    for (let i = 0; i < Math.max(m, n); i++) {
       let prev = prevNodes[i];
       if (tempByElement.has(prev)) prev = tempByElement.get(prev);
       const cur = nodes[i];
+      const last = nodes[i - 1];
       if (i >= m) prev.remove();
-      else if (i >= n) parent.append(cur);
+      else if (i >= n) parent.insertBefore(cur, last.nextSibling);
       else if (prev !== cur) {
         const temp = placeholder();
         cur.replaceWith(temp);
