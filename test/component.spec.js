@@ -22,10 +22,7 @@ test("component should construct nested structure.", () => {
 test("component should use state for attribute.", async () => {
   await withContainer((el) => {
     const App = ex.component(
-      ex
-        .reactive()
-        .state("style", () => "color: red")
-        .state("className", () => "test"),
+      ex.reactive().state("style", "color: red").state("className", "test"),
       $.p({class: "test", style: (d) => d.style})("Hello World!"),
     );
     ex.mount(el, App());
@@ -36,7 +33,7 @@ test("component should use state for attribute.", async () => {
 test("component should use state for text nodes.", async () => {
   await withContainer((el) => {
     const App = ex.component(
-      ex.reactive().state("test", () => "hello world"),
+      ex.reactive().state("test", "hello world"),
       $.p()((d) => d.test),
     );
     ex.mount(el, App());
@@ -47,10 +44,7 @@ test("component should use state for text nodes.", async () => {
 test("component should use state for child component props.", async () => {
   await withContainer((el) => {
     const Hello = ex.component(ex.reactive().prop("style"), $.p({style: (d) => d.style})("Hello World!"));
-    const App = ex.component(
-      ex.reactive().state("style", () => "color: blue"),
-      Hello({style: (d) => d.style}),
-    );
+    const App = ex.component(ex.reactive().state("style", "color: blue"), Hello({style: (d) => d.style}));
     ex.mount(el, App());
     expect(el.innerHTML).toBe(`<p style="color: blue;">Hello World!</p>`);
   });
@@ -58,10 +52,7 @@ test("component should use state for child component props.", async () => {
 
 test("component should pass props.", async () => {
   await withContainer((el) => {
-    const Hello = ex.component(
-      ex.reactive().prop("style", () => "color: red"),
-      $.p({style: (d) => d.style})("Hello World!"),
-    );
+    const Hello = ex.component(ex.reactive().prop("style", "color: red"), $.p({style: (d) => d.style})("Hello World!"));
     const App = ex.component($.div()(Hello({style: "color: blue"}), Hello()));
     ex.mount(el, App());
     expect(el.innerHTML).toBe(
@@ -360,5 +351,37 @@ test("component should update text nodes.", async () => {
     await sleep();
     expect(el.innerHTML).toBe(`<button>switch</button><p>world</p>`);
     expect(text.mock.calls.length).toBe(2);
+  });
+});
+
+test("component should track object state.", async () => {
+  await withContainer(async (el) => {
+    const obj = vi.fn(() => ({name: "test"}));
+    const App = ex.component(
+      ex.reactive().state("obj", obj),
+      ex.Fragment()(
+        $.button({onclick: (d) => () => (d.obj.name = "world")})("switch"),
+        $.p()((d) => d.obj.name),
+      ),
+    );
+    ex.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>switch</button><p>test</p>`);
+
+    const button = el.querySelector("button");
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>switch</button><p>world</p>`);
+  });
+});
+
+test("component should not track function in object state.", async () => {
+  await withContainer(async (el) => {
+    const obj = vi.fn(() => ({name: "test", fn: (d) => d}));
+    const App = ex.component(
+      ex.reactive().state("obj", obj),
+      $.p()((d) => d.obj.fn("hello")),
+    );
+    ex.mount(el, App());
+    expect(el.innerHTML).toBe(`<p>hello</p>`);
   });
 });

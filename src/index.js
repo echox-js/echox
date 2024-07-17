@@ -6,8 +6,11 @@ const isExpr = (d) => isFunc(d) && !d.tag && !d.cf;
 const isNode = (d) => isFunc(d) && d.tag;
 const isControl = (d) => isFunc(d) && d.cf;
 const isDef = (d) => d !== undefined;
+const isObject = (d) => d instanceof Object && !(d instanceof Function);
+const isState = (d) => d?.[STATE];
 const cache = {};
 const UNSET = Symbol();
+const STATE = Symbol();
 
 const placeholder = () => document.createTextNode("");
 
@@ -77,7 +80,7 @@ function compose(...fns) {
 
 function watchProps(reactive) {
   const {_props, _defaults} = reactive;
-  const defaults = from(_defaults, (v) => v?.());
+  const defaults = from(_defaults, (v) => (isFunc(v) ? v() : v));
   return (target) => {
     return new Proxy(target, {
       get(target, key, proxy) {
@@ -90,14 +93,15 @@ function watchProps(reactive) {
 }
 
 function watchState() {
-  return (target) => {
+  const watch = (target) => {
+    if (!isObject(target)) return target;
     const states = from(target, (v) => ({raw: v, deps: new Set(), val: UNSET}));
     const scope = new Proxy(target, {
       get(target, key) {
         const state = states[key];
         if (!state) return target[key];
         actives?.getters?.add(state);
-        if (state.val === UNSET) track(() => (scope[key] = state.raw(scope)));
+        if (state.val === UNSET) track(() => (scope[key] = watch(isState(state.raw) ? state.raw(scope) : state.raw)));
         return state.val;
       },
       set(target, key, value) {
@@ -112,6 +116,7 @@ function watchState() {
     });
     return scope;
   };
+  return watch;
 }
 
 class Reactive {
@@ -125,7 +130,7 @@ class Reactive {
     return this;
   }
   state(k, v) {
-    this._states[k] = v;
+    this._states[k] = isFunc(v) ? assign(v, {[STATE]: true}) : v;
     return this;
   }
   props(props) {
@@ -135,7 +140,7 @@ class Reactive {
   join() {
     const state = watchState(this);
     const prop = watchProps(this);
-    const watch = compose(prop, state);
+    const watch = compose(state, prop);
     return watch(this._states);
   }
 }
