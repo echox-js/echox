@@ -7,7 +7,7 @@ const isNode = (d) => isFunc(d) && d.tag;
 const isControl = (d) => isFunc(d) && d.cf;
 const isDef = (d) => d !== undefined;
 const cache = {};
-const unset = Symbol();
+const UNSET = Symbol();
 
 const placeholder = () => document.createTextNode("");
 
@@ -67,10 +67,58 @@ function patch(parent) {
   };
 }
 
+function compose(...fns) {
+  return fns.reduce(
+    (f, g) =>
+      (...args) =>
+        f(g(...args)),
+  );
+}
+
+function watchProps(reactive) {
+  const {_props, _defaults} = reactive;
+  const defaults = from(_defaults, (v) => v?.());
+  return (target) => {
+    return new Proxy(target, {
+      get(target, key, proxy) {
+        const prop = _props?.[key] ?? defaults[key];
+        if (key in defaults) return isExpr(prop) ? prop() : prop;
+        return Reflect.get(target, key, proxy);
+      },
+    });
+  };
+}
+
+function watchState() {
+  return (target) => {
+    const states = from(target, (v) => ({raw: v, deps: new Set(), val: UNSET}));
+    const scope = new Proxy(target, {
+      get(target, key) {
+        const state = states[key];
+        if (!state) return target[key];
+        actives?.getters?.add(state);
+        if (state.val === UNSET) track(() => (scope[key] = state.raw(scope)));
+        return state.val;
+      },
+      set(target, key, value) {
+        if (!(key in states)) return (target[key] = value), true;
+        const state = states[key];
+        actives?.setters?.add(state);
+        if (value === state.val) return true;
+        state.val = value;
+        if (state.deps.size) scheduleUpdate(state);
+        return true;
+      },
+    });
+    return scope;
+  };
+}
+
 class Reactive {
   constructor() {
     this._defaults = {children: () => []};
     this._states = {};
+    this._props = {};
   }
   prop(k, v) {
     this._defaults[k] = v;
@@ -80,33 +128,15 @@ class Reactive {
     this._states[k] = v;
     return this;
   }
-  join(props) {
-    const defaults = from(this._defaults, (v) => v?.());
-    const states = from(this._states, (v) => ({raw: v, deps: new Set(), val: unset}));
-    const scope = new Proxy(
-      {},
-      {
-        get(target, key) {
-          const prop = props?.[key] ?? defaults[key];
-          if (key in defaults) return isExpr(prop) ? prop() : prop;
-          const state = states[key];
-          if (!state) return target[key];
-          actives?.getters?.add(state);
-          if (state.val === unset) track(() => (scope[key] = state.raw(scope)));
-          return state.val;
-        },
-        set(target, key, value) {
-          if (!(key in states)) return (target[key] = value), true;
-          const state = states[key];
-          actives?.setters?.add(state);
-          if (value === state.val) return true;
-          state.val = value;
-          if (state.deps.size) scheduleUpdate(state);
-          return true;
-        },
-      },
-    );
-    return scope;
+  props(props) {
+    this._props = props;
+    return this;
+  }
+  join() {
+    const state = watchState(this);
+    const prop = watchProps(this);
+    const watch = compose(prop, state);
+    return watch(this._states);
   }
 }
 
@@ -246,7 +276,7 @@ export const mount = (parent, template, scope) => {
   if (!isFunc(node)) return parent.append(document.createTextNode(node));
   if (!isStr(node.tag)) {
     const {tag, props, children} = node;
-    return mount(parent, tag[1], tag[0].join(assign(props, {children})));
+    return mount(parent, tag[1], tag[0].props(assign(props, {children})).join());
   }
   const {tag, ns, props, children} = node;
   const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
