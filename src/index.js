@@ -70,14 +70,6 @@ function patch(parent) {
   };
 }
 
-function compose(...fns) {
-  return fns.reduce(
-    (f, g) =>
-      (...args) =>
-        f(g(...args)),
-  );
-}
-
 function watchProps(reactive) {
   const {_props, _defaults} = reactive;
   const defaults = from(_defaults, (v) => (isFunc(v) ? v() : v));
@@ -140,8 +132,7 @@ class Reactive {
   join() {
     const state = watchState(this);
     const prop = watchProps(this);
-    const watch = compose(state, prop);
-    return watch(this._states);
+    return prop(state(this._states));
   }
 }
 
@@ -176,7 +167,7 @@ const fragment = (d, parent) => d.children.forEach((child) => mount(parent, chil
 
 const handler = (ns) => ({get: (_, tag) => node(tag, ns)});
 
-export const $ = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
+export const html = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
 
 export const component = (...params) => node(params[1] ? params : [reactive(), params[0]]);
 

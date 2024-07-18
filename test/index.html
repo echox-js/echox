@@ -6,15 +6,15 @@
   const App = component(
     reactive().state("list", () => [1, 2, 3]),
     Fragment()(
-      $.button({
+      html.button({
         onclick: (d) => () => {
           if (d.list.length) d.list = [];
           else d.list = [1, 2, 3];
         },
       })("change"),
-      $.h1()("Hello"),
-      For({each: (d) => d.list})($.span()((d, item) => item.index + "," + item.val)),
-      $.h1()("World"),
+      html.h1()("Hello"),
+      For({each: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
+      html.h1()("World"),
     ),
   );
 

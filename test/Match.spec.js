@@ -1,63 +1,63 @@
-import * as ex from "echox";
+import * as EchoX from "echox";
 import {test, expect} from "vitest";
 import {withContainer} from "./container.js";
 import {sleep} from "./sleep.js";
 
-const {$} = ex;
+const {html} = EchoX;
 
 test("Match should do nothing if no children", () => {
   withContainer((el) => {
-    const App = ex.component(ex.Match());
-    ex.mount(el, App());
+    const App = EchoX.component(EchoX.Match());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(``);
   });
 });
 
 test("Match with truthy test prop should render the first child", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 5),
-      ex.Match({test: (d) => d.number > 0})($.h1()("Hello, World!")),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 5),
+      EchoX.Match({test: (d) => d.number > 0})(html.h1()("Hello, World!")),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>Hello, World!</h1>`);
   });
 });
 
 test("Match with falsy test prop should render the second child", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 5),
-      ex.Match({test: (d) => d.number > 10})($.h1()("Hello"), $.h1()("World")),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 5),
+      EchoX.Match({test: (d) => d.number > 10})(html.h1()("Hello"), html.h1()("World")),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>World</h1>`);
   });
 });
 
 test("Match with falsy test prop should ignore the second child if is undefined", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 5),
-      ex.Match({test: (d) => d.number > 10})($.h1()("Hello, World!")),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 5),
+      EchoX.Match({test: (d) => d.number > 10})(html.h1()("Hello, World!")),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(``);
   });
 });
 
 test("Match with test prop should only rerender when the test result changes", async () => {
   await withContainer(async (el) => {
-    const App = ex.component(
-      ex.reactive().state("count", () => 0),
-      ex.Fragment()(
-        $.h1()("Hello"),
-        ex.Match({test: (d) => d.count % 2 === 0})($.h1()("Even"), $.h1()("Odd")),
-        $.h1()("World"),
-        $.button({onclick: (d) => () => d.count++})((d) => d.count),
+    const App = EchoX.component(
+      EchoX.reactive().state("count", () => 0),
+      EchoX.Fragment()(
+        html.h1()("Hello"),
+        EchoX.Match({test: (d) => d.count % 2 === 0})(html.h1()("Even"), html.h1()("Odd")),
+        html.h1()("World"),
+        html.button({onclick: (d) => () => d.count++})((d) => d.count),
       ),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
 
     expect(el.innerHTML).toBe(`<h1>Hello</h1><h1>Even</h1><h1>World</h1><button>0</button>`);
 
@@ -82,16 +82,16 @@ test("Match with test prop should only rerender when the test result changes", a
 
 test("Match should remove and insert element when the test result changes", async () => {
   await withContainer(async (el) => {
-    const App = ex.component(
-      ex.reactive().state("count", () => 0),
-      ex.Fragment()(
-        $.h1()("Hello"),
-        ex.Match({test: (d) => d.count % 2 === 0})($.h1()("A")),
-        $.h1()("World"),
-        $.button({onclick: (d) => () => d.count++})((d) => d.count),
+    const App = EchoX.component(
+      EchoX.reactive().state("count", () => 0),
+      EchoX.Fragment()(
+        html.h1()("Hello"),
+        EchoX.Match({test: (d) => d.count % 2 === 0})(html.h1()("A")),
+        html.h1()("World"),
+        html.button({onclick: (d) => () => d.count++})((d) => d.count),
       ),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>Hello</h1><h1>A</h1><h1>World</h1><button>0</button>`);
 
     const button = el.querySelector("button");
@@ -107,91 +107,94 @@ test("Match should remove and insert element when the test result changes", asyn
 
 test("Match with value prop should match the fist Arm with the same value", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 2),
-      ex.Match({value: (d) => d.number})(
-        ex.Arm({test: 1})($.h1()("Hello")), //
-        $.div()($.h1()("World")),
-        ex.Arm({test: 2})($.h1()("World")),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 2),
+      EchoX.Match({value: (d) => d.number})(
+        EchoX.Arm({test: 1})(html.h1()("Hello")), //
+        html.div()(html.h1()("World")),
+        EchoX.Arm({test: 2})(html.h1()("World")),
       ),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>World</h1>`);
   });
 });
 
 test("Match should do nothing is no match Arm is found", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 3),
-      ex.Match({value: (d) => d.number})(
-        ex.Arm({test: 1})($.h1()("Hello")),
-        ex.Arm({test: 2})($.h1()("World")),
-        $.div()($.h1()("World")),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 3),
+      EchoX.Match({value: (d) => d.number})(
+        EchoX.Arm({test: 1})(html.h1()("Hello")),
+        EchoX.Arm({test: 2})(html.h1()("World")),
+        html.div()(html.h1()("World")),
       ),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(``);
   });
 });
 
 test("Match with value prop should ignore the Arm with functional test", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 2),
-      ex.Match({value: (d) => d.number})(
-        ex.Arm({test: 1})($.h1()("Hello")),
-        ex.Arm({test: (d) => d.number === 2})($.h1()("World")),
-        ex.Arm({test: 2})($.h1()("!")),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 2),
+      EchoX.Match({value: (d) => d.number})(
+        EchoX.Arm({test: 1})(html.h1()("Hello")),
+        EchoX.Arm({test: (d) => d.number === 2})(html.h1()("World")),
+        EchoX.Arm({test: 2})(html.h1()("!")),
       ),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>!</h1>`);
   });
 });
 
 test("Match should use empty Arm is no match is found", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 3),
-      ex.Match({value: (d) => d.number})(
-        ex.Arm({test: 1})($.h1()("Hello")),
-        ex.Arm({test: 2})($.h1()("World")),
-        ex.Arm()($.h1()("!")),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 3),
+      EchoX.Match({value: (d) => d.number})(
+        EchoX.Arm({test: 1})(html.h1()("Hello")),
+        EchoX.Arm({test: 2})(html.h1()("World")),
+        EchoX.Arm()(html.h1()("!")),
       ),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>!</h1>`);
   });
 });
 
 test("Match should be nested", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 2),
-      ex.Match({value: (d) => d.number})(
-        ex.Arm({test: 1})($.h1()("Hello")),
-        ex.Arm({test: 2})(
-          $.h1()("World"),
-          ex.Match({value: (d) => d.number})(ex.Arm({test: 1})($.h1()("Hello")), ex.Arm({test: 2})($.h1()("World"))),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 2),
+      EchoX.Match({value: (d) => d.number})(
+        EchoX.Arm({test: 1})(html.h1()("Hello")),
+        EchoX.Arm({test: 2})(
+          html.h1()("World"),
+          EchoX.Match({value: (d) => d.number})(
+            EchoX.Arm({test: 1})(html.h1()("Hello")),
+            EchoX.Arm({test: 2})(html.h1()("World")),
+          ),
         ),
       ),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>World</h1><h1>World</h1>`);
   });
 });
 
 test("Match should return the first Arm with functional test", () => {
   withContainer((el) => {
-    const App = ex.component(
-      ex.reactive().state("number", () => 2),
-      ex.Match()(
-        ex.Arm({test: (d) => d.number === 1})($.h1()((d) => d.number)),
-        ex.Arm({test: (d) => d.number === 2})($.h1()((d) => d.number)),
+    const App = EchoX.component(
+      EchoX.reactive().state("number", () => 2),
+      EchoX.Match()(
+        EchoX.Arm({test: (d) => d.number === 1})(html.h1()((d) => d.number)),
+        EchoX.Arm({test: (d) => d.number === 2})(html.h1()((d) => d.number)),
       ),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>2</h1>`);
   });
 });

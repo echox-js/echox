@@ -1,45 +1,45 @@
-import * as ex from "echox";
+import * as EchoX from "echox";
 import {test, expect} from "vitest";
 import {withContainer} from "./container.js";
 
-const {$} = ex;
+const {html} = EchoX;
 
 test("Slot should render children", () => {
   withContainer((el) => {
-    const Div = ex.component($.div()(ex.Slot({from: (d) => d.children})));
-    const App = ex.component(Div()($.h1()("Hello, World!"), Div()($.p()("This is a test."))));
-    ex.mount(el, App());
+    const Div = EchoX.component(html.div()(EchoX.Slot({from: (d) => d.children})));
+    const App = EchoX.component(Div()(html.h1()("Hello, World!"), Div()(html.p()("This is a test."))));
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<div><h1>Hello, World!</h1><div><p>This is a test.</p></div></div>`);
   });
 });
 
 test("Slot should render default slot", () => {
   withContainer((el) => {
-    const Div = ex.component($.div()(ex.Slot({from: (d) => d.children})($.h1()("Hello, World!"))));
-    const App = ex.component(Div());
-    ex.mount(el, App());
+    const Div = EchoX.component(html.div()(EchoX.Slot({from: (d) => d.children})(html.h1()("Hello, World!"))));
+    const App = EchoX.component(Div());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<div><h1>Hello, World!</h1></div>`);
   });
 });
 
 test("Slot should render named slot", () => {
   withContainer((el) => {
-    const Layout = ex.component(
-      ex.reactive().prop("header").prop("body").prop("footer"),
-      $.div()(
-        $.div()(ex.Slot({from: (d) => d.header})),
-        $.div()(ex.Slot({from: (d) => d.body})),
-        $.div()(ex.Slot({from: (d) => d.footer})),
+    const Layout = EchoX.component(
+      EchoX.reactive().prop("header").prop("body").prop("footer"),
+      html.div()(
+        html.div()(EchoX.Slot({from: (d) => d.header})),
+        html.div()(EchoX.Slot({from: (d) => d.body})),
+        html.div()(EchoX.Slot({from: (d) => d.footer})),
       ),
     );
-    const App = ex.component(
+    const App = EchoX.component(
       Layout({
-        header: $.h1()("Header"),
-        body: $.p()("Body"),
-        footer: $.h2()("Footer"),
+        header: html.h1()("Header"),
+        body: html.p()("Body"),
+        footer: html.h2()("Footer"),
       }),
     );
-    ex.mount(el, App());
+    EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<div><div><h1>Header</h1></div><div><p>Body</p></div><div><h2>Footer</h2></div></div>`);
   });
 });
