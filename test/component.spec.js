@@ -273,7 +273,7 @@ test("component should track deps every update.", async () => {
           value: (d) => d.message,
         }),
         html.button({onclick: (d) => () => (d.count += 1)})("Increment"),
-        html.h1({class: (d) => (d.count > 0 ? d.message : "")})("hello"),
+        html.h1({class: (d) => (d.count> 0 ? d.message : "")})("hello"),
       ),
     );
 
@@ -391,3 +391,127 @@ test("component should not track function in object state.", async () => {
     expect(el.innerHTML).toBe(`<p>hello</p>`);
   });
 });
+
+test("component should track setting array.", async () => {
+  await withContainer(async (el) => {
+    const list = vi.fn(() => [1, 2, 3]);
+    const App = EchoX.component(
+      EchoX.reactive().state("list", list),
+      EchoX.Fragment()(
+        html.button({onclick: (d) => () => (d.list[0] = 10)})("add"),
+        EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+      ),
+    );
+    EchoX.mount(el, App());
+
+    expect(el.innerHTML).toBe(`<button>add</button><p>1</p><p>2</p><p>3</p>`);
+
+    const button = el.querySelector("button");
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>add</button><p>10</p><p>2</p><p>3</p>`);
+  });
+});
+
+test("component should track array.push(item).", async () => {
+  await withContainer(async (el) => {
+    const list = vi.fn(() => []);
+    const text = vi.fn((d) => d.list.join(" "));
+    const App = EchoX.component(
+      EchoX.reactive().state("list", list),
+      EchoX.Fragment()(html.button({onclick: (d) => () => d.list.push(d.list.length)})("add"), html.p()(text)),
+    );
+    EchoX.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>add</button><p></p>`);
+    expect(text.mock.calls.length).toBe(1);
+
+    const button = el.querySelector("button");
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>add</button><p>0</p>`);
+    expect(text.mock.calls.length).toBe(2);
+
+    button.click();
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>add</button><p>0 1 2</p>`);
+    expect(text.mock.calls.length).toBe(3);
+  });
+});
+
+test("component should track array.splice(index, 1).", async () => {
+  await withContainer(async (el) => {
+    const list = vi.fn(() => [1, 2, 3]);
+    const text = vi.fn((d) => d.list.join(" "));
+    const App = EchoX.component(
+      EchoX.reactive().state("list", list),
+      EchoX.Fragment()(
+        html.button({
+          onclick: (d) => () => d.list.splice(1, 1),
+        })("remove"),
+        html.p()(text),
+      ),
+    );
+    EchoX.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>remove</button><p>1 2 3</p>`);
+    expect(text.mock.calls.length).toBe(1);
+
+    const button = el.querySelector("button");
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>remove</button><p>1 3</p>`);
+    expect(text.mock.calls.length).toBe(2);
+  });
+});
+
+test("component should track mutate array.", async () => {
+  await withContainer(async (el) => {
+    const list = vi.fn(() => [1, 2, 3]);
+    const App = EchoX.component(
+      EchoX.reactive().state("list", list),
+      EchoX.Fragment()(
+        html.button({
+          onclick: (d) => () => d.list.reverse(),
+        })("mutate"),
+        EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+      ),
+    );
+    EchoX.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>mutate</button><p>1</p><p>2</p><p>3</p>`);
+    const pList = el.querySelectorAll("p");
+
+    const button = el.querySelector("button");
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>mutate</button><p>3</p><p>2</p><p>1</p>`);
+    const newPList = el.querySelectorAll("p");
+    expect(pList[0]).toBe(newPList[2]);
+  });
+});
+
+test("component should track new added item.", async () => {
+  await withContainer(async (el) => {
+    const list = vi.fn(() => [1, 2, 3]);
+    const App = EchoX.component(
+      EchoX.reactive().state("list", list),
+      EchoX.Fragment()(
+        html.button({
+          onclick: (d) => () => (d.list.length === 3 ? d.list.push(4) : (d.list[3] = 5)),
+        })("update"),
+        EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+      ),
+    );
+    EchoX.mount(el, App());
+    expect(el.innerHTML).toBe(`<button>update</button><p>1</p><p>2</p><p>3</p>`);
+
+    const button = el.querySelector("button");
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>update</button><p>1</p><p>2</p><p>3</p><p>4</p>`);
+
+    button.click();
+    await sleep();
+    expect(el.innerHTML).toBe(`<button>update</button><p>1</p><p>2</p><p>3</p><p>5</p>`);
+  });
+});
+

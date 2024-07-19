@@ -7,10 +7,10 @@ const isNode = (d) => isFunc(d) && d.tag;
 const isControl = (d) => isFunc(d) && d.cf;
 const isDef = (d) => d !== undefined;
 const isObject = (d) => d instanceof Object && !(d instanceof Function);
-const isState = (d) => d?.[STATE];
+const isArray = Array.isArray;
+const isPositiveInt = (d) => Number.isInteger(d) && d >= 0;
 const cache = {};
 const UNSET = Symbol();
-const STATE = Symbol();
 
 const placeholder = () => document.createTextNode("");
 
@@ -70,65 +70,60 @@ function patch(parent) {
   };
 }
 
-function watchProps(reactive) {
-  const {_props, _defaults} = reactive;
-  const defaults = from(_defaults, (v) => (isFunc(v) ? v() : v));
-  return (target) => {
-    return new Proxy(target, {
-      get(target, key, proxy) {
-        const prop = _props?.[key] ?? defaults[key];
-        if (key in defaults) return isExpr(prop) ? prop() : prop;
-        return Reflect.get(target, key, proxy);
-      },
-    });
-  };
-}
-
-function watch(target) {
-  if (!isObject(target)) return target;
-  const states = from(target, (v) => ({raw: v, deps: new Set(), val: UNSET}));
-  const scope = new Proxy(target, {
-    get(target, key) {
-      const state = states[key];
-      if (!state) return target[key];
-      actives?.getters?.add(state);
-      if (state.val === UNSET) track(() => (scope[key] = watch(isState(state.raw) ? state.raw(scope) : state.raw)));
-      return state.val;
-    },
-    set(target, key, value) {
-      if (!(key in states)) return (target[key] = value), true;
-      const state = states[key];
-      actives?.setters?.add(state);
-      if (value === state.val) return true;
-      state.val = value;
-      if (state.deps.size) scheduleUpdate(state);
-      return true;
-    },
-  });
-  return scope;
-}
-
 class Reactive {
   constructor() {
     this._defaults = {children: () => []};
     this._states = {};
-    this._props = {};
   }
   prop(k, v) {
     this._defaults[k] = v;
     return this;
   }
   state(k, v) {
-    this._states[k] = isFunc(v) ? assign(v, {[STATE]: true}) : v;
+    this._states[k] = v;
     return this;
   }
-  props(props) {
-    this._props = props;
-    return this;
-  }
-  join() {
-    const prop = watchProps(this);
-    return prop(watch({...this._states}));
+  join(props) {
+    const {_defaults, _states} = this;
+    const defaults = from(_defaults, (v) => (isFunc(v) ? v() : v));
+    return watch({..._states}, 0);
+
+    function watch(obj, depth) {
+      if (!isObject(obj)) return obj;
+      const top = depth === 0;
+      const state = (v) => ({raw: v, deps: new Set(), val: UNSET});
+      const states = from(obj, state);
+      if (isArray(obj)) states.length = state(obj.length);
+      const scope = new Proxy(obj, {
+        get(target, key) {
+          if (top) {
+            const prop = props?.[key] ?? defaults[key];
+            if (key in defaults) return isExpr(prop) ? prop() : prop;
+          }
+          const s = states[key];
+          if (!s) return target[key];
+          if (s.val === UNSET) {
+            if (top && isFunc(s.raw)) track(() => (scope[key] = watch(s.raw(scope), depth + 1)));
+            else s.val = watch(s.raw, depth + 1);
+          }
+          actives?.getters?.add(s);
+          return s.val;
+        },
+        set(target, key, value) {
+          if (!(key in states)) {
+            if (isArray(target) && isPositiveInt(+key)) states[key] = state(target[key]);
+            else return (target[key] = value), true;
+          }
+          const s = states[key];
+          actives?.setters?.add(s);
+          if (value === state.val) return true;
+          s.val = value;
+          if (s.deps.size) scheduleUpdate(s);
+          return true;
+        },
+      });
+      return scope;
+    }
   }
 }
 
@@ -268,7 +263,7 @@ export const mount = (parent, template, scope) => {
   if (!isFunc(node)) return parent.append(document.createTextNode(node));
   if (!isStr(node.tag)) {
     const {tag, props, children} = node;
-    return mount(parent, tag[1], tag[0].props(assign(props, {children})).join());
+    return mount(parent, tag[1], tag[0].join(assign(props, {children})));
   }
   const {tag, ns, props, children} = node;
   const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
