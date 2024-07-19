@@ -84,31 +84,28 @@ function watchProps(reactive) {
   };
 }
 
-function watchState() {
-  const watch = (target) => {
-    if (!isObject(target)) return target;
-    const states = from(target, (v) => ({raw: v, deps: new Set(), val: UNSET}));
-    const scope = new Proxy(target, {
-      get(target, key) {
-        const state = states[key];
-        if (!state) return target[key];
-        actives?.getters?.add(state);
-        if (state.val === UNSET) track(() => (scope[key] = watch(isState(state.raw) ? state.raw(scope) : state.raw)));
-        return state.val;
-      },
-      set(target, key, value) {
-        if (!(key in states)) return (target[key] = value), true;
-        const state = states[key];
-        actives?.setters?.add(state);
-        if (value === state.val) return true;
-        state.val = value;
-        if (state.deps.size) scheduleUpdate(state);
-        return true;
-      },
-    });
-    return scope;
-  };
-  return watch;
+function watch(target) {
+  if (!isObject(target)) return target;
+  const states = from(target, (v) => ({raw: v, deps: new Set(), val: UNSET}));
+  const scope = new Proxy(target, {
+    get(target, key) {
+      const state = states[key];
+      if (!state) return target[key];
+      actives?.getters?.add(state);
+      if (state.val === UNSET) track(() => (scope[key] = watch(isState(state.raw) ? state.raw(scope) : state.raw)));
+      return state.val;
+    },
+    set(target, key, value) {
+      if (!(key in states)) return (target[key] = value), true;
+      const state = states[key];
+      actives?.setters?.add(state);
+      if (value === state.val) return true;
+      state.val = value;
+      if (state.deps.size) scheduleUpdate(state);
+      return true;
+    },
+  });
+  return scope;
 }
 
 class Reactive {
@@ -130,9 +127,8 @@ class Reactive {
     return this;
   }
   join() {
-    const state = watchState(this);
     const prop = watchProps(this);
-    return prop(state(this._states));
+    return prop(watch({...this._states}));
   }
 }
 
