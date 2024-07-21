@@ -5,22 +5,11 @@
 
   const {html} = EchoX;
 
-  const Add = EchoX.component(
-    EchoX.reactive()
-      .get(EchoX.ref, null)
-      .call((d) => (d[EchoX.ref] = (x, y) => x + y)),
-    html.div()("Add"),
-  );
-
   const App = EchoX.component(
-    EchoX.reactive()
-      .let("add", null)
-      .let("sum", 0)
-      .call((d) => d.add && (d.sum = d.add(1, 2))),
-    EchoX.Fragment()(
-      Add({[EchoX.ref]: "add"}),
-      html.div()((d) => d.sum),
-    ),
+    html.div({
+      class: EchoX.cx(null, "a", undefined, new Date(), {b: true}, {c: false, d: true, e: new Date()}),
+      style: EchoX.css({backgroundColor: "red"}, {backgroundColor: "blue"}, false && {backgroundColor: "yellow"}),
+    })("Hello, World!"),
   );
 
   const root = document.getElementById("root");

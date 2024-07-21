@@ -204,6 +204,30 @@ const fragment = (d, parent) => d.children.forEach((child) => mount(parent, chil
 
 const handler = (ns) => ({get: (_, tag) => node(tag, ns)});
 
+function kebabCase(string) {
+  return string.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, "$1-$2").toLowerCase();
+}
+
+export const cx = (...names) =>
+  names
+    .flatMap((d) =>
+      isObject(d)
+        ? entries(d)
+            .filter(([, v]) => v)
+            .map(([k]) => k)
+        : d,
+    )
+    .filter((d) => isStr(d) && !!d)
+    .join(" ");
+
+export const css = (...styles) =>
+  styles
+    .reverse()
+    .filter(isObject)
+    .flatMap(entries)
+    .map(([k, v]) => `${kebabCase(k)}: ${v}`)
+    .join(";");
+
 export const html = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
 
 export const component = (...params) => node(params[1] ? params : [reactive(), params[0]]);
