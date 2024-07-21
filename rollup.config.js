@@ -4,7 +4,7 @@ const config = {
   input: "src/index.js",
   output: {
     file: "dist/echox.js",
-    name: "ex",
+    name: "EchoX",
     format: "umd",
   },
 };

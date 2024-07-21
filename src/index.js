@@ -1,5 +1,6 @@
 const assign = Object.assign;
 const entries = Object.entries;
+const symbol = Symbol;
 const isStr = (d) => typeof d === "string";
 const isFunc = (d) => typeof d === "function";
 const isExpr = (d) => isFunc(d) && !d.tag && !d.cf;
@@ -10,10 +11,10 @@ const isObject = (d) => d instanceof Object && !(d instanceof Function);
 const isArray = Array.isArray;
 const isPositiveInt = (d) => Number.isInteger(d) && d >= 0;
 const cache = {};
-const UNSET = Symbol();
-const UNMOUNT = Symbol();
-const setRef = Symbol();
-export const ref = Symbol();
+const UNSET = symbol();
+const UNMOUNT = symbol();
+const setRef = symbol();
+export const ref = symbol();
 
 const placeholder = () => document.createTextNode("");
 
@@ -113,7 +114,7 @@ class Reactive {
     return this;
   }
   call(v) {
-    this._effects[Symbol()] = v;
+    this._effects[symbol()] = v;
     return this;
   }
   join(props) {
