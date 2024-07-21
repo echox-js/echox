@@ -11,10 +11,13 @@ const isArray = Array.isArray;
 const isPositiveInt = (d) => Number.isInteger(d) && d >= 0;
 const cache = {};
 const UNSET = Symbol();
+const UNMOUNT = Symbol();
 
 const placeholder = () => document.createTextNode("");
 
 const from = (obj, callback) => Object.fromEntries(entries(obj).map(([k, v]) => [k, callback(v, k)]));
+
+const maybeCall = (d) => (isFunc(d) ? d() : d);
 
 let updates, actives;
 
@@ -43,29 +46,47 @@ function track(effect) {
   for (const d of cur.getters) cur.setters.has(d) || d.deps.add(effect);
 }
 
+function dispose(node) {
+  const disposes = [];
+  const collect = (node) => {
+    node.childNodes.forEach(collect);
+    if (node[UNMOUNT]) disposes.push(node[UNMOUNT]);
+  };
+  collect(node);
+  disposes.forEach(maybeCall);
+}
+
+function remove(node) {
+  node.remove(), dispose(node);
+}
+
 function patch(parent) {
   let prevNodes;
+  const guard = placeholder();
   return (nodes) => {
-    nodes.push(placeholder());
+    nodes.push(guard);
     if (!prevNodes) return parent.append(...(prevNodes = nodes));
     prevNodes = prevNodes.filter((d) => d.isConnected);
     const n = prevNodes.length;
     const m = nodes.length;
     const tempByElement = new Map();
+    const removed = new Set();
     for (let i = 0; i < Math.max(m, n); i++) {
       let prev = prevNodes[i];
       if (tempByElement.has(prev)) prev = tempByElement.get(prev);
       const cur = nodes[i];
       const last = nodes[i - 1];
-      if (i >= m) prev.remove();
-      else if (i >= n) parent.insertBefore(cur, last.nextSibling);
+      if (i >= m) remove(prev);
+      else if (i >= n) parent.insertBefore(cur, last?.nextSibling);
       else if (prev !== cur) {
+        removed.delete(cur);
         const temp = placeholder();
-        cur.replaceWith(temp);
-        tempByElement.set(cur, temp);
+        cur.replaceWith(temp), tempByElement.set(cur, temp);
         prev.replaceWith(cur);
+        removed.add(prev);
       }
     }
+    removed.forEach(dispose);
     prevNodes = nodes;
   };
 }
@@ -74,6 +95,7 @@ class Reactive {
   constructor() {
     this._defaults = {children: () => []};
     this._states = {};
+    this._effects = {};
   }
   prop(k, v) {
     this._defaults[k] = v;
@@ -83,10 +105,18 @@ class Reactive {
     this._states[k] = v;
     return this;
   }
+  effect(v) {
+    this._effects[Symbol()] = v;
+    return this;
+  }
   join(props) {
-    const {_defaults, _states} = this;
-    const defaults = from(_defaults, (v) => (isFunc(v) ? v() : v));
-    return watch({..._states}, 0);
+    const {_defaults, _states, _effects} = this;
+    const defaults = from(_defaults, maybeCall);
+    const scope = watch({..._states, ..._effects}, 0);
+    const keys = Object.getOwnPropertySymbols(_effects);
+    const disposes = [];
+    for (let i = 0; i < keys.length; i++) track(() => (maybeCall(disposes[i]), (disposes[i] = scope[keys[i]](scope))));
+    return assign(scope, {[UNMOUNT]: () => disposes.forEach(maybeCall)});
 
     function watch(obj, depth) {
       if (!isObject(obj)) return obj;
@@ -218,7 +248,7 @@ export const For = controlFlow(reactive().prop("each"), (d, parent) => {
     for (const datum of exit) {
       const index = indexByDatum.get(datum);
       const nodes = prevNodes[index];
-      nodes.forEach((node) => node.remove());
+      nodes.forEach(remove);
       indexByDatum.delete(datum), scopeByDatum.delete(datum);
     }
 
@@ -248,6 +278,8 @@ export const For = controlFlow(reactive().prop("each"), (d, parent) => {
   });
 });
 
+export const unmount = (node) => (dispose(node), (node.innerHTML = ""));
+
 export const mount = (parent, template, scope) => {
   const node = scope ? hydrate(template, scope) : template;
   if (!node) return;
@@ -263,7 +295,13 @@ export const mount = (parent, template, scope) => {
   if (!isFunc(node)) return parent.append(document.createTextNode(node));
   if (!isStr(node.tag)) {
     const {tag, props, children} = node;
-    return mount(parent, tag[1], tag[0].join(assign(props, {children})));
+    const scope = tag[0].join(assign(props, {children}));
+    mount(parent, tag[1], scope);
+    let last = parent;
+    while (last.nodeType === 11) last = last.lastChild;
+    const unmount = last[UNMOUNT];
+    last[UNMOUNT] = () => (unmount?.(), scope?.[UNMOUNT]?.());
+    return;
   }
   const {tag, ns, props, children} = node;
   const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);

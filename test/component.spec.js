@@ -273,7 +273,7 @@ test("component should track deps every update.", async () => {
           value: (d) => d.message,
         }),
         html.button({onclick: (d) => () => (d.count += 1)})("Increment"),
-        html.h1({class: (d) => (d.count> 0 ? d.message : "")})("hello"),
+        html.h1({class: (d) => (d.count > 0 ? d.message : "")})("hello"),
       ),
     );
 
@@ -514,4 +514,3 @@ test("component should track new added item.", async () => {
     expect(el.innerHTML).toBe(`<button>update</button><p>1</p><p>2</p><p>3</p><p>5</p>`);
   });
 });
-

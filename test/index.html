@@ -1,22 +1,20 @@
 <!--For Debugging -->
 <div id="root"></div>
 <script type="module">
-  import {component, reactive, $, Fragment, mount, For} from "echox";
+  import * as EchoX from "echox";
 
-  const App = component(
-    reactive().state("list", () => [1, 2, 3]),
-    Fragment()(
-      html.button({
-        onclick: (d) => () => {
-          if (d.list.length) d.list = [];
-          else d.list = [1, 2, 3];
-        },
-      })("change"),
-      html.h1()("Hello"),
-      For({each: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
-      html.h1()("World"),
+  const {html} = EchoX;
+
+  const App = EchoX.component(
+    EchoX.reactive()
+      .state("bool", true)
+      .effect(() => () => console.log("hello")),
+    EchoX.Fragment()(
+      html.button({onclick: (d) => () => (d.bool = !d.bool)})("Change"),
+      EchoX.Match({test: (d) => d.bool})("hello"),
     ),
   );
 
-  mount(document.getElementById("root"), App());
+  const root = document.getElementById("root");
+  EchoX.mount(root, App());
 </script>
