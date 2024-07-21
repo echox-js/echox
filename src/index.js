@@ -228,6 +228,12 @@ export const css = (...styles) =>
     .map(([k, v]) => `${kebabCase(k)}: ${v}`)
     .join(";");
 
+export const method =
+  (fn) =>
+  (d) =>
+  (...params) =>
+    fn(d, ...params);
+
 export const html = new Proxy((ns) => new Proxy({}, handler(ns)), handler());
 
 export const component = (...params) => node(params[1] ? params : [reactive(), params[0]]);
