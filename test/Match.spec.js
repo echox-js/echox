@@ -16,7 +16,7 @@ test("Match should do nothing if no children", () => {
 test("Match with truthy test prop should render the first child", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 5),
+      EchoX.reactive().let("number", () => 5),
       EchoX.Match({test: (d) => d.number > 0})(html.h1()("Hello, World!")),
     );
     EchoX.mount(el, App());
@@ -27,7 +27,7 @@ test("Match with truthy test prop should render the first child", () => {
 test("Match with falsy test prop should render the second child", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 5),
+      EchoX.reactive().let("number", () => 5),
       EchoX.Match({test: (d) => d.number > 10})(html.h1()("Hello"), html.h1()("World")),
     );
     EchoX.mount(el, App());
@@ -38,7 +38,7 @@ test("Match with falsy test prop should render the second child", () => {
 test("Match with falsy test prop should ignore the second child if is undefined", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 5),
+      EchoX.reactive().let("number", () => 5),
       EchoX.Match({test: (d) => d.number > 10})(html.h1()("Hello, World!")),
     );
     EchoX.mount(el, App());
@@ -49,7 +49,7 @@ test("Match with falsy test prop should ignore the second child if is undefined"
 test("Match with test prop should only rerender when the test result changes", async () => {
   await withContainer(async (el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("count", () => 0),
+      EchoX.reactive().let("count", () => 0),
       EchoX.Fragment()(
         html.h1()("Hello"),
         EchoX.Match({test: (d) => d.count % 2 === 0})(html.h1()("Even"), html.h1()("Odd")),
@@ -83,7 +83,7 @@ test("Match with test prop should only rerender when the test result changes", a
 test("Match should remove and insert element when the test result changes", async () => {
   await withContainer(async (el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("count", () => 0),
+      EchoX.reactive().let("count", () => 0),
       EchoX.Fragment()(
         html.h1()("Hello"),
         EchoX.Match({test: (d) => d.count % 2 === 0})(html.h1()("A")),
@@ -108,7 +108,7 @@ test("Match should remove and insert element when the test result changes", asyn
 test("Match with value prop should match the fist Arm with the same value", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 2),
+      EchoX.reactive().let("number", () => 2),
       EchoX.Match({value: (d) => d.number})(
         EchoX.Arm({test: 1})(html.h1()("Hello")), //
         html.div()(html.h1()("World")),
@@ -123,7 +123,7 @@ test("Match with value prop should match the fist Arm with the same value", () =
 test("Match should do nothing is no match Arm is found", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 3),
+      EchoX.reactive().let("number", () => 3),
       EchoX.Match({value: (d) => d.number})(
         EchoX.Arm({test: 1})(html.h1()("Hello")),
         EchoX.Arm({test: 2})(html.h1()("World")),
@@ -138,7 +138,7 @@ test("Match should do nothing is no match Arm is found", () => {
 test("Match with value prop should ignore the Arm with functional test", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 2),
+      EchoX.reactive().let("number", () => 2),
       EchoX.Match({value: (d) => d.number})(
         EchoX.Arm({test: 1})(html.h1()("Hello")),
         EchoX.Arm({test: (d) => d.number === 2})(html.h1()("World")),
@@ -153,7 +153,7 @@ test("Match with value prop should ignore the Arm with functional test", () => {
 test("Match should use empty Arm is no match is found", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 3),
+      EchoX.reactive().let("number", () => 3),
       EchoX.Match({value: (d) => d.number})(
         EchoX.Arm({test: 1})(html.h1()("Hello")),
         EchoX.Arm({test: 2})(html.h1()("World")),
@@ -168,7 +168,7 @@ test("Match should use empty Arm is no match is found", () => {
 test("Match should be nested", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 2),
+      EchoX.reactive().let("number", () => 2),
       EchoX.Match({value: (d) => d.number})(
         EchoX.Arm({test: 1})(html.h1()("Hello")),
         EchoX.Arm({test: 2})(
@@ -188,7 +188,7 @@ test("Match should be nested", () => {
 test("Match should return the first Arm with functional test", () => {
   withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("number", () => 2),
+      EchoX.reactive().let("number", () => 2),
       EchoX.Match()(
         EchoX.Arm({test: (d) => d.number === 1})(html.h1()((d) => d.number)),
         EchoX.Arm({test: (d) => d.number === 2})(html.h1()((d) => d.number)),

@@ -22,7 +22,7 @@ test("component should construct nested structure.", () => {
 test("component should use state for attribute.", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("style", "color: red").state("className", "test"),
+      EchoX.reactive().let("style", "color: red").let("className", "test"),
       html.p({class: "test", style: (d) => d.style})("Hello World!"),
     );
     EchoX.mount(el, App());
@@ -33,7 +33,7 @@ test("component should use state for attribute.", async () => {
 test("component should use state for text nodes.", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("test", "hello world"),
+      EchoX.reactive().let("test", "hello world"),
       html.p()((d) => d.test),
     );
     EchoX.mount(el, App());
@@ -43,8 +43,8 @@ test("component should use state for text nodes.", async () => {
 
 test("component should use state for child component props.", async () => {
   await withContainer((el) => {
-    const Hello = EchoX.component(EchoX.reactive().prop("style"), html.p({style: (d) => d.style})("Hello World!"));
-    const App = EchoX.component(EchoX.reactive().state("style", "color: blue"), Hello({style: (d) => d.style}));
+    const Hello = EchoX.component(EchoX.reactive().get("style"), html.p({style: (d) => d.style})("Hello World!"));
+    const App = EchoX.component(EchoX.reactive().let("style", "color: blue"), Hello({style: (d) => d.style}));
     EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<p style="color: blue;">Hello World!</p>`);
   });
@@ -53,7 +53,7 @@ test("component should use state for child component props.", async () => {
 test("component should pass props.", async () => {
   await withContainer((el) => {
     const Hello = EchoX.component(
-      EchoX.reactive().prop("style", "color: red"),
+      EchoX.reactive().get("style", "color: red"),
       html.p({style: (d) => d.style})("Hello World!"),
     );
     const App = EchoX.component(html.div()(Hello({style: "color: blue"}), Hello()));
@@ -78,7 +78,7 @@ test("component should bind state to attribute.", async () => {
     const style = vi.fn((d) => `background:${d.color}`);
     const color = vi.fn(() => "red");
     const App = EchoX.component(
-      EchoX.reactive().state("color", color),
+      EchoX.reactive().let("color", color),
       EchoX.Fragment()(
         html.input({
           oninput: (d) => (e) => (d.color = e.target.value),
@@ -107,7 +107,7 @@ test("component should bind state to attribute.", async () => {
 test("component should not computed unbind state.", async () => {
   await withContainer(async (el) => {
     const color = vi.fn(() => "red");
-    const App = EchoX.component(EchoX.reactive().state("color", color), html.h1()("hello world"));
+    const App = EchoX.component(EchoX.reactive().let("color", color), html.h1()("hello world"));
     EchoX.mount(el, App());
     expect(color.mock.calls.length).toBe(0);
 
@@ -121,7 +121,7 @@ test("component should updated event handlers.", async () => {
     const count = vi.fn(() => 0);
     const increment = vi.fn(() => true);
     const App = EchoX.component(
-      EchoX.reactive().state("count", count).state("increment", increment),
+      EchoX.reactive().let("count", count).let("increment", increment),
       EchoX.Fragment()(
         html.button({
           id: "button1",
@@ -157,7 +157,7 @@ test("component should only compute state once for multiple binds.", async () =>
   await withContainer(async (el) => {
     const className = vi.fn(() => "test");
     const App = EchoX.component(
-      EchoX.reactive().state("class", className),
+      EchoX.reactive().let("class", className),
       EchoX.Fragment()(html.h1({class: (d) => d.class})("hello"), html.h1({class: (d) => d.class})("world")),
     );
     EchoX.mount(el, App());
@@ -173,7 +173,7 @@ test("component should compute derived state.", async () => {
     const message = vi.fn(() => "test");
     const reversed = vi.fn((d) => d.message.split("").reverse().join(""));
     const App = EchoX.component(
-      EchoX.reactive().state("message", message).state("reversed", reversed),
+      EchoX.reactive().let("message", message).let("reversed", reversed),
       EchoX.Fragment()(html.h1({class: (d) => d.message})("hello"), html.h1({class: (d) => d.reversed})("world")),
     );
     EchoX.mount(el, App());
@@ -188,7 +188,7 @@ test("component should not compute derived state when not used.", async () => {
     const message = vi.fn(() => "test");
     const reversed = vi.fn((d) => d.message.split("").reverse().join(""));
     const App = EchoX.component(
-      EchoX.reactive().state("message", message).state("reversed", reversed),
+      EchoX.reactive().let("message", message).let("reversed", reversed),
       html.h1({class: (d) => d.message})("hello"),
     );
     EchoX.mount(el, App());
@@ -202,7 +202,7 @@ test("component should update derived state.", async () => {
     const message = vi.fn(() => "test");
     const reversed = vi.fn((d) => d.message.split("").reverse().join(""));
     const App = EchoX.component(
-      EchoX.reactive().state("message", message).state("reversed", reversed),
+      EchoX.reactive().let("message", message).let("reversed", reversed),
       EchoX.Fragment()(
         html.input({
           oninput: (d) => (e) => (d.message = e.target.value),
@@ -235,7 +235,7 @@ test("component should compute derived state with multiple dependencies in a bat
     const message = vi.fn(() => "test");
     const messageCount = vi.fn((d) => `${d.message} ${d.count}`);
     const App = EchoX.component(
-      EchoX.reactive().state("count", count).state("message", message).state("messageCount", messageCount),
+      EchoX.reactive().let("count", count).let("message", message).let("messageCount", messageCount),
       EchoX.Fragment()(
         html.input({
           oninput: (d) => (e) => (d.message = e.target.value),
@@ -266,7 +266,7 @@ test("component should track deps every update.", async () => {
     const count = vi.fn(() => 0);
     const message = vi.fn(() => "test");
     const App = EchoX.component(
-      EchoX.reactive().state("count", count).state("message", message),
+      EchoX.reactive().let("count", count).let("message", message),
       EchoX.Fragment()(
         html.input({
           oninput: (d) => (e) => (d.message = e.target.value),
@@ -297,7 +297,7 @@ test("component should avoid self-referencing.", async () => {
   await withContainer(async (el) => {
     const count = vi.fn(() => 0);
     const App = EchoX.component(
-      EchoX.reactive().state("count", count),
+      EchoX.reactive().let("count", count),
       html.button({
         onclick: (d) => () => d.count++,
         id: (d) => ++d.count,
@@ -316,12 +316,12 @@ test("component should avoid self-referencing.", async () => {
 test("component should update props.", async () => {
   await withContainer(async (el) => {
     const ColorLabel = EchoX.component(
-      EchoX.reactive().prop("color"),
+      EchoX.reactive().get("color"),
       html.span({style: (d) => `color: ${d.color}`})("label"),
     );
 
     const App = EchoX.component(
-      EchoX.reactive().state("color", () => "red"),
+      EchoX.reactive().let("color", () => "red"),
       EchoX.Fragment()(
         html.input({
           oninput: (d) => (e) => (d.color = e.target.value),
@@ -346,7 +346,7 @@ test("component should update text nodes.", async () => {
   const text = vi.fn((d) => (d.hello ? "hello" : "world"));
   await withContainer(async (el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("hello", () => true),
+      EchoX.reactive().let("hello", () => true),
       EchoX.Fragment()(html.button({onclick: (d) => () => (d.hello = !d.hello)})("switch"), html.p()(text)),
     );
     EchoX.mount(el, App());
@@ -364,7 +364,7 @@ test("component should track object state.", async () => {
   await withContainer(async (el) => {
     const obj = vi.fn(() => ({name: "test"}));
     const App = EchoX.component(
-      EchoX.reactive().state("obj", obj),
+      EchoX.reactive().let("obj", obj),
       EchoX.Fragment()(
         html.button({onclick: (d) => () => (d.obj.name = "world")})("switch"),
         html.p()((d) => d.obj.name),
@@ -384,7 +384,7 @@ test("component should not track function in object state.", async () => {
   await withContainer(async (el) => {
     const obj = vi.fn(() => ({name: "test", fn: (d) => d}));
     const App = EchoX.component(
-      EchoX.reactive().state("obj", obj),
+      EchoX.reactive().let("obj", obj),
       html.p()((d) => d.obj.fn("hello")),
     );
     EchoX.mount(el, App());
@@ -396,7 +396,7 @@ test("component should track setting array.", async () => {
   await withContainer(async (el) => {
     const list = vi.fn(() => [1, 2, 3]);
     const App = EchoX.component(
-      EchoX.reactive().state("list", list),
+      EchoX.reactive().let("list", list),
       EchoX.Fragment()(
         html.button({onclick: (d) => () => (d.list[0] = 10)})("add"),
         EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
@@ -418,7 +418,7 @@ test("component should track array.push(item).", async () => {
     const list = vi.fn(() => []);
     const text = vi.fn((d) => d.list.join(" "));
     const App = EchoX.component(
-      EchoX.reactive().state("list", list),
+      EchoX.reactive().let("list", list),
       EchoX.Fragment()(html.button({onclick: (d) => () => d.list.push(d.list.length)})("add"), html.p()(text)),
     );
     EchoX.mount(el, App());
@@ -444,7 +444,7 @@ test("component should track array.splice(index, 1).", async () => {
     const list = vi.fn(() => [1, 2, 3]);
     const text = vi.fn((d) => d.list.join(" "));
     const App = EchoX.component(
-      EchoX.reactive().state("list", list),
+      EchoX.reactive().let("list", list),
       EchoX.Fragment()(
         html.button({
           onclick: (d) => () => d.list.splice(1, 1),
@@ -468,7 +468,7 @@ test("component should track mutate array.", async () => {
   await withContainer(async (el) => {
     const list = vi.fn(() => [1, 2, 3]);
     const App = EchoX.component(
-      EchoX.reactive().state("list", list),
+      EchoX.reactive().let("list", list),
       EchoX.Fragment()(
         html.button({
           onclick: (d) => () => d.list.reverse(),
@@ -493,7 +493,7 @@ test("component should track new added item.", async () => {
   await withContainer(async (el) => {
     const list = vi.fn(() => [1, 2, 3]);
     const App = EchoX.component(
-      EchoX.reactive().state("list", list),
+      EchoX.reactive().let("list", list),
       EchoX.Fragment()(
         html.button({
           onclick: (d) => () => (d.list.length === 3 ? d.list.push(4) : (d.list[3] = 5)),

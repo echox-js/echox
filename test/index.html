@@ -7,8 +7,8 @@
 
   const App = EchoX.component(
     EchoX.reactive()
-      .state("bool", true)
-      .effect(() => () => console.log("hello")),
+      .let("bool", true)
+      .call(() => () => console.log("hello")),
     EchoX.Fragment()(
       html.button({onclick: (d) => () => (d.bool = !d.bool)})("Change"),
       EchoX.Match({test: (d) => d.bool})("hello"),

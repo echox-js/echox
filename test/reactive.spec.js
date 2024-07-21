@@ -7,20 +7,20 @@ test("reactive().join() should return defaults reactive", () => {
   expect(keys.length).toBe(0);
 });
 
-test("reactive().prop() should define a default prop", () => {
+test("reactive().get() should define a default prop", () => {
   const ctx = EchoX.reactive();
-  const ctx2 = ctx.prop("test", () => "hello");
+  const ctx2 = ctx.get("test", () => "hello");
   expect(ctx).toBe(ctx2);
 });
 
-test("reactive.state() should effect a state", () => {
+test("reactive.let() should effect a state", () => {
   const ctx = EchoX.reactive();
-  const ctx2 = ctx.state("test", () => "hello");
+  const ctx2 = ctx.let("test", () => "hello");
   expect(ctx).toBe(ctx2);
 });
 
-test("reactive.effect() should define an effect", () => {
+test("reactive.call() should define an effect", () => {
   const ctx = EchoX.reactive();
-  const ctx2 = ctx.effect(() => {});
+  const ctx2 = ctx.call(() => {});
   expect(ctx).toBe(ctx2);
 });

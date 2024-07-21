@@ -8,7 +8,7 @@ const {html} = EchoX;
 test("component should call effect before rendering dom", async () => {
   await withContainer(async (el) => {
     const effect = vi.fn(() => {});
-    const App = EchoX.component(EchoX.reactive().effect(effect), html.h1()("Hello, World!"));
+    const App = EchoX.component(EchoX.reactive().call(effect), html.h1()("Hello, World!"));
     EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>Hello, World!</h1>`);
     expect(effect).toHaveBeenCalled();
@@ -19,10 +19,10 @@ test("component should call effect one by one", async () => {
   await withContainer(async (el) => {
     const App = EchoX.component(
       EchoX.reactive()
-        .state("list", () => [])
-        .effect((d) => d.list.push(1))
-        .effect((d) => d.list.push(2))
-        .effect((d) => d.list.push(3)),
+        .let("list", () => [])
+        .call((d) => d.list.push(1))
+        .call((d) => d.list.push(2))
+        .call((d) => d.list.push(3)),
       html.h1()((d) => d.list.join(" ")),
     );
     EchoX.mount(el, App());
@@ -34,11 +34,11 @@ test("component should call effect from parent to child", async () => {
   await withContainer(async (el) => {
     const list = [];
     const Child = EchoX.component(
-      EchoX.reactive().effect(() => list.push(1)),
+      EchoX.reactive().call(() => list.push(1)),
       html.h1()("Hello, World!"),
     );
     const Parent = EchoX.component(
-      EchoX.reactive().effect(() => list.push(2)),
+      EchoX.reactive().call(() => list.push(2)),
       Child(),
     );
     EchoX.mount(el, Parent());
@@ -52,8 +52,8 @@ test("effect should update dom when state changes", async () => {
     const count = vi.fn((d) => d.count);
     const App = EchoX.component(
       EchoX.reactive()
-        .state("count", () => 0)
-        .effect(async (d) => {
+        .let("count", () => 0)
+        .call(async (d) => {
           await sleep(10);
           d.count++;
         }),
@@ -75,8 +75,8 @@ test("effect should return dispose function", async () => {
     const dispose2 = vi.fn(() => {});
     const App = EchoX.component(
       EchoX.reactive()
-        .effect(() => dispose)
-        .effect(() => dispose2),
+        .call(() => dispose)
+        .call(() => dispose2),
       html.h1()("Hello, World!"),
     );
     EchoX.mount(el, App());
@@ -98,20 +98,20 @@ test("effect should call dispose function when delete element in For controlFlow
 
     const H1 = EchoX.component(
       EchoX.reactive()
-        .prop("index")
-        .effect((d) => () => list.push(d.index)),
+        .get("index")
+        .call((d) => () => list.push(d.index)),
       html.h1()((d) => d.index),
     );
 
     const Item = EchoX.component(
       EchoX.reactive()
-        .prop("index")
-        .effect((d) => () => list.push(d.index)),
+        .get("index")
+        .call((d) => () => list.push(d.index)),
       H1({index: (d) => d.index + 1}),
     );
 
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.Fragment()(
         html.button({onclick: (d) => () => d.list.pop()})("Delete"),
         EchoX.For({each: (d) => d.list})(Item({index: (d, item) => item.index})),
@@ -136,13 +136,13 @@ test("effect should not call when reverse list", async () => {
 
     const Item = EchoX.component(
       EchoX.reactive()
-        .prop("index")
-        .effect((d) => () => list.push(d.index)),
+        .get("index")
+        .call((d) => () => list.push(d.index)),
       html.h1()((d) => d.index),
     );
 
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.Fragment()(
         html.button({onclick: (d) => () => d.list.reverse()})("Reverse"),
         EchoX.For({each: (d) => d.list})(Item({index: (d, item) => item.val})),
@@ -164,12 +164,12 @@ test("effect should call dispose function when delete element in Match controlFl
     const dispose = vi.fn(() => {});
 
     const True = EchoX.component(
-      EchoX.reactive().effect(() => dispose),
+      EchoX.reactive().call(() => dispose),
       html.h1()("True"),
     );
 
     const App = EchoX.component(
-      EchoX.reactive().state("bool", true),
+      EchoX.reactive().let("bool", true),
       EchoX.Fragment()(
         html.button({onclick: (d) => () => (d.bool = !d.bool)})("Change"),
         EchoX.Match({test: (d) => d.bool})(True(), html.h1()("false")),

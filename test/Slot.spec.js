@@ -25,7 +25,7 @@ test("Slot should render default slot", () => {
 test("Slot should render named slot", () => {
   withContainer((el) => {
     const Layout = EchoX.component(
-      EchoX.reactive().prop("header").prop("body").prop("footer"),
+      EchoX.reactive().get("header").get("body").get("footer"),
       html.div()(
         html.div()(EchoX.Slot({from: (d) => d.header})),
         html.div()(EchoX.Slot({from: (d) => d.body})),

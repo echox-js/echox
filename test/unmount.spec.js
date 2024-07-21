@@ -8,7 +8,7 @@ test("umount should dispose scope of a component", async () => {
   await withContainer(async (el) => {
     const dispose = vi.fn(() => {});
     const App = EchoX.component(
-      EchoX.reactive().effect(() => dispose),
+      EchoX.reactive().call(() => dispose),
       html.h1()("Hello, World!"),
     );
     EchoX.mount(el, App());
@@ -33,11 +33,11 @@ test("unmount should dispose scope from child to parent if is nested", async () 
   await withContainer(async (el) => {
     const list = [];
     const Child = EchoX.component(
-      EchoX.reactive().effect(() => () => list.push(1)),
+      EchoX.reactive().call(() => () => list.push(1)),
       html.h1()("Hello World!"),
     );
     const Parent = EchoX.component(
-      EchoX.reactive().effect(() => () => list.push(2)),
+      EchoX.reactive().call(() => () => list.push(2)),
       html.div()(Child()),
     );
     EchoX.mount(el, Parent());
@@ -51,11 +51,11 @@ test("unmount should dispose scope from child to parent if is sibling", async ()
   await withContainer(async (el) => {
     const list = [];
     const Child = EchoX.component(
-      EchoX.reactive().effect(() => () => list.push(1)),
+      EchoX.reactive().call(() => () => list.push(1)),
       html.h1()("World!"),
     );
     const Parent = EchoX.component(
-      EchoX.reactive().effect(() => () => list.push(2)),
+      EchoX.reactive().call(() => () => list.push(2)),
       EchoX.Fragment()(html.h1()("Hello"), Child()),
     );
     EchoX.mount(el, Parent());

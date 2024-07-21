@@ -97,15 +97,15 @@ class Reactive {
     this._states = {};
     this._effects = {};
   }
-  prop(k, v) {
+  get(k, v) {
     this._defaults[k] = v;
     return this;
   }
-  state(k, v) {
+  let(k, v) {
     this._states[k] = v;
     return this;
   }
-  effect(v) {
+  call(v) {
     this._effects[Symbol()] = v;
     return this;
   }
@@ -200,14 +200,14 @@ export const controlFlow = (...params) => {
 export const Fragment = controlFlow(fragment);
 
 export const Slot = controlFlow(
-  reactive().prop("from", (d) => () => d.children),
+  reactive().get("from", (d) => () => d.children),
   (d, parent) => {
     const fromNodes = [d.from].flat(Infinity);
     (fromNodes.length ? fromNodes : d.children).forEach((child) => mount(parent, child));
   },
 );
 
-export const Match = controlFlow(reactive().prop("test").prop("value"), (d, parent) => {
+export const Match = controlFlow(reactive().get("test").get("value"), (d, parent) => {
   const test = ({props: {test}}) => (isDef(d.value) ? test === d.value : isFunc(test) && test());
   const replace = patch(parent);
   let prev;
@@ -222,9 +222,9 @@ export const Match = controlFlow(reactive().prop("test").prop("value"), (d, pare
   });
 });
 
-export const Arm = controlFlow(reactive().prop("test"), assign(fragment, {arm: true}));
+export const Arm = controlFlow(reactive().get("test"), assign(fragment, {arm: true}));
 
-export const For = controlFlow(reactive().prop("each"), (d, parent) => {
+export const For = controlFlow(reactive().get("each"), (d, parent) => {
   const indexByDatum = new Map();
   const scopeByDatum = new Map();
   let prevNodes = [];
@@ -266,8 +266,8 @@ export const For = controlFlow(reactive().prop("each"), (d, parent) => {
       indexByDatum.set(datum, i);
       const el = document.createDocumentFragment();
       const scope = reactive()
-        .state("val", () => datum)
-        .state("index", () => i)
+        .let("val", () => datum)
+        .let("index", () => i)
         .join();
       d.children.forEach((child) => mount(el, child, scope));
       scopeByDatum.set(datum, scope);

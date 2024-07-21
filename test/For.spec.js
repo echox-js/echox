@@ -17,7 +17,7 @@ test("For should render list children", async () => {
 test("For should render list state children", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.For({each: (d) => d.list})(html.h1()("Hello, World!")),
     );
     EchoX.mount(el, App());
@@ -28,7 +28,7 @@ test("For should render list state children", async () => {
 test("For should render list children with value and index", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("test", () => "A"),
+      EchoX.reactive().let("test", () => "A"),
       EchoX.For({each: [1, 2, 3]})(html.h1()((d, item) => d.test + item.val + item.index)),
     );
     EchoX.mount(el, App());
@@ -40,8 +40,8 @@ test("For should render list state children with value and index", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
       EchoX.reactive()
-        .state("test", () => "A")
-        .state("list", () => [1, 2, 3]),
+        .let("test", () => "A")
+        .let("list", () => [1, 2, 3]),
       EchoX.For({each: (d) => d.list})(html.h1()((d, item) => d.test + item.val + item.index)),
     );
     EchoX.mount(el, App());
@@ -52,7 +52,7 @@ test("For should render list state children with value and index", async () => {
 test("For should render nested list children with value and index", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("test", () => "A"),
+      EchoX.reactive().let("test", () => "A"),
       EchoX.For({each: [1, 2, 3]})(
         EchoX.For({each: [1, 2]})(
           html.h1()((d, x1, x2) => {
@@ -69,7 +69,7 @@ test("For should render nested list children with value and index", async () => 
 test("For should render nested list state children with value and index", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [
+      EchoX.reactive().let("list", () => [
         {text: "A", list: [1, 2]},
         {text: "B", list: [3, 4]},
       ]),
@@ -89,7 +89,7 @@ test("For should render nested list state children with value and index", async 
 test("For and Match should work together", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.For({each: (d) => d.list})(
         EchoX.Match({value: (d, list) => list.val})(
           EchoX.Arm({test: 1})(html.h1()("One")),
@@ -106,7 +106,7 @@ test("For and Match should work together", async () => {
 test("For should render reactive list children", async () => {
   await withContainer(async (el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.Fragment()(
         html.button({
           onclick: (d) => () => {
@@ -142,7 +142,7 @@ test("For should render reactive list children", async () => {
 test("For should append elements", async () => {
   await withContainer(async (el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.Fragment()(
         html.button({
           onclick: (d) => () => {
@@ -174,7 +174,7 @@ test("For should append elements", async () => {
 test("For should remove elements", async () => {
   await withContainer(async (el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.Fragment()(
         html.button({
           onclick: (d) => () => {
@@ -213,7 +213,7 @@ test("For should remove elements", async () => {
 test("For should toggle elements", async () => {
   await withContainer(async (el) => {
     const App = EchoX.component(
-      EchoX.reactive().state("list", () => [1, 2, 3]),
+      EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.Fragment()(
         html.button({
           onclick: (d) => () => {
