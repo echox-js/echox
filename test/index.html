@@ -5,23 +5,22 @@
 
   const {html} = EchoX;
 
-  const mouse = EchoX.reactive()
-    .get("x0", 0)
-    .get("y0", 0)
-    .let("x", (d) => d.x0 ?? 0)
-    .let("y", (d) => d.y0 ?? 0)
-    .call((d) => {
-      const mousemove = (e) => ((d.x = e.clientX), (d.y = e.clientY));
-      document.addEventListener("mousemove", mousemove);
-      return () => document.removeEventListener("mousemove", mousemove);
-    });
+  const Add = EchoX.component(
+    EchoX.reactive()
+      .get(EchoX.ref, null)
+      .call((d) => (d[EchoX.ref] = (x, y) => x + y)),
+    html.div()("Add"),
+  );
 
   const App = EchoX.component(
     EchoX.reactive()
-      .let("x0", 100)
-      .let("y0", 100)
-      .use("mouse", (d) => mouse.join({x0: d.x0, y0: d.y0})),
-    html.div()((d) => `${d.mouse.x}, ${d.mouse.y}`),
+      .let("add", null)
+      .let("sum", 0)
+      .call((d) => d.add && (d.sum = d.add(1, 2))),
+    EchoX.Fragment()(
+      Add({[EchoX.ref]: "add"}),
+      html.div()((d) => d.sum),
+    ),
   );
 
   const root = document.getElementById("root");

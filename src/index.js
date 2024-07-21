@@ -12,6 +12,8 @@ const isPositiveInt = (d) => Number.isInteger(d) && d >= 0;
 const cache = {};
 const UNSET = Symbol();
 const UNMOUNT = Symbol();
+const setRef = Symbol();
+export const ref = Symbol();
 
 const placeholder = () => document.createTextNode("");
 
@@ -151,6 +153,7 @@ class Reactive {
           return s.val;
         },
         set(target, key, value) {
+          if (top && key === ref) return props[setRef](value), true;
           if (!(key in states)) {
             if (isArray(target) && isPositiveInt(+key)) states[key] = state(target[key]);
             else return (target[key] = value), true;
@@ -192,6 +195,8 @@ const hydrate = (d, scope) => {
   if (!isNode(d)) return d;
   const {tag, ns, props, children} = d;
   const newProps = from(props, (v) => (isExpr(v) ? bind(v, scope) : v));
+  newProps[ref] = props[ref];
+  newProps[setRef] = (val) => (scope[props[ref]] = val);
   return node(tag, ns)(newProps)(...children.map((d) => hydrate(d, scope)));
 };
 
@@ -306,17 +311,18 @@ export const mount = (parent, template, scope) => {
   if (!isFunc(node)) return parent.append(document.createTextNode(node));
   if (!isStr(node.tag)) {
     const {tag, props, children} = node;
-    const scope = tag[0].join(assign(props, {children}));
-    mount(parent, tag[1], scope);
+    const subscope = tag[0].join(assign(props, {children}));
+    mount(parent, tag[1], subscope);
     let last = parent;
     while (last.nodeType === 11) last = last.lastChild;
     const unmount = last[UNMOUNT];
-    last[UNMOUNT] = () => (unmount?.(), scope?.[UNMOUNT]?.());
+    last[UNMOUNT] = () => (unmount?.(), subscope?.[UNMOUNT]?.());
     return;
   }
   const {tag, ns, props, children} = node;
   const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
   parent.append(el);
+  if (props[ref]) scope[props[ref]] = el;
   for (const [k, v] of Object.entries(props)) {
     const setter = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
     let old;
