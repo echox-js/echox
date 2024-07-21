@@ -96,6 +96,7 @@ class Reactive {
     this._defaults = {children: () => []};
     this._states = {};
     this._effects = {};
+    this._scopes = {};
   }
   get(k, v) {
     this._defaults[k] = v;
@@ -105,18 +106,28 @@ class Reactive {
     this._states[k] = v;
     return this;
   }
+  use(k, v) {
+    this._scopes[k] = v;
+    return this;
+  }
   call(v) {
     this._effects[Symbol()] = v;
     return this;
   }
   join(props) {
-    const {_defaults, _states, _effects} = this;
+    const {_defaults, _states, _effects, _scopes} = this;
     const defaults = from(_defaults, maybeCall);
     const scope = watch({..._states, ..._effects}, 0);
     const keys = Object.getOwnPropertySymbols(_effects);
     const disposes = [];
+    for (const [k, v] of entries(_scopes)) scope[k] = v(scope);
     for (let i = 0; i < keys.length; i++) track(() => (maybeCall(disposes[i]), (disposes[i] = scope[keys[i]](scope))));
-    return assign(scope, {[UNMOUNT]: () => disposes.forEach(maybeCall)});
+    return assign(scope, {
+      [UNMOUNT]: () => {
+        for (const [k] of entries(_scopes)) maybeCall(scope[k][UNMOUNT]);
+        disposes.forEach(maybeCall);
+      },
+    });
 
     function watch(obj, depth) {
       if (!isObject(obj)) return obj;

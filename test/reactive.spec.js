@@ -24,3 +24,9 @@ test("reactive.call() should define an effect", () => {
   const ctx2 = ctx.call(() => {});
   expect(ctx).toBe(ctx2);
 });
+
+test("reactive.use() should defined a scope", () => {
+  const ctx = EchoX.reactive();
+  const ctx2 = ctx.use(() => {});
+  expect(ctx).toBe(ctx2);
+});

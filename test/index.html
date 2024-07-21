@@ -5,14 +5,23 @@
 
   const {html} = EchoX;
 
+  const mouse = EchoX.reactive()
+    .get("x0", 0)
+    .get("y0", 0)
+    .let("x", (d) => d.x0 ?? 0)
+    .let("y", (d) => d.y0 ?? 0)
+    .call((d) => {
+      const mousemove = (e) => ((d.x = e.clientX), (d.y = e.clientY));
+      document.addEventListener("mousemove", mousemove);
+      return () => document.removeEventListener("mousemove", mousemove);
+    });
+
   const App = EchoX.component(
     EchoX.reactive()
-      .let("bool", true)
-      .call(() => () => console.log("hello")),
-    EchoX.Fragment()(
-      html.button({onclick: (d) => () => (d.bool = !d.bool)})("Change"),
-      EchoX.Match({test: (d) => d.bool})("hello"),
-    ),
+      .let("x0", 100)
+      .let("y0", 100)
+      .use("mouse", (d) => mouse.join({x0: d.x0, y0: d.y0})),
+    html.div()((d) => `${d.mouse.x}, ${d.mouse.y}`),
   );
 
   const root = document.getElementById("root");
