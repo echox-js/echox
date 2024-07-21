@@ -20,7 +20,7 @@ export const isObject = (d) => d instanceof Object && !(d instanceof Function);
 
 export const isArray = Array.isArray;
 
-export const isPositiveInt = (d) => Number.isInteger(d) && d >= 0;
+export const isNatural = (d) => Number.isInteger(d) && d >= 0;
 
 export const maybeCall = (d) => (isFunc(d) ? d() : d);
 
