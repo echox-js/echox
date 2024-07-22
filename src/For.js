@@ -4,20 +4,20 @@ import {reactive, track} from "./reactive.js";
 import {isDef} from "./shared.js";
 import {remove} from "./unmount.js";
 
-export const For = controlFlow(reactive().get("each"), (d, parent) => {
+export const For = controlFlow(reactive().get("of"), (d, parent) => {
   const indexByDatum = new Map();
   const scopeByDatum = new Map();
   let prevNodes = [];
   const replace = patch(parent);
   track(() => {
-    const each = d.each ?? [];
+    const of = d.of ?? [];
     const enter = [];
     const move = [];
     const exit = new Set(indexByDatum.keys());
     const newNodes = [];
 
-    for (let i = 0; i < each.length; i++) {
-      const datum = each[i];
+    for (let i = 0; i < of.length; i++) {
+      const datum = of[i];
       const index = indexByDatum.get(datum);
       exit.delete(datum);
       if (!isDef(index)) enter.push(i);
@@ -33,7 +33,7 @@ export const For = controlFlow(reactive().get("each"), (d, parent) => {
     }
 
     for (const [from, to] of move) {
-      const datum = each[to];
+      const datum = of[to];
       const nodes = prevNodes[from];
       const scope = scopeByDatum.get(datum);
       scope.index = to;
@@ -42,7 +42,7 @@ export const For = controlFlow(reactive().get("each"), (d, parent) => {
     }
 
     for (const i of enter) {
-      const datum = each[i];
+      const datum = of[i];
       indexByDatum.set(datum, i);
       const el = document.createDocumentFragment();
       const scope = reactive()

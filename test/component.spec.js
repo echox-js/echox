@@ -399,7 +399,7 @@ test("component should track setting array.", async () => {
       EchoX.reactive().let("list", list),
       EchoX.Fragment()(
         html.button({onclick: (d) => () => (d.list[0] = 10)})("add"),
-        EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+        EchoX.For({of: (d) => d.list})(html.p()((d, item) => item.val)),
       ),
     );
     EchoX.mount(el, App());
@@ -473,7 +473,7 @@ test("component should track mutate array.", async () => {
         html.button({
           onclick: (d) => () => d.list.reverse(),
         })("mutate"),
-        EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+        EchoX.For({of: (d) => d.list})(html.p()((d, item) => item.val)),
       ),
     );
     EchoX.mount(el, App());
@@ -498,7 +498,7 @@ test("component should track new added item.", async () => {
         html.button({
           onclick: (d) => () => (d.list.length === 3 ? d.list.push(4) : (d.list[3] = 5)),
         })("update"),
-        EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+        EchoX.For({of: (d) => d.list})(html.p()((d, item) => item.val)),
       ),
     );
     EchoX.mount(el, App());

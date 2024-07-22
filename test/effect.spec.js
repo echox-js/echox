@@ -114,7 +114,7 @@ test("effect should call dispose function when delete element in For controlFlow
       EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.Fragment()(
         html.button({onclick: (d) => () => d.list.pop()})("Delete"),
-        EchoX.For({each: (d) => d.list})(Item({index: (d, item) => item.index})),
+        EchoX.For({of: (d) => d.list})(Item({index: (d, item) => item.index})),
       ),
     );
 
@@ -145,7 +145,7 @@ test("effect should not call when reverse list", async () => {
       EchoX.reactive().let("list", () => [1, 2, 3]),
       EchoX.Fragment()(
         html.button({onclick: (d) => () => d.list.reverse()})("Reverse"),
-        EchoX.For({each: (d) => d.list})(Item({index: (d, item) => item.val})),
+        EchoX.For({of: (d) => d.list})(Item({index: (d, item) => item.val})),
       ),
     );
 

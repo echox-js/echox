@@ -49,7 +49,7 @@ test("For should cleanup effects every cycle.", async () => {
         html.button({
           onclick: EchoX.method((d) => (d.list = [])),
         })("change"),
-        EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+        EchoX.For({of: (d) => d.list})(html.p()((d, item) => item.val)),
       ),
     );
     EchoX.mount(el, App());

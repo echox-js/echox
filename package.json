@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "vite dev",
     "test": "npm run test:js && npm run test:lint && npm run test:format",
-    "test:js": "vitest test/gc.spec.js",
+    "test:js": "vitest",
     "test:lint": "eslint src test",
     "test:format": "prettier --check src test",
     "build": "rm -rf dist && rollup -c"

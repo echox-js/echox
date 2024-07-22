@@ -8,7 +8,7 @@ const {html} = EchoX;
 
 test("For should render list children", async () => {
   await withContainer((el) => {
-    const App = EchoX.component(EchoX.For({each: [1, 2, 3]})(html.h1()("Hello, World!")));
+    const App = EchoX.component(EchoX.For({of: [1, 2, 3]})(html.h1()("Hello, World!")));
     EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>Hello, World!</h1><h1>Hello, World!</h1><h1>Hello, World!</h1>`);
   });
@@ -18,7 +18,7 @@ test("For should render list state children", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
       EchoX.reactive().let("list", () => [1, 2, 3]),
-      EchoX.For({each: (d) => d.list})(html.h1()("Hello, World!")),
+      EchoX.For({of: (d) => d.list})(html.h1()("Hello, World!")),
     );
     EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>Hello, World!</h1><h1>Hello, World!</h1><h1>Hello, World!</h1>`);
@@ -29,7 +29,7 @@ test("For should render list children with value and index", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
       EchoX.reactive().let("test", () => "A"),
-      EchoX.For({each: [1, 2, 3]})(html.h1()((d, item) => d.test + item.val + item.index)),
+      EchoX.For({of: [1, 2, 3]})(html.h1()((d, item) => d.test + item.val + item.index)),
     );
     EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>A10</h1><h1>A21</h1><h1>A32</h1>`);
@@ -42,7 +42,7 @@ test("For should render list state children with value and index", async () => {
       EchoX.reactive()
         .let("test", () => "A")
         .let("list", () => [1, 2, 3]),
-      EchoX.For({each: (d) => d.list})(html.h1()((d, item) => d.test + item.val + item.index)),
+      EchoX.For({of: (d) => d.list})(html.h1()((d, item) => d.test + item.val + item.index)),
     );
     EchoX.mount(el, App());
     expect(el.innerHTML).toBe(`<h1>A10</h1><h1>A21</h1><h1>A32</h1>`);
@@ -53,8 +53,8 @@ test("For should render nested list children with value and index", async () => 
   await withContainer((el) => {
     const App = EchoX.component(
       EchoX.reactive().let("test", () => "A"),
-      EchoX.For({each: [1, 2, 3]})(
-        EchoX.For({each: [1, 2]})(
+      EchoX.For({of: [1, 2, 3]})(
+        EchoX.For({of: [1, 2]})(
           html.h1()((d, x1, x2) => {
             return d.test + x1.val + x1.index + x2.val + x2.index;
           }),
@@ -73,8 +73,8 @@ test("For should render nested list state children with value and index", async 
         {text: "A", list: [1, 2]},
         {text: "B", list: [3, 4]},
       ]),
-      EchoX.For({each: (d) => d.list})(
-        EchoX.For({each: ($, x1) => x1.val.list})(
+      EchoX.For({of: (d) => d.list})(
+        EchoX.For({of: ($, x1) => x1.val.list})(
           html.h1()((d, x1, x2) => {
             return x1.val.text + x1.index + x2.val + x2.index;
           }),
@@ -90,7 +90,7 @@ test("For and Match should work together", async () => {
   await withContainer((el) => {
     const App = EchoX.component(
       EchoX.reactive().let("list", () => [1, 2, 3]),
-      EchoX.For({each: (d) => d.list})(
+      EchoX.For({of: (d) => d.list})(
         EchoX.Match({value: (d, list) => list.val})(
           EchoX.Arm({test: 1})(html.h1()("One")),
           EchoX.Arm({test: 2})(html.h1()("Two")),
@@ -116,7 +116,7 @@ test("For should render reactive list children", async () => {
             d.list = [...d.list];
           },
         })("change"),
-        EchoX.For({each: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
+        EchoX.For({of: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
       ),
     );
     EchoX.mount(el, App());
@@ -150,7 +150,7 @@ test("For should append elements", async () => {
             d.list = [...d.list];
           },
         })("change"),
-        EchoX.For({each: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
+        EchoX.For({of: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
       ),
     );
     EchoX.mount(el, App());
@@ -182,7 +182,7 @@ test("For should remove elements", async () => {
             d.list = [...d.list];
           },
         })("change"),
-        EchoX.For({each: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
+        EchoX.For({of: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
       ),
     );
     EchoX.mount(el, App());
@@ -222,7 +222,7 @@ test("For should toggle elements", async () => {
           },
         })("change"),
         html.h1()("Hello"),
-        EchoX.For({each: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
+        EchoX.For({of: (d) => d.list})(html.span()((d, item) => item.index + "," + item.val)),
         html.h1()("World"),
       ),
     );

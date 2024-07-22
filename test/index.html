@@ -15,7 +15,7 @@
       html.button({
         onclick: EchoX.method((d) => (d.list = [])),
       })("change"),
-      EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+      EchoX.For({of: (d) => d.list})(html.p()((d, item) => item.val)),
     ),
   );
 
