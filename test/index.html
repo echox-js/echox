@@ -5,11 +5,18 @@
 
   const {html} = EchoX;
 
+  let scope;
+
   const App = EchoX.component(
-    html.div({
-      class: EchoX.cx(null, "a", undefined, new Date(), {b: true}, {c: false, d: true, e: new Date()}),
-      style: EchoX.css({backgroundColor: "red"}, {backgroundColor: "blue"}, false && {backgroundColor: "yellow"}),
-    })("Hello, World!"),
+    EchoX.reactive()
+      .let("list", [1, 2, 3])
+      .call((d) => (scope = d)),
+    EchoX.Fragment()(
+      html.button({
+        onclick: EchoX.method((d) => (d.list = [])),
+      })("change"),
+      EchoX.For({each: (d) => d.list})(html.p()((d, item) => item.val)),
+    ),
   );
 
   const root = document.getElementById("root");

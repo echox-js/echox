@@ -69,6 +69,7 @@ export const mount = (parent, template, scope) => {
       const text = document.createTextNode(node());
       old?.replaceWith(text) ?? parent.append(text);
       old = text;
+      return text;
     });
   }
   if (!isFunc(node)) return parent.append(document.createTextNode(node));

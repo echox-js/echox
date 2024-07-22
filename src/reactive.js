@@ -2,31 +2,47 @@ import {maybeCall, symbol, isObject, isArray, entries, from, assign, isExpr, isF
 import {ref, setRef} from "./ref.js";
 import {UNMOUNT} from "./unmount.js";
 
-let updates, actives;
+let updates, actives, disposes;
 
 const UNSET = symbol();
 
-const scheduleUpdate = (state) => (updates = (updates ?? (setTimeout(flushUpdate), new Set())).add(state));
+const GC_CYCLE = 1000;
 
-const flushUpdate = () => {
-  while (updates.size) {
-    const deps = Array.from(new Set([...updates].flatMap(({deps}) => [...deps])));
+const schedule = (set, d, f, ms) => (set ?? (setTimeout(f, ms), new Set())).add(d);
+
+const flush = () => {
+  let i = 0;
+  while (updates.size && i++ < 100) {
+    const deps = new Set([...updates].flatMap((s) => [...disconnect(s)]));
     updates = new Set();
     deps.forEach(track);
   }
   updates = null;
 };
 
+const disconnect = (state) => (state.deps = new Set([...state.deps].filter((d) => d.dom?.isConnected)));
+
+const dispose = () => {
+  for (const d of disposes) disconnect(d);
+  disposes = null;
+};
+
+const update = (state) => ((updates = schedule(updates, state, flush)), state);
+
+const cleanup = (state) => ((disposes = schedule(disposes, state, dispose, GC_CYCLE)), state);
+
 export const track = (effect) => {
   const prev = actives;
   const cur = (actives = {setters: new Set(), getters: new Set()});
+  let dom;
   try {
-    effect();
+    dom = effect();
   } catch (e) {
     console.error(e);
   }
+  effect.dom = dom?.nodeType ? dom : {isConnected: true};
   actives = prev;
-  for (const d of cur.getters) cur.setters.has(d) || d.deps.add(effect);
+  for (const d of cur.getters) cur.setters.has(d) || cleanup(d).deps.add(effect);
 };
 
 class Reactive {
@@ -98,11 +114,11 @@ class Reactive {
           actives?.setters?.add(s);
           if (value === state.val) return true;
           s.val = value;
-          if (s.deps.size) scheduleUpdate(s);
+          if (s.deps.size) update(s);
           return true;
         },
       });
-      return scope;
+      return assign(scope, {__states__: states});
     }
   }
 }

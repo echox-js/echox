@@ -4,7 +4,7 @@ import {test, expect} from "vitest";
 test("reactive().join() should return defaults reactive", () => {
   const ctx = EchoX.reactive().join();
   const keys = Object.keys(ctx);
-  expect(keys.length).toBe(0);
+  expect(keys.length).toBe(1);
 });
 
 test("reactive().get() should define a default prop", () => {

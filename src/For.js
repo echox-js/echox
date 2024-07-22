@@ -55,5 +55,7 @@ export const For = controlFlow(reactive().get("each"), (d, parent) => {
     }
 
     replace((prevNodes = newNodes).flat(Infinity));
+
+    return prevNodes[0];
   });
 });
