@@ -1,7 +1,7 @@
 import {controlFlow} from "./controlFlow.js";
 import {mount, patch} from "./mount.js";
 import {reactive, track} from "./reactive.js";
-import {isDef} from "./shared.js";
+import {isDef, createDocumentFragment, childNodes} from "./shared.js";
 import {remove} from "./unmount.js";
 
 export const For = controlFlow(reactive().get("of"), (d, parent) => {
@@ -44,14 +44,14 @@ export const For = controlFlow(reactive().get("of"), (d, parent) => {
     for (const i of enter) {
       const datum = of[i];
       indexByDatum.set(datum, i);
-      const el = document.createDocumentFragment();
+      const el = createDocumentFragment();
       const scope = reactive()
         .let("val", () => datum)
         .let("index", () => i)
         .join();
       d.children.forEach((child) => mount(el, child, scope));
       scopeByDatum.set(datum, scope);
-      newNodes[i] = [...el.childNodes];
+      newNodes[i] = [...childNodes(el)];
     }
 
     replace((prevNodes = newNodes).flat(Infinity));

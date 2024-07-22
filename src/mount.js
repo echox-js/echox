@@ -1,4 +1,4 @@
-import {isExpr, isControl, isNode, isFunc, isStr, assign, from} from "./shared.js";
+import {isExpr, isControl, isNode, isFunc, isStr, assign, from, doc, Obj, entries} from "./shared.js";
 import {ref, setRef} from "./ref.js";
 import {track} from "./reactive.js";
 import {node} from "./html.js";
@@ -6,9 +6,9 @@ import {dispose, remove, UNMOUNT} from "./unmount.js";
 
 const cache = {};
 
-const placeholder = () => document.createTextNode("");
+export const createTextNode = doc.createTextNode.bind(doc);
 
-const setterOf = (p, k) => p && (Object.getOwnPropertyDescriptor(p, k) ?? setterOf(Object.getPrototypeOf(p), k));
+const setterOf = (p, k) => p && (Obj.getOwnPropertyDescriptor(p, k) ?? setterOf(Obj.getPrototypeOf(p), k));
 
 const bind =
   (fn, scope) =>
@@ -30,7 +30,7 @@ export const fragment = (d, parent) => d.children.forEach((child) => mount(paren
 
 export const patch = (parent) => {
   let prevNodes;
-  const guard = placeholder();
+  const guard = createTextNode("");
   return (nodes) => {
     nodes.push(guard);
     if (!prevNodes) return parent.append(...(prevNodes = nodes));
@@ -48,7 +48,7 @@ export const patch = (parent) => {
       else if (i >= n) parent.insertBefore(cur, last?.nextSibling);
       else if (prev !== cur) {
         removed.delete(cur);
-        const temp = placeholder();
+        const temp = createTextNode("");
         cur.replaceWith(temp), tempByElement.set(cur, temp);
         prev.replaceWith(cur);
         removed.add(prev);
@@ -66,13 +66,13 @@ export const mount = (parent, template, scope) => {
   if (isExpr(node)) {
     let old;
     return track(() => {
-      const text = document.createTextNode(node());
+      const text = createTextNode(node());
       old?.replaceWith(text) ?? parent.append(text);
       old = text;
       return text;
     });
   }
-  if (!isFunc(node)) return parent.append(document.createTextNode(node));
+  if (!isFunc(node)) return parent.append(createTextNode(node));
   if (!isStr(node.tag)) {
     const {tag, props, children} = node;
     const subscope = tag[0].join(assign(props, {children}));
@@ -84,10 +84,10 @@ export const mount = (parent, template, scope) => {
     return;
   }
   const {tag, ns, props, children} = node;
-  const el = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
+  const el = ns ? doc.createElementNS(ns, tag) : doc.createElement(tag);
   parent.append(el);
   if (props[ref]) scope[props[ref]] = el;
-  for (const [k, v] of Object.entries(props)) {
+  for (const [k, v] of entries(props)) {
     const setter = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
     let old;
     const event = (v) => {

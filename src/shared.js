@@ -1,8 +1,12 @@
 export const symbol = Symbol;
 
-export const assign = Object.assign;
+export const doc = document;
 
-export const entries = Object.entries;
+export const Obj = Object;
+
+export const assign = Obj.assign;
+
+export const entries = Obj.entries;
 
 export const isStr = (d) => typeof d === "string";
 
@@ -16,7 +20,7 @@ export const isControl = (d) => isFunc(d) && d.cf;
 
 export const isDef = (d) => d !== undefined;
 
-export const isObject = (d) => d instanceof Object && !(d instanceof Function);
+export const isObject = (d) => d instanceof Obj && !(d instanceof Function);
 
 export const isArray = Array.isArray;
 
@@ -24,4 +28,8 @@ export const isNatural = (d) => Number.isInteger(d) && d >= 0;
 
 export const maybeCall = (d) => (isFunc(d) ? d() : d);
 
-export const from = (obj, callback) => Object.fromEntries(entries(obj).map(([k, v]) => [k, callback(v, k)]));
+export const from = (obj, callback) => Obj.fromEntries(entries(obj).map(([k, v]) => [k, callback(v, k)]));
+
+export const createDocumentFragment = doc.createDocumentFragment.bind(doc);
+
+export const childNodes = (d) => d.childNodes;

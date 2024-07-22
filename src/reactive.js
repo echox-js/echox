@@ -1,4 +1,4 @@
-import {maybeCall, symbol, isObject, isArray, entries, from, assign, isExpr, isFunc, isNatural} from "./shared.js";
+import {maybeCall, symbol, isObject, isArray, entries, from, assign, isExpr, isFunc, isNatural, Obj} from "./shared.js";
 import {ref, setRef} from "./ref.js";
 import {UNMOUNT} from "./unmount.js";
 
@@ -72,7 +72,7 @@ class Reactive {
     const {_defaults, _states, _effects, _scopes} = this;
     const defaults = from(_defaults, maybeCall);
     const scope = watch({..._states, ..._effects}, 0);
-    const keys = Object.getOwnPropertySymbols(_effects);
+    const keys = Obj.getOwnPropertySymbols(_effects);
     const disposes = [];
     for (const [k, v] of entries(_scopes)) scope[k] = v(scope);
     for (let i = 0; i < keys.length; i++) track(() => (maybeCall(disposes[i]), (disposes[i] = scope[keys[i]](scope))));
