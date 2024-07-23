@@ -1,5 +1,5 @@
 import {controlFlow} from "./controlFlow.js";
-import {mount, patch} from "./mount.js";
+import {h, patch} from "./mount.js";
 import {reactive, track} from "./reactive.js";
 import {isDef, createDocumentFragment, childNodes} from "./shared.js";
 import {remove} from "./unmount.js";
@@ -49,7 +49,7 @@ export const For = controlFlow(reactive().get("of"), (d, parent) => {
         .let("val", () => datum)
         .let("index", () => i)
         .join();
-      d.children.forEach((child) => mount(el, child, scope));
+      d.children.forEach((child) => h(el, child, scope));
       scopeByDatum.set(datum, scope);
       newNodes[i] = [...childNodes(el)];
     }
