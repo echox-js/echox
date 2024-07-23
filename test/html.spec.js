@@ -54,7 +54,7 @@ test("html[tag] should build nested nodes.", () => {
   expect(div.children[1].children).toEqual(["This is a test."]);
 });
 
-test(" html(namespace)[tag] should return node with namespace.", () => {
+test("html(namespace)[tag] should return node with namespace.", () => {
   const ns = "http://www.w3.org/2000/svg";
   const svg = html(ns);
   const circle = svg.circle({id: "test"})(svg.title()("Test"));
