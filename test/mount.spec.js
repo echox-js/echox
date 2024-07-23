@@ -4,7 +4,7 @@ import {withContainer} from "./container.js";
 
 const {html} = EchoX;
 
-test("mount(component) should render HTML template.", () => {
+test("mount(container, component) should render HTML template.", () => {
   withContainer((el) => {
     const App = EchoX.component(
       html.div({id: "app"})(html.h1()("Hello, World!"), html.p()("This is a test."), html.span()),
@@ -14,7 +14,7 @@ test("mount(component) should render HTML template.", () => {
   });
 });
 
-test("mount(component) should render SVG template.", () => {
+test("mount(container, component) should render SVG template.", () => {
   withContainer((el) => {
     const ns = "http://www.w3.org/2000/svg";
     const svg = html(ns);
@@ -24,7 +24,7 @@ test("mount(component) should render SVG template.", () => {
   });
 });
 
-test("mount(component) should render string.", () => {
+test("mount(container, component) should render string.", () => {
   withContainer((el) => {
     const App = EchoX.component("Hello, World!");
     EchoX.mount(el, App());
@@ -32,7 +32,7 @@ test("mount(component) should render string.", () => {
   });
 });
 
-test("mount(component) should render HTML template with event listener.", () => {
+test("mount(container, component) should render HTML template with event listener.", () => {
   withContainer((el) => {
     const onclick = vi.fn();
     const attr = vi.fn(() => onclick);
@@ -47,7 +47,7 @@ test("mount(component) should render HTML template with event listener.", () => 
   });
 });
 
-test("mount(component) should support innerHTML props.", () => {
+test("mount(container, component) should support innerHTML props.", () => {
   withContainer((el) => {
     const App = EchoX.component(html.div({innerHTML: "<h1>Hello, World!</h1>"}));
     EchoX.mount(el, App());
@@ -55,7 +55,7 @@ test("mount(component) should support innerHTML props.", () => {
   });
 });
 
-test("mount(component) should support boolean props.", () => {
+test("mount(container, component) should support boolean props.", () => {
   withContainer((el) => {
     const App = EchoX.component(html.div()(html.input({disabled: true}), html.input({disabled: false})));
     EchoX.mount(el, App());

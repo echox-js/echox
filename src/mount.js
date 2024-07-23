@@ -26,7 +26,7 @@ const hydrate = (d, scope) => {
   return node(tag, ns)(newProps)(...children.map((d) => hydrate(d, scope)));
 };
 
-export const fragment = (d, parent) => d.children.forEach((child) => mount(parent, child));
+export const fragment = (d, parent) => d.children.forEach((child) => h(parent, child));
 
 export const patch = (parent) => {
   let prevNodes;
@@ -59,7 +59,7 @@ export const patch = (parent) => {
   };
 };
 
-export const mount = (parent, template, scope) => {
+export const h = (parent, template, scope) => {
   const node = scope ? hydrate(template, scope) : template;
   if (!node) return;
   if (isControl(node)) return node(parent);
@@ -76,7 +76,7 @@ export const mount = (parent, template, scope) => {
   if (!isStr(node.tag)) {
     const {tag, props, children} = node;
     const subscope = tag[0].join(assign(props, {children}));
-    mount(parent, tag[1], subscope);
+    h(parent, tag[1], subscope);
     let last = parent;
     while (last.nodeType === 11) last = last.lastChild;
     const unmount = last[UNMOUNT];
@@ -98,5 +98,7 @@ export const mount = (parent, template, scope) => {
     const attr = (v) => setter(v());
     k.startsWith("on") ? track(() => event(v)) : isExpr(v) ? track(() => attr(v)) : setter(v);
   }
-  for (const child of children) mount(el, child);
+  for (const child of children) h(el, child);
 };
+
+export const mount = (parent, template) => h(parent, template);
