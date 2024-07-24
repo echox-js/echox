@@ -1,13 +1,15 @@
-# EchoX
+# EchoX: UI = f(reactive, template)
 
-The fast, 3KB JavaScript framework for "echoing" reactive UI with tagged templates, inspired by [Hypertext Literal](https://github.com/observablehq/htl).
+The fast, 3KB JavaScript framework for "echoing" reactive UI in functional style.
 
-- **Fast** - no virtual DOM, no extensive diffing, pure fine-grained reactivity
-- **Small** - no transpiling or compiling, zero dependencies, 3KB (gzip)
-- **Simple** - as simple as innerHTML
+- **Fast** - No Compiling, but Fine-tune Reactivity and No Virtual DOM Diff
+- **Small** - Zero Dependencies, 3KB (gzip)
+- **Simple** - 15 APIs, 1 Hour Learning
+- **Productive** - Structural Code, but Nicely Reusable Logic and Flexible Organization of Concerns
+- **Pragmatic** - No Transpiling, but Readable Template and Fully TS Support
 
 > [!NOTE]
-> The current release is merely a proof of concept and is not ready for production. The [next branch](https://github.com/pearmini/echox/tree/next) is implementing the [new proposal API](https://github.com/pearmini/echox/discussions/1) for production use. Feel free to join the discussion and contribute!
+> The current next branch is implementing the new proposal API for production use. Please refer to the [main branch](https://github.com/echox-js/echox/tree/main) for the current release.
 
 ## Getting Started
 
@@ -20,15 +22,23 @@ $ npm install echox
 EchoX can then imported as a namespace:
 
 ```js
-import * as X from "echox";
+import * as EchoX from "echox";
 
-const node = X.html`<define count=${X.state(0)}>
-  <button @click=${(d) => d.count++}>👍</button>
-  <button @click=${(d) => d.count--}>👎</button>
-  <span>${(d) => d.count}</span>
-</define>`;
+const {html} = EchoX;
 
-document.body.append(node);
+const Counter = EchoX.component(
+  EchoX.reactive()
+    .let("value", 0)
+    .let("increment", EchoX.method((d) => d.value++))
+    .let("decrement", EchoX.method((d) => d.value--)),
+  html.div()(
+    html.button({onclick: (d) => d.increment})("👍"),
+    html.button({onclick: (d) => d.decrement})("👎"),
+    html.span()((d) => d.value),
+  ),
+);
+
+EchoX.mount(document.body, Counter());
 ```
 
 EchoX is also available as a UMD bundle for legacy browsers.
@@ -36,328 +46,400 @@ EchoX is also available as a UMD bundle for legacy browsers.
 ```html
 <script src="https://cdn.jsdelivr.net/npm/echox"></script>
 <script>
-  const node = X.html`...`;
-
-  document.body.append(node);
+  const {html} = EchoX;
 </script>
 ```
 
-Reading the core concepts to learn more:
+Please reading the following core concepts to learn more:
 
-- [Template Interpolations](#template-interpolations)
-- [State Bindings](#state-bindings)
-- [Class and Style Bindings](#class-and-style-bindings)
+- [DOM Building](#dom-building)
+- [Component Mounting](#component-mounting)
+- [Reactive Defining](#reactive-defining)
+- [Style Bindings](#style-bindings)
 - [Event Handling](#event-handling)
 - [List Rendering](#list-rendering)
 - [Conditional Rendering](#conditional-rendering)
-- [Effect](#effect)
 - [Ref Bindings](#ref-bindings)
-- [Component](#component)
-- [Composable](#composable)
-- [Store](#store)
+- [Composable Reactive](#composable-reactive)
+- [Store Sharing](#store-sharing)
 
-## Template Interpolations
+## DOM building
 
-EchoX uses tagged template literal to declare UI, which renders the specified markup as an element.
-
-```js
-import * as X from "echox";
-
-const node = X.html`<h1>hello world</h1>`;
-
-document.body.append(node);
-```
-
-A string, boolean, null, undefined can be interpolated to an attribute:
+EchoX uses a dynamic object _html_ implemented with [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) to building DOM:
 
 ```js
-// Interpolate number attribute.
-X.html`<h1 id=${"id" + Math.random()}></h1>`;
+import {html} from "echox";
 
-// Interpolate boolean attribute.
-X.html`<input checked=${true}></input>`;
+html.div({class: "title"})(
+  html.span({style: "color:blue"})("Hello"),
+  html.span()("World"),
+  html.input({value: "EchoX"}),
+);
 ```
 
-If the interpolated data value is a node, it is inserted into the result at the corresponding location.
+<a name="echox-html" href="echox-html">#</a> _EchoX_.**html**._\<tag\>_(_[props]_)(_[...children]_)
+
+_html.\<tag\>_ returns the tag function to create the specified tag template (not the real DOM). Calling the tag function to create the tag template with the specified _props_ (if any) and returns a function to specify the _children_ (if any) of the tag template. A child noe can be a tag template or a string.
+
+## Component Mounting
+
+A component is a piece of UI (user interface) that has its own logic and appearance which can be defined by [EchoX.component](#echox-component)
 
 ```js
-X.html`<h1>${document.createText('hello world')}</h1>
+const HelloWorld = EchoX.component(html.h1()("hello World"));
 ```
 
-It is also possible to interpolate iterables of nodes into element.
+A component can be rendered and mount to the specified container by [EchoX.mount](#echox-mount):
 
 ```js
-X.html`<ul>${["A", "B", "C"].map((d) => X.html`<li>${d}</li>`)}</ul>`;
+EchoX.mount(document.body, HelloWorld());
 ```
 
-<a name="x-html" href="x-html">#</a> _X_.**html**(_markup_, _...interpolations_)
-
-If only one arguments is specified, render and return the specified [component](x-component). Otherwise tenders the specified _markups_ and _interpolations_ as an element.
-
-## State Bindings
-
-For stateful UI, a wrapped _define_ tag is required for defining some properties related to reactivity. Each state-derived property or child node should be specified as a **callback**, which is invoked on an object containing all the properties defined on the _define_ tag.
+Then it can be removed and disposes allocated resources by [EchoX.unmount](#echox-unmount):
 
 ```js
-// state-derived property
-X.html`<define count=${X.state(0)}>
-  <span>${(d) => d.count}</span>
-  <button @click=${(d) => d.count++}></button>
-</define>`;
-
-// state-derived child node
-X.html`<define color=${X.state(0)}>
-  <span style=${(d) => `background: ${d.color}`}>hello</span>
-  <input value=${(d) => d.color} @input=${(d, e) => (d.color = e.target.value)} />
-</define>`;
+EchoX.unmount(document.body);
 ```
 
-If a state is non-primitive, it should be specified as a _callback_ returning the state.
+<a name="echox-component" href="echox-component">#</a> _EchoX_.**component**([_reactive_,] template\_)
+
+Returns a component with the specified reactive scope and template. If only one argument is specified, returns a component only with template.
+
+<a name="echox-mount" href="echox-mount">#</a> _EchoX_.**mount**(_container_, _template_)
+
+Mounts the specified _template_ into the specified _container_.
+
+<a name="echox-unmount" href="echox-unmount">#</a> _EchoX_.**unmount**(_container_)
+
+Unmounts the the specified _container_ with the mounted template.
+
+## Reactive Defining
 
 ```js
-// array state
-X.html`<define letters=${X.state(() => ["A", "B", "C"])}></define>`;
-
-// object state
-X.html`<define info=${X.state(() => ({name: "jim", age: 22}))}></define>`;
+ // Define primitive states
+const Counter = EchoX.component(
+  EchoX.reactive().let("value", 0),
+  html.button({onclick: (d) => () => d.value++})((d) => d.value),
+);
 ```
-
-A computed state also can be specified as a _callback_, calling on all reactive properties and return a new state.
 
 ```js
-X.html`<define message=${X.state("hello")} reversed=${X.state((d) => d.message.split("").reverse().join(""))}>
-  <input value=${(d) => d.message} @input=${(d, e) => (d.message = e.target.value)} />
-  <p>Reversed: ${(d) => d.reversed}</p>
-</define>`;
+// Define non-primitive states
+const Person = EchoX.component(
+  EchoX.reactive().let("person", () => ({name: "Jack", age: 24})),
+  html.div(
+    html.span()((d) => d.person.name),
+    html.span()((d) => d.person.age),
+  ),
+);
 ```
-
-Please notes that the name of a reactive property must be **kebab case** in defined tag, but convert to camel case when accessing.
 
 ```js
-X.html`<define must-kebab-case=${X.state("hi")}>${(d) => d.museKebabCase}</define>`;
+// Define computed states
+const Message = EchoX.component(
+  EchoX.reactive()
+    .let("message", "hello world")
+    .let("reversed", (d) => d.message.split("").reverse().join("")),
+  html.div()(
+    html.input({
+      oninput: (d) => (e) => (d.message = e.target.value),
+      value: (d) => d.message,
+    }),
+    html.span()((d) => d.reversed),
+  ),
+);
 ```
 
-<a name="x-state" href="#x-state">#</a> _X_.**state**(_value_)
+```js
+// Define methods
+const Counter = EchoX.component(
+  EchoX.reactive()
+    .let("value", 0)
+    .let("increment", (d) => () => d.value++),
+  html.button({onclick: (d) => d.increment})((d) => d.value),
+);
+```
 
-Returns a state.
+```js
+// Define props
+const Red = EchoX.component(
+  EchoX.reactive().get("text"),
+  html.span({style: "color:red"})((d) => d.text),
+);
+```
 
-## Class and Style Bindings
+```js
+// Define effects
+const Timer = EchoX.component(
+  EchoX.reactive()
+    .let("date", new Date())
+    .call((d) => {
+      const timer = setInterval(() => (d.date = new Date()), 1000);
+      return () => clearInterval(timer);
+    }),
+  EchoX.span((d) => d.date.toLocaleString()),
+);
+```
+
+## Style Bindings
 
 Class and style are just like other properties:
 
 ```js
-X.html`<define random=${Math.random()} >
-  <span 
-    class=${(d) => (d.random > 0.5 ? "red" : null)}
-    style=${(d) => (d.random > 0.5 ? `background: ${d.color}` : null)}
-  >
-    hello
-  </span>
-</define>`;
+html.span({
+  class: (d) => (d.random > 0.5 ? "red" : null),
+  style: (d) => (d.random > 0.5 ? `background: ${d.color}` : null),
+})("hello");
 ```
 
-But [X.cx](#x-cx) and [X.css](#x-css) make it easier to style conditionally . With them, now say:
+But [EchoX.cx](#echox-cx) and [EchoX.css](#echox-css) make it easier to style conditionally . With them, now say:
 
 ```js
-X.html`<define random=${Math.random()} >
-  <span
-    class=${(d) => X.cx({red: d.random > 0.5})}
-    style=${(d) => X.css(d.random > 0.5 && {background: d.color})}
-  >
-    hello
-  </span>
-</define>`;
+html.span({
+  class: (d) => EchoX.cx({red: d.random > 0.5}),
+  style: (d) => EchoX.css(d.random > 0.5 && {background: d.color})
+})("hello");
 ```
 
 Multiple class objects and style objects can be specified and only truthy strings will be applied:
 
 ```js
 // class: 'a b d'
+html.span({
+  class: EchoX.cx(null, "a", undefined, new Date(), {b: true}, {c: false, d: true, e: new Date()}),
+});
+
 // style: background: blue
-X.html`<define>
-  <span class=${X.cx(null, "a", undefined, new Date(), {b: true}, {c: false, d: true, e: new Date()})}> Hello </span>
-  <span style=${X.css({background: "red"}, {background: "blue"}, false && {background: "yellow"})}> World </span>
-</define>`;
+html.span({
+  style: EchoX.css({background: "red"}, {background: "blue"}, false && {background: "yellow"}),
+});
 ```
 
-<a name="x-cx" href="x-cx">#</a> _X_.**cx**(_...classObjects_)
+<a name="echox-cx" href="echox-cx">#</a> _EchoX_.**cx**(_...classObjects_)
 
 Returns a string joined by all the attribute names defined in the specified _classObjects_ with truthy string values.
 
-<a name="x-css" href="x-css">#</a> _X_.**css**(_...styleObjects_)
+<a name="echox-css" href="echox-css">#</a> _EchoX_.**css**(_...styleObjects_)
 
 Returns a string joined by all the attributes names defined in the merged specified _styleObjects_ with truthy string values.
 
 ## Event Handling
 
-Using _@_ directive to bind a event with the _specified_ event handler, which is calling on all _reactive properties_ and native _event object_.
+```js
+const Counter = EchoX.component(
+  EchoX.reactive().let("value", 0),
+  html.button({onclick: (d) => () => d.value++})((d) => d.value),
+);
+```
 
 ```js
-X.html`<define count=${X.state(0)}>
-  <button @click=${(d) => d.count++}>👍</button>
-  <button @click=${(d) => d.count--}>👎</button>
-  <span>${(d) => d.count}</span>
-</define>`;
-
-// Event is the second parameter.
-X.html`<define color=${X.state(0)}>
-  <span style=${(d) => `background: ${d.color}`}>hello</span>
-  <input value=${(d) => d.color} @input=${(d, e) => (d.color = e.target.value)} />
-</define>`;
+const Counter = EchoX.component(
+  EchoX.reactive().let("value", 0),
+  html.button({onclick: EchoX.method((d) => d.value++)})((d) => d.value),
+);
 ```
 
 ## List Rendering
 
-Memorized list rendering is achieved by _for_ tag. The _each_ property is required in _for_ tag to specify the iterable state. Some rest item parameters are called on the stateful binds in _for_ tag, accessing item and index by _item.$value_ and _item.$index_ respectively.
+```js
+// Render a list
+const List = EchoX.component(
+  EchoX.reactive().let("list", [1, 2, 3]),
+  html.ul()(
+    EchoX.For({of: (d) => d.list})(
+      html.li()((d, item) => item.index + ": " + item.val)
+    )
+  ),
+);
+```
 
 ```js
-X.html`<define dark=${state(false)} blocks=${state([1, 2, 3])}>
-  <ul>
-    <for each=${(d) => d.blocks}>
-      <li>${(d, item) => item.$index}-${item.$value}</li>
-    </for>
-  </ul>
-</define>`;
+// Reactive updating
+const List = EchoX.component(
+  EchoX.reactive().let("list", [1, 2, 3]),
+  html.div(
+    html.button({onclick: (d) => () => (d.list[0] = 4)}),
+    html.ul()(
+      EchoX.For({of: (d) => d.list})(
+        html.li()((d, item) => item.index + ": " + item.val)
+      )
+    ),
+  ),
+);
+```
+
+```js
+// Reactive appending
+const List = EchoX.component(
+  EchoX.reactive().let("list", [1, 2, 3]),
+  html.div(
+    html.button({onclick: (d) => () => (d.list.push(4))}),
+    html.ul()(
+      EchoX.For({of: (d) => d.list})(
+        html.li()((d, item) => item.index + ": " + item.val)
+      )
+    ),
+  ),
+);
+```
+
+```js
+// Reactive removing
+const List = EchoX.component(
+  EchoX.reactive().let("list", [1, 2, 3]),
+  html.div(
+    html.button({onclick: (d) => () => (d.list.splice(1, 1))}),
+    html.ul()(
+      EchoX.For({of: (d) => d.list})(
+        html.li()((d, item) => item.index + ": " + item.val)
+      )
+    ),
+  ),
+);
+```
+
+```js
+// Reactive reversing
+const List = EchoX.component(
+  EchoX.reactive().let("list", [1, 2, 3]),
+  html.div(
+    html.button({onclick: (d) => () => (d.list.reverse())}),
+    html.ul()(
+      EchoX.For({of: (d) => d.list})(
+        html.li()((d, item) => item.index + ": " + item.val)
+      )
+    ),
+  ),
+);
+```
+
+```js
+// Reactive filtering
+const List = EchoX.component(
+  EchoX.reactive()
+    .let("list", [1, 2, 3])
+    .let("filtered", (d) => list.filter((val) => val % 2)),
+  html.div(
+    html.button({onclick: (d) => () => (d.list[0] = 4)}),
+    html.ul()(
+      EchoX.For({of: (d) => d.filtered})(
+        html.li()((d, item) => item.index + ": " + item.val)
+      )
+    ),
+  ),
+);
 ```
 
 ## Conditional Rendering
 
-Memorized conditional rendering is achieved by _if_, _elif_ and _else_ tags. The _expr_ property is required in _if_ and _elif_ tags, displaying the child nodes with the specified callback evaluating to true.
-
 ```js
-X.html`<define count=${state(0)} random=${state(Math.random())}>
-  <if expr=${(d) => d.random < 0.3}>
-    <span>A</span>
-  </if>
-  <elif expr="${(d) => d.random < 0.6}}">
-    <span>B</span>
-  </elif>
-  <else>
-    <span>C</span>
-  </else>
-</define>`;
+// Match with two arms
+EchoX.Match({test: (d) => d.value > 0.5})(
+  html.span()("Yes"),
+  html.span()("No")
+);
 ```
 
-## Effect
-
-Effects can be defined using [X.effect](#x-effect), which is be called before DOM elements are mounted and after dependent states are updated. An optional callback can be returned to dispose of allocated resources.
-
 ```js
-const f = (d) => ("0" + d).slice(-2);
-
-X.html`<define
-  date=${X.state(new Date())}
-  ${X.effect(() => console.log(`I'm a new time component.`))}
-  ${X.effect((d) => {
-    const timer = setInterval(() => (d.date = new Date()), 1000);
-    return () => clearInterval(timer);
-  })}
-  >
-  <span>${({date}) => `${f(date.getHours())}:${f(date.getMinutes())}:${f(date.getSeconds())}`}</span>
-</define>`;
+// Match with multiple arms
+EchoX.Match()(
+  EchoX.Arm({test: (d) => d.type === "A"})(html.span("apple")),
+  EchoX.Arm({test: (d) => d.type === "B"})(html.span("banana")),
+  EchoX.Arm()(html.span("unknown")),
+);
 ```
 
-<a name="x-effect" href="x-effect">#</a> _X_.**effect**(_effect_)
-
-Returns a effect.
+```js
+// Switch-like Match
+EchoX.Match({value: (d) => d.type})(
+  EchoX.Arm({test: "A"})(html.span("apple")),
+  EchoX.Arm({test: "B"})(html.span("banana")),
+  EchoX.Arm()(html.span("unknown")),
+);
+```
 
 ## Ref Bindings
 
-Accessing a DOM element in effect.
-
 ```js
-X.html`<define
-  div=${X.ref()}
-  ${X.effect((d) => d.div && (d.div.textContent = "hello"))}
->
-  <div ref="div"></div>
-</define>`;
+// Accessing a DOM element.
+EchoX.component(
+  EchoX.reactive()
+    .let("div", null)
+    .call((d) => d.div && (d.div.textContent = "hello world")),
+  html.div({[EchoX.ref]: "div"}),
+);
 ```
 
-<a name="x-effect" href="x-effect">#</a> _X_.**ref**()
-
-Returns a ref.
-
-## Component
-
-A component can be defined a component using [X.component](x-component) and registered it in _define_ tag. Please notes that the name of component should always be kebab case.
-
 ```js
-const ColorLabel = X.component`<define color=${X.prop("steelblue")} text=${X.prop()}>
-  <span>${(d) => d.text}</span>
-</define>`;
+// Expose methods from state.
+const Add = EchoX.component(
+  EchoX.reactive()
+    .get(EchoX.ref, null)
+    .call((d) => (d[EchoX.ref] = (x, y) => x + y)),
+  html.div()("Add"),
+);
 
-X.html`<define color-label=${ColorLabel}>
-  <color-label color="red" text="hello world"></color-label>
-</define>`;
+const App = EchoX.component(
+  EchoX.reactive()
+    .let("add", null)
+    .let("sum", 0)
+    .call((d) => d.add && (d.sum = d.add(1, 2))),
+  EchoX.Fragment()(
+    Add({[EchoX.ref]: "add"}),
+    html.div()((d) => d.sum),
+  ),
+);
 ```
 
-A component can be rendered directly by [X.html](x-html).
+## Composable Reactive
 
 ```js
-const App = component`<define count=${state(0)}></define>`;
+const mouse = EchoX.reactive()
+  .get("x0", 0)
+  .get("y0", 0)
+  .let("x", (d) => d.x0 ?? 0)
+  .let("y", (d) => d.y0 ?? 0)
+  .call((d) => {
+    const mousemove = (e) => ((d.x = e.clientX), (d.y = e.clientY));
+    document.addEventListener("mousemove", mousemove);
+    return () => document.removeEventListener("mousemove", mousemove);
+  });
 
-html(App);
+const App = EchoX.component(
+  EchoX.reactive()
+    .let("x0", 100)
+    .let("y0", 100)
+    .use("mouse", (d) => mouse.join({x0: d.x0, y0: d.y0})),
+  html.div()((d) => `${d.mouse.x}, ${d.mouse.y}`),
+);
 ```
 
-<a name="x-component" href="x-component">#</a> _X_.**component**(_markup_, _...interpolations_)
-
-Returns a component.
-
-<a name="x-prop" href="x-prop">#</a> _X_.**prop**(_[defaultValue]_)
-
-Returns a prop.
-
-## Composable
-
-Some reusable logic can be defined using [X.composable](x-composable) and accessed through the specified _namespace_.
-
-```js
-const useMouse = X.composable`<define 
-  x=${X.state(0)} 
-  y=${X.state(0)}
-  log=${X.method((d) => console.log(d.x, d.y))} 
-  ${X.effect((d) => {
-    const update = ({clientY, clientX}) => ((d.x = clientX), (d.y = clientY));
-    window.addEventListener("mousemove", update);
-    return () => (window.removeEventListener("mousemove", update), console.log("remove"));
-  })}>
-</define>`;
-
-X.html`<define mouse=${useMouse}>
-  <button @click=${(d) => d.mouse.log()}>Log</button>
-  <span>${(d) => `(${d.mouse.x}, ${d.mouse.y})`}</span>
-</define>`;
-```
-
-<a name="x-composable" href="x-composable">#</a> _X_.**composable**(_strings_, _...interpolations_)
-
-Returns a reusable composable.
-
-## Store
-
-A global and single-instance store can be defined using [X.store](x-store) and accessed through the specified _namespace_.
+## Store Sharing
 
 ```js
 // store.js
-export createStore = store`<define
-  value=${state(0)}
-  increment=${method((d) => d.value++)}
-  decrement=${method((d) => d.value--)}>
-</define>`;
+export function createStore() {
+  let store;
+  return () => {
+    if (store) return store;
+    store = EchoX.reactive()
+      .let("value", 0)
+      .let("increment", (d) => () => d.value++)
+      .join();
+  };
+}
 ```
 
 ```js
 // counter.js
 import {createStore} from "./store.js";
 
-X.component`<define counter=${createStore()}>
-  <button @click=${(d) => d.counter.count++}>👍</button>
-  <button @click=${(d) => d.counter.count--}>👎</button>
-  <span>${(d) => d.counter.count}</span>
-</define>`;
+const Counter = EchoX.component(
+  EchoX.reactive()
+    .let("value", 0)
+    .use("counter", () => createStore()),
+  html.button({
+    onclick: (d) => d.counter.increment,
+  })((d) => d.counter.value),
+);
 ```
-
-<a name="x-store" href="x-store">#</a> _X_.**store**(_strings_, _...interpolations_)
-
-Returns a global and single-instance store.
