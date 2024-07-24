@@ -13,7 +13,7 @@
       .call((d) => (scope = d)),
     EchoX.Fragment()(
       html.button({
-        onclick: EchoX.method((d) => (d.list = [])),
+        onclick: (d) => () => (d.list = []),
       })("change"),
       EchoX.For({of: (d) => d.list})(html.p()((d, item) => item.val)),
     ),
