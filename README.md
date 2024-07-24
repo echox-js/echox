@@ -29,8 +29,8 @@ const {html} = EchoX;
 const Counter = EchoX.component(
   EchoX.reactive()
     .let("value", 0)
-    .let("increment", EchoX.method((d) => d.value++))
-    .let("decrement", EchoX.method((d) => d.value--)),
+    .let("increment", (d) => () => d.value++)
+    .let("decrement", (d) => () => d.value--),
   html.div()(
     html.button({onclick: (d) => d.increment})("👍"),
     html.button({onclick: (d) => d.decrement})("👎"),

@@ -19,7 +19,7 @@ test("Match should cleanup effects every cycle.", async () => {
         .call((d) => (scope = d)),
       EchoX.Fragment()(
         html.button({
-          onclick: EchoX.method((d) => (d.pre = !d.pre)),
+          onclick: (d) => () => (d.pre = !d.pre),
         })("change"),
         EchoX.Match({test: (d) => d.pre})(
           html.pre()((d) => d.text),
@@ -47,7 +47,7 @@ test("For should cleanup effects every cycle.", async () => {
         .call((d) => (scope = d)),
       EchoX.Fragment()(
         html.button({
-          onclick: EchoX.method((d) => (d.list = [])),
+          onclick: (d) => () => (d.list = []),
         })("change"),
         EchoX.For({of: (d) => d.list})(html.p()((d, item) => item.val)),
       ),
