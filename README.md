@@ -244,7 +244,7 @@ const Counter = EchoX.component(
 ```js
 // Render a list
 const List = EchoX.component(
-  EchoX.reactive().let("list", [1, 2, 3]),
+  EchoX.reactive().let("list", () => [1, 2, 3]),
   html.ul()(
     EchoX.For({of: (d) => d.list})(
       html.li()((d, item) => item.index + ": " + item.val)
@@ -256,7 +256,7 @@ const List = EchoX.component(
 ```js
 // Reactive updating
 const List = EchoX.component(
-  EchoX.reactive().let("list", [1, 2, 3]),
+  EchoX.reactive().let("list", () => [1, 2, 3]),
   html.div(
     html.button({onclick: (d) => () => (d.list[0] = 4)}),
     html.ul()(
@@ -271,7 +271,7 @@ const List = EchoX.component(
 ```js
 // Reactive appending
 const List = EchoX.component(
-  EchoX.reactive().let("list", [1, 2, 3]),
+  EchoX.reactive().let("list", () => [1, 2, 3]),
   html.div(
     html.button({onclick: (d) => () => (d.list.push(4))}),
     html.ul()(
@@ -286,7 +286,7 @@ const List = EchoX.component(
 ```js
 // Reactive removing
 const List = EchoX.component(
-  EchoX.reactive().let("list", [1, 2, 3]),
+  EchoX.reactive().let("list", () => [1, 2, 3]),
   html.div(
     html.button({onclick: (d) => () => (d.list.splice(1, 1))}),
     html.ul()(
@@ -301,7 +301,7 @@ const List = EchoX.component(
 ```js
 // Reactive reversing
 const List = EchoX.component(
-  EchoX.reactive().let("list", [1, 2, 3]),
+  EchoX.reactive().let("list", () => [1, 2, 3]),
   html.div(
     html.button({onclick: (d) => () => (d.list.reverse())}),
     html.ul()(
@@ -317,7 +317,7 @@ const List = EchoX.component(
 // Reactive filtering
 const List = EchoX.component(
   EchoX.reactive()
-    .let("list", [1, 2, 3])
+    .let("list", () => [1, 2, 3])
     .let("filtered", (d) => list.filter((val) => val % 2)),
   html.div(
     html.button({onclick: (d) => () => (d.list[0] = 4)}),
