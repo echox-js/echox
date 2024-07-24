@@ -60,6 +60,7 @@ Please reading the following core concepts to learn more:
 - [List Rendering](#list-rendering)
 - [Conditional Rendering](#conditional-rendering)
 - [Ref Bindings](#ref-bindings)
+- [Slot Forwarding](#slot-forwarding)
 - [Composable Reactive](#composable-reactive)
 - [Store Sharing](#store-sharing)
 
@@ -388,6 +389,59 @@ const App = EchoX.component(
     Add({[EchoX.ref]: "add"}),
     html.div()((d) => d.sum),
   ),
+);
+```
+
+## Slot Forwarding
+
+```js
+// Slots from children
+const Div = EchoX.component(
+  html.div()(
+    EchoX.Slot({from: (d) => d.children})
+  )
+);
+
+const App = EchoX.component(
+  Div()(
+    html.h1()("Hello, World!"), 
+    Div()(
+      html.p()("This is a test.")
+    )
+  )
+);
+```
+
+```js
+// Slots with fallback content
+const Div = EchoX.component(
+  html.div()(
+    EchoX.Slot({from: (d) => d.children})(
+      html.h1()("Hello, World!")
+    )
+  )
+);
+
+const App = EchoX.component(Div());
+```
+
+```js
+// Named slots
+const Layout = EchoX.component(
+  EchoX.reactive().get("header").get("body").get("footer"),
+  html.div()(
+    html.div()(EchoX.Slot({from: (d) => d.header})),
+    html.div()(EchoX.Slot({from: (d) => d.body})),
+    html.div()(EchoX.Slot({from: (d) => d.footer})),
+  ),
+);
+
+const App = EchoX.component(
+  Layout({
+    header: html.h1()("Header"),
+    body: html.p()("Body"),
+    footer: html.h2()("Footer"),
+  }),
 );
 ```
 
