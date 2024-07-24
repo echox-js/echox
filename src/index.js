@@ -7,7 +7,6 @@ export {For} from "./For.js";
 export {Fragment} from "./Fragment.js";
 export {html} from "./html.js";
 export {Match} from "./Match.js";
-export {method} from "./method.js";
 export {mount} from "./mount.js";
 export {reactive} from "./reactive.js";
 export {ref} from "./ref.js";
