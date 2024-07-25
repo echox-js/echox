@@ -64,7 +64,7 @@ Please reading the following core concepts to learn more:
 - [Composable Reactive](#composable-reactive)
 - [Store Sharing](#store-sharing)
 
-## DOM building
+## DOM Building
 
 EchoX uses a dynamic object _html_ implemented with [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) to building DOM:
 
@@ -84,7 +84,7 @@ _html.\<tag\>_ returns the tag function to create the specified tag template (no
 
 ## Component Mounting
 
-A component is a piece of UI (user interface) that has its own logic and appearance which can be defined by [EchoX.component](#echox-component)
+A component is a piece of UI (user interface) that has its own logic and appearance which can be defined by [EchoX.component](#echox-component):
 
 ```js
 const HelloWorld = EchoX.component(html.h1()("hello World"));
@@ -117,7 +117,7 @@ Unmounts the the specified _container_ with the mounted template.
 ## Reactive Defining
 
 ```js
- // Define primitive states
+// Define primitive states.
 const Counter = EchoX.component(
   EchoX.reactive().let("value", 0),
   html.button({onclick: (d) => () => d.value++})((d) => d.value),
@@ -125,7 +125,7 @@ const Counter = EchoX.component(
 ```
 
 ```js
-// Define non-primitive states
+// Define non-primitive states.
 const Person = EchoX.component(
   EchoX.reactive().let("person", () => ({name: "Jack", age: 24})),
   html.div(
@@ -136,7 +136,7 @@ const Person = EchoX.component(
 ```
 
 ```js
-// Define computed states
+// Define computed states.
 const Message = EchoX.component(
   EchoX.reactive()
     .let("message", "hello world")
@@ -152,7 +152,7 @@ const Message = EchoX.component(
 ```
 
 ```js
-// Define methods
+// Define methods.
 const Counter = EchoX.component(
   EchoX.reactive()
     .let("value", 0)
@@ -162,7 +162,7 @@ const Counter = EchoX.component(
 ```
 
 ```js
-// Define props
+// Define props.
 const Red = EchoX.component(
   EchoX.reactive().get("text"),
   html.span({style: "color:red"})((d) => d.text),
@@ -170,7 +170,7 @@ const Red = EchoX.component(
 ```
 
 ```js
-// Define effects
+// Define effects.
 const Timer = EchoX.component(
   EchoX.reactive()
     .let("date", new Date())
@@ -193,7 +193,7 @@ html.span({
 })("hello");
 ```
 
-But [EchoX.cx](#echox-cx) and [EchoX.css](#echox-css) make it easier to style conditionally . With them, now say:
+But [EchoX.cx](#echox-cx) and [EchoX.css](#echox-css) make it easier to style conditionally. With them, now say:
 
 ```js
 html.span({
@@ -236,14 +236,14 @@ const Counter = EchoX.component(
 ```js
 const Counter = EchoX.component(
   EchoX.reactive().let("value", 0),
-  html.button({onclick: EchoX.method((d) => d.value++)})((d) => d.value),
+  html.button({onclick: (d) => () => d.value++})((d) => d.value),
 );
 ```
 
 ## List Rendering
 
 ```js
-// Render a list
+// Render a list.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
   html.ul()(
@@ -255,7 +255,7 @@ const List = EchoX.component(
 ```
 
 ```js
-// Reactive updating
+// Reactive updating.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
   html.div(
@@ -270,7 +270,7 @@ const List = EchoX.component(
 ```
 
 ```js
-// Reactive appending
+// Reactive appending.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
   html.div(
@@ -285,7 +285,7 @@ const List = EchoX.component(
 ```
 
 ```js
-// Reactive removing
+// Reactive removing.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
   html.div(
@@ -300,7 +300,7 @@ const List = EchoX.component(
 ```
 
 ```js
-// Reactive reversing
+// Reactive reversing.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
   html.div(
@@ -315,7 +315,7 @@ const List = EchoX.component(
 ```
 
 ```js
-// Reactive filtering
+// Reactive filtering.
 const List = EchoX.component(
   EchoX.reactive()
     .let("list", () => [1, 2, 3])
@@ -334,7 +334,7 @@ const List = EchoX.component(
 ## Conditional Rendering
 
 ```js
-// Match with two arms
+// Match with two arms.
 EchoX.Match({test: (d) => d.value > 0.5})(
   html.span()("Yes"),
   html.span()("No")
@@ -342,7 +342,7 @@ EchoX.Match({test: (d) => d.value > 0.5})(
 ```
 
 ```js
-// Match with multiple arms
+// Match with multiple arms.
 EchoX.Match()(
   EchoX.Arm({test: (d) => d.type === "A"})(html.span("apple")),
   EchoX.Arm({test: (d) => d.type === "B"})(html.span("banana")),
@@ -351,7 +351,7 @@ EchoX.Match()(
 ```
 
 ```js
-// Switch-like Match
+// Switch-like Match.
 EchoX.Match({value: (d) => d.type})(
   EchoX.Arm({test: "A"})(html.span("apple")),
   EchoX.Arm({test: "B"})(html.span("banana")),
@@ -395,7 +395,7 @@ const App = EchoX.component(
 ## Slot Forwarding
 
 ```js
-// Slots from children
+// Slots from children.
 const Div = EchoX.component(
   html.div()(
     EchoX.Slot({from: (d) => d.children})
@@ -404,7 +404,7 @@ const Div = EchoX.component(
 
 const App = EchoX.component(
   Div()(
-    html.h1()("Hello, World!"), 
+    html.h1()("Hello, World!"),
     Div()(
       html.p()("This is a test.")
     )
@@ -413,7 +413,7 @@ const App = EchoX.component(
 ```
 
 ```js
-// Slots with fallback content
+// Slots with fallback content.
 const Div = EchoX.component(
   html.div()(
     EchoX.Slot({from: (d) => d.children})(
@@ -426,7 +426,7 @@ const App = EchoX.component(Div());
 ```
 
 ```js
-// Named slots
+// Named slots.
 const Layout = EchoX.component(
   EchoX.reactive().get("header").get("body").get("footer"),
   html.div()(
