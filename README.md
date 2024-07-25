@@ -463,7 +463,7 @@ const App = EchoX.component(
   EchoX.reactive()
     .let("x0", 100)
     .let("y0", 100)
-    .use("mouse", (d) => mouse.join({x0: d.x0, y0: d.y0})),
+    .let("mouse", (d) => mouse.join({x0: d.x0, y0: d.y0})),
   html.div()((d) => `${d.mouse.x}, ${d.mouse.y}`),
 );
 ```
