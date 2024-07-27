@@ -33,3 +33,5 @@ export const from = (obj, callback) => Obj.fromEntries(entries(obj).map(([k, v])
 export const createDocumentFragment = doc.createDocumentFragment.bind(doc);
 
 export const childNodes = (d) => d.childNodes;
+
+export const setRef = symbol();
