@@ -9,6 +9,5 @@ export {html} from "./html.js";
 export {Match} from "./Match.js";
 export {mount} from "./mount.js";
 export {reactive} from "./reactive.js";
-export {ref} from "./ref.js";
 export {Slot} from "./Slot.js";
 export {unmount} from "./unmount.js";

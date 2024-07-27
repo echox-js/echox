@@ -1,5 +1,4 @@
-import {isExpr, isControl, isNode, isFunc, isStr, assign, from, doc, Obj, entries} from "./shared.js";
-import {ref, setRef} from "./ref.js";
+import {isExpr, isControl, isNode, isFunc, isStr, assign, from, doc, Obj, entries, setRef} from "./shared.js";
 import {track} from "./reactive.js";
 import {node} from "./html.js";
 import {dispose, remove, UNMOUNT} from "./unmount.js";
@@ -21,8 +20,7 @@ const hydrate = (d, scope) => {
   if (!isNode(d)) return d;
   const {tag, ns, props, children} = d;
   const newProps = from(props, (v) => (isExpr(v) ? bind(v, scope) : v));
-  newProps[ref] = props[ref];
-  newProps[setRef] = (val) => (scope[props[ref]] = val);
+  newProps[setRef] = (val) => props.ref?.(scope)(val);
   return node(tag, ns)(newProps)(...children.map((d) => hydrate(d, scope)));
 };
 
@@ -86,7 +84,7 @@ export const h = (parent, template, scope) => {
   const {tag, ns, props, children} = node;
   const el = ns ? doc.createElementNS(ns, tag) : doc.createElement(tag);
   parent.append(el);
-  if (props[ref]) scope[props[ref]] = el;
+  props.ref?.(scope)(el), delete props.ref;
   for (const [k, v] of entries(props)) {
     const setter = (cache[tag + "," + k] ??= setterOf(el, k)?.set ?? 0).bind?.(el) ?? el.setAttribute.bind(el, k);
     let old;

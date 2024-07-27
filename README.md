@@ -367,16 +367,14 @@ EchoX.component(
   EchoX.reactive()
     .let("div", null)
     .call((d) => d.div && (d.div.textContent = "hello world")),
-  html.div({[EchoX.ref]: "div"}),
+  html.div({ref: (d) => (el) => (d.div = el)}),
 );
 ```
 
 ```js
 // Expose methods from state.
 const Add = EchoX.component(
-  EchoX.reactive()
-    .get(EchoX.ref, null)
-    .call((d) => (d[EchoX.ref] = (x, y) => x + y)),
+  EchoX.reactive().call((d) => (d.ref = (x, y) => x + y)),
   html.div()("Add"),
 );
 
@@ -386,7 +384,7 @@ const App = EchoX.component(
     .let("sum", 0)
     .call((d) => d.add && (d.sum = d.add(1, 2))),
   EchoX.Fragment()(
-    Add({[EchoX.ref]: "add"}),
+    Add({ref: (d) => (val) => (d.ref = val)}),
     html.div()((d) => d.sum),
   ),
 );
@@ -491,7 +489,7 @@ import {createStore} from "./store.js";
 const Counter = EchoX.component(
   EchoX.reactive()
     .let("value", 0)
-    .use("counter", () => createStore()),
+    .let("counter", () => createStore()),
   html.button({
     onclick: (d) => d.counter.increment,
   })((d) => d.counter.value),
