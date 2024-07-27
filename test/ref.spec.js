@@ -11,7 +11,7 @@ test("ref should bind to a DOM element", async () => {
       EchoX.reactive()
         .let("div", null)
         .call((d) => d.div && (d.div.textContent = "hello world")),
-      html.div({[EchoX.ref]: "div"}),
+      html.div({ref: (d) => (el) => (d.div = el)})(),
     );
     EchoX.mount(el, App());
 
@@ -23,9 +23,7 @@ test("ref should bind to a DOM element", async () => {
 test("ref should bind to component", async () => {
   await withContainer(async (el) => {
     const Add = EchoX.component(
-      EchoX.reactive()
-        .get(EchoX.ref, null)
-        .call((d) => (d[EchoX.ref] = (x, y) => x + y)),
+      EchoX.reactive().call((d) => (d.ref = (x, y) => x + y)),
       html.div()("Add"),
     );
 
@@ -35,7 +33,7 @@ test("ref should bind to component", async () => {
         .let("sum", 0)
         .call((d) => d.add && (d.sum = d.add(1, 2))),
       EchoX.Fragment()(
-        Add({[EchoX.ref]: "add"}),
+        Add({ref: (d) => (val) => (d.add = val)}),
         html.div()((d) => d.sum),
       ),
     );

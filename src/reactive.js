@@ -1,5 +1,4 @@
-import {maybeCall, symbol, isObject, isArray, from, assign, isExpr, isFunc, isNatural, Obj} from "./shared.js";
-import {ref, setRef} from "./ref.js";
+import {maybeCall, symbol, isObject, isArray, from, assign, isExpr, isFunc, isNatural, Obj, setRef} from "./shared.js";
 import {UNMOUNT} from "./unmount.js";
 
 let updates, actives, disposes;
@@ -101,7 +100,7 @@ class Reactive {
           return s.val;
         },
         set(target, key, value) {
-          if (top && key === ref) return props[setRef](value), true;
+          if (top && key === "ref") return props[setRef](value), true;
           if (!(key in states)) {
             if (isArray(target) && isNatural(+key)) states[key] = state(target[key]);
             else return (target[key] = value), true;
