@@ -52,21 +52,19 @@ EchoX is also available as a UMD bundle for legacy browsers.
 
 Please reading the following core concepts to learn more:
 
-- [DOM Building](#dom-building)
+- [UI Describing](#ui-describing)
 - [Component Mounting](#component-mounting)
 - [Reactive Defining](#reactive-defining)
 - [Style Bindings](#style-bindings)
 - [Event Handling](#event-handling)
-- [List Rendering](#list-rendering)
-- [Conditional Rendering](#conditional-rendering)
+- [Control Flow](#control-flow)
 - [Ref Bindings](#ref-bindings)
-- [Slot Forwarding](#slot-forwarding)
-- [Composable Reactive](#composable-reactive)
-- [Store Sharing](#store-sharing)
+- [Stateful Reusing](#stateful-reusing)
+- [Context Sharing](#context-sharing)
 
-## DOM Building
+## UI Describing
 
-EchoX uses a dynamic object _html_ implemented with [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) to building DOM:
+EchoX uses a dynamic object _html_ implemented with [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) to describing UI:
 
 ```js
 import {html} from "echox";
@@ -240,7 +238,9 @@ const Counter = EchoX.component(
 );
 ```
 
-## List Rendering
+## Control Flow
+
+### List Rendering
 
 ```js
 // Render a list.
@@ -331,7 +331,7 @@ const List = EchoX.component(
 );
 ```
 
-## Conditional Rendering
+### Conditional Rendering
 
 ```js
 // Match with two arms.
@@ -359,38 +359,18 @@ EchoX.Match({value: (d) => d.type})(
 );
 ```
 
-## Ref Bindings
+### Fragment wrapping
 
 ```js
-// Accessing a DOM element.
 EchoX.component(
-  EchoX.reactive()
-    .let("div", null)
-    .call((d) => d.div && (d.div.textContent = "hello world")),
-  html.div({ref: (d) => (el) => (d.div = el)}),
-);
-```
-
-```js
-// Expose methods from state.
-const Add = EchoX.component(
-  EchoX.reactive().call((d) => (d.ref = (x, y) => x + y)),
-  html.div()("Add"),
-);
-
-const App = EchoX.component(
-  EchoX.reactive()
-    .let("add", null)
-    .let("sum", 0)
-    .call((d) => d.add && (d.sum = d.add(1, 2))),
   EchoX.Fragment()(
-    Add({ref: (d) => (val) => (d.ref = val)}),
-    html.div()((d) => d.sum),
-  ),
+    html.h1()("Hello, World!"),
+    html.p()("This is a test.")
+  )
 );
 ```
 
-## Slot Forwarding
+### Slot Forwarding
 
 ```js
 // Slots from children.
@@ -443,7 +423,38 @@ const App = EchoX.component(
 );
 ```
 
-## Composable Reactive
+## Ref Bindings
+
+```js
+// Accessing a DOM element.
+EchoX.component(
+  EchoX.reactive()
+    .let("div", null)
+    .call((d) => d.div && (d.div.textContent = "hello world")),
+  html.div({ref: (d) => (el) => (d.div = el)}),
+);
+```
+
+```js
+// Expose methods from state.
+const Add = EchoX.component(
+  EchoX.reactive().call((d) => (d.ref = (x, y) => x + y)),
+  html.div()("Add"),
+);
+
+const App = EchoX.component(
+  EchoX.reactive()
+    .let("add", null)
+    .let("sum", 0)
+    .call((d) => d.add && (d.sum = d.add(1, 2))),
+  EchoX.Fragment()(
+    Add({ref: (d) => (val) => (d.ref = val)}),
+    html.div()((d) => d.sum),
+  ),
+);
+```
+
+## Stateful Reusing
 
 ```js
 const mouse = EchoX.reactive()
@@ -466,7 +477,7 @@ const App = EchoX.component(
 );
 ```
 
-## Store Sharing
+## Context Sharing
 
 ```js
 // store.js
