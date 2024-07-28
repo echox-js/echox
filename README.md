@@ -4,7 +4,7 @@ The fast, 3KB JavaScript framework for "echoing" reactive UI in functional style
 
 - **Fast** - No Compiling, but Fine-tune Reactivity and No Virtual DOM Diff
 - **Small** - Zero Dependencies, 3KB (gzip)
-- **Simple** - 15 APIs, 1 Hour Learning
+- **Simple** - 16 APIs, 1 Hour Learning
 - **Productive** - Structural Code, but Nicely Reusable Logic and Flexible Organization of Concerns
 - **Pragmatic** - No Transpiling, but Readable Template and Fully TS Support
 
@@ -61,6 +61,25 @@ Please reading the following core concepts to learn more:
 - [Ref Bindings](#ref-bindings)
 - [Stateful Reusing](#stateful-reusing)
 - [Context Sharing](#context-sharing)
+
+## API Index
+
+- [EchoX.**Arm**](#echox-arm)
+- [EchoX.**component**](#echox-component)
+- [EchoX.**controlFlow**](#echox-controlFlow)
+- [EchoX.**css**](#echox-css)
+- [EchoX.**cx**](#echox-cx)
+- [EchoX.**For**](#echox-For)
+- [EchoX.**Fragment**](#echox-fragment)
+- [EchoX.**html**](#echox-html)
+- [EchoX.**Match**](#echox-match)
+- [EchoX.**mount**](#echox-mount)
+- [EchoX.**reactive**](#echox-reactive)
+- [reactive.**get**](#reactive-get)
+- [reactive.**let**](#reactive-let)
+- [reactive.**call**](#reactive-call)
+- [reactive.**join**](#reactive-join)
+- [EchoX.**unmount**](#echox-unmount)
 
 ## UI Describing
 
