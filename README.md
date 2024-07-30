@@ -61,25 +61,7 @@ Please reading the following core concepts to learn more:
 - [Ref Bindings](#ref-bindings)
 - [Stateful Reusing](#stateful-reusing)
 - [Context Sharing](#context-sharing)
-
-## API Index
-
-- [EchoX.**Arm**](#echox-arm)
-- [EchoX.**component**](#echox-component)
-- [EchoX.**controlFlow**](#echox-controlFlow)
-- [EchoX.**css**](#echox-css)
-- [EchoX.**cx**](#echox-cx)
-- [EchoX.**For**](#echox-For)
-- [EchoX.**Fragment**](#echox-fragment)
-- [EchoX.**html**](#echox-html)
-- [EchoX.**Match**](#echox-match)
-- [EchoX.**mount**](#echox-mount)
-- [EchoX.**reactive**](#echox-reactive)
-- [reactive.**get**](#reactive-get)
-- [reactive.**let**](#reactive-let)
-- [reactive.**call**](#reactive-call)
-- [reactive.**join**](#reactive-join)
-- [EchoX.**unmount**](#echox-unmount)
+- [API Index](#api-index)
 
 ## UI Describing
 
@@ -525,3 +507,22 @@ const Counter = EchoX.component(
   })((d) => d.counter.value),
 );
 ```
+
+## API Index
+
+- [EchoX.**Arm**](#echox-arm)
+- [EchoX.**component**](#echox-component)
+- [EchoX.**controlFlow**](#echox-controlFlow)
+- [EchoX.**css**](#echox-css)
+- [EchoX.**cx**](#echox-cx)
+- [EchoX.**For**](#echox-For)
+- [EchoX.**Fragment**](#echox-fragment)
+- [EchoX.**html**](#echox-html)
+- [EchoX.**Match**](#echox-match)
+- [EchoX.**mount**](#echox-mount)
+- [EchoX.**reactive**](#echox-reactive)
+- [reactive.**get**](#reactive-get)
+- [reactive.**let**](#reactive-let)
+- [reactive.**call**](#reactive-call)
+- [reactive.**join**](#reactive-join)
+- [EchoX.**unmount**](#echox-unmount)
