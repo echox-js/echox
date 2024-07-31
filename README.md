@@ -510,19 +510,19 @@ const Counter = EchoX.component(
 
 ## API Index
 
-- [EchoX.**Arm**](#echox-arm)
-- [EchoX.**component**](#echox-component)
-- [EchoX.**controlFlow**](#echox-controlFlow)
-- [EchoX.**css**](#echox-css)
-- [EchoX.**cx**](#echox-cx)
-- [EchoX.**For**](#echox-For)
-- [EchoX.**Fragment**](#echox-fragment)
-- [EchoX.**html**](#echox-html)
-- [EchoX.**Match**](#echox-match)
-- [EchoX.**mount**](#echox-mount)
-- [EchoX.**reactive**](#echox-reactive)
-- [reactive.**get**](#reactive-get)
-- [reactive.**let**](#reactive-let)
-- [reactive.**call**](#reactive-call)
-- [reactive.**join**](#reactive-join)
-- [EchoX.**unmount**](#echox-unmount)
+- [EchoX.**Arm**](#echox-arm) - arms for Match
+- [EchoX.**component**](#echox-component) - defining piece of reusable UI
+- [EchoX.**controlFlow**](#echox-controlFlow) - defining a custom control flow
+- [EchoX.**css**](#echox-css) - defining conditional styles
+- [EchoX.**cx**](#echox-cx) - defining conditional class names
+- [EchoX.**For**](#echox-For) - rendering list
+- [EchoX.**Fragment**](#echox-fragment) - rendering nodes without wrapping nodes
+- [EchoX.**html**](#echox-html) - describing UI functionally
+- [EchoX.**Match**](#echox-match) - rendering conditionally
+- [EchoX.**mount**](#echox-mount) - mounting DOM
+- [EchoX.**reactive**](#echox-reactive) - returning a reactive scope
+- [reactive.**get**](#reactive-get) - receiving props
+- [reactive.**let**](#reactive-let) - defining a state, derived state, method
+- [reactive.**call**](#reactive-call) - calling a effect
+- [reactive.**join**](#reactive-join) - instantiating a reactive scope
+- [EchoX.**unmount**](#echox-unmount) - destroying DOM and clearing allocated resources
