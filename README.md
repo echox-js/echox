@@ -457,6 +457,8 @@ const App = EchoX.component(
 
 ## Stateful Reusing
 
+A stateful reactive scope is reusable by binding to a existing reactive scope with the specified namespace. Make sure to call _reactive.join_ to create a new reactive scope with the specified props:
+
 ```js
 const mouse = EchoX.reactive()
   .get("x0", 0)
@@ -477,6 +479,10 @@ const App = EchoX.component(
   html.div()((d) => `${d.mouse.x}, ${d.mouse.y}`),
 );
 ```
+
+<a name="reactive-join" href="reactive-join">#</a> _reactive_.**join**(_[props]_)
+
+Instantiates a reactive scope with the specified _props_.
 
 ## Context Sharing
 
