@@ -486,13 +486,15 @@ Instantiates a reactive scope with the specified _props_.
 
 ## Context Sharing
 
+A single instance stateful reactive scope can be shared by binding to a existing reactive scope with the specified namespace.
+
 ```js
-// store.js
-export function createStore() {
-  let store;
+// context.js
+export function createContext() {
+  let context;
   return () => {
-    if (store) return store;
-    store = EchoX.reactive()
+    if (context) return context;
+    context = EchoX.reactive()
       .let("value", 0)
       .let("increment", (d) => () => d.value++)
       .join();
@@ -502,12 +504,12 @@ export function createStore() {
 
 ```js
 // counter.js
-import {createStore} from "./store.js";
+import {createContext} from "./context.js";
 
 const Counter = EchoX.component(
   EchoX.reactive()
     .let("value", 0)
-    .let("counter", () => createStore()),
+    .let("counter", () => createContext()),
   html.button({
     onclick: (d) => d.counter.increment,
   })((d) => d.counter.value),
