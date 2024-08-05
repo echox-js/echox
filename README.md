@@ -426,32 +426,39 @@ const App = EchoX.component(
 
 ## Ref Bindings
 
+Ref is particularly common used to manipulate the DOM. First declare a variable with [reactive.let](#reactive-let), then a pass a binding function as the _ref_ attribute to the DOM you want to manipulate. Then binding function returns a setter which take the DOM element as the parameter.
+
 ```js
-// Accessing a DOM element.
+// Manipulate a DOM element.
 EchoX.component(
   EchoX.reactive()
-    .let("div", null)
-    .call((d) => d.div && (d.div.textContent = "hello world")),
-  html.div({ref: (d) => (el) => (d.div = el)}),
+    .let("divRef", null)
+    .call((d) => d.divRef && (d.divRef.textContent = "hello world")),
+  html.div({ref: (d) => (el) => (d.divRef = el)}),
 );
 ```
 
+Instead of manipulating a DOM element, you can expose a custom handle from a component. To do this, you'd need to assign the handle to the _ref_ props for the component. And then pass a binding function as _ref_ attribute to the component.
+
 ```js
-// Expose methods from state.
-const Add = EchoX.component(
-  EchoX.reactive().call((d) => (d.ref = (x, y) => x + y)),
-  html.div()("Add"),
+// Exposes imperative handle from component.
+const MyInput = EchoX.component(
+  EchoX.reactive()
+    .let("inputRef", null)
+    .call((d) => {
+      d.ref = {
+        focus: () => d.inputRef.current.focus(),
+        scrollIntoView: () => d.inputRef.current.scrollIntoView(),
+      };
+    }),
+  html.input({ref: (d) => (el) => (d.inputRef = el)}),
 );
 
-const App = EchoX.component(
+const Form = EchoX.component(
   EchoX.reactive()
-    .let("add", null)
-    .let("sum", 0)
-    .call((d) => d.add && (d.sum = d.add(1, 2))),
-  EchoX.Fragment()(
-    Add({ref: (d) => (val) => (d.ref = val)}),
-    html.div()((d) => d.sum),
-  ),
+    .let("inputRef", null)
+    .let("handleClick", (d) => () => d.inputRef.focus()),
+  MyInput({ref: (d) => (handle) => (d.inputRef = handle)}),
 );
 ```
 
