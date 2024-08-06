@@ -225,17 +225,23 @@ Returns a string joined by all the attributes names defined in the merged specif
 
 ## Event Handling
 
+In tag function, you provide a _function_ value for property starting with _on_. This is a convenient way to specify event handlers. The specified function takes the reactive scope as the parameter and returns the event handler:
+
 ```js
-const Counter = EchoX.component(
-  EchoX.reactive().let("value", 0),
-  html.button({onclick: (d) => () => d.value++})((d) => d.value),
+const Input = EchoX.component(
+  EchoX.reactive().let("text", "hello"),
+  html.input({oninput: (d) => (e) => (d.text = e.target.value)}),
 );
 ```
 
+You can also define a method variable and bind it to an event handler.
+
 ```js
 const Counter = EchoX.component(
-  EchoX.reactive().let("value", 0),
-  html.button({onclick: (d) => () => d.value++})((d) => d.value),
+  EchoX.reactive()
+    .let("value", 0)
+    .let("onclick", (d) => () => d.value++),
+  html.button({onclick: (d) => d.onclick})((d) => d.value),
 );
 ```
 
