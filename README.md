@@ -247,6 +247,59 @@ const Counter = EchoX.component(
 
 ## Control Flow
 
+Control Flow is the component to control the logic flow in the template, such as [conditional](#conditional-rendering) or [list rendering](#list-rendering).
+
+### Conditional Rendering
+
+The most basic control flow is [EchoX.\<Match\>](#echox-match), which is for conditional rendering. To handle boolean expression (_a && b_), wraps the component by _\<Match\>_ component with the _test_ attribute specified. If the specified _test_ function returns a truthy value, the wrapped component will be rendered, otherwise nothing.
+
+```js
+// Boolean expression.
+EchoX.Match({test: (d) => d.value > 0.5})(
+  html.span()("Hello World"),
+);
+```
+
+To handle ternaries (_a ? b : c_) expression, wraps two components by _\<Match\>_ component with the _test_ attribute specified. If the specified _test_ function returns a truthy value, the first component will be rendered, otherwise the second.
+
+```js
+// Match with two arms.
+EchoX.Match({test: (d) => d.value > 0.5})(
+  html.span()("Yes"),
+  html.span()("No")
+);
+```
+
+To deal with conditionals with more than 2 mutual exclusive outcomes, wraps [EchoX.\<Arm\>](#echox-arm) by [EchoX.\<Match\>](#echox-match). Each _\<Arm\>_ component should be specified the test attribute. If the _test_ attribute is not specified, it defaults to _() => true_. The children of the first _\<Arm\>_ component whose _test_ function returns a truthy value will be rendered.
+
+```js
+// Match with multiple arms.
+EchoX.Match()(
+  EchoX.Arm({test: (d) => d.type === "A"})(html.span("apple")),
+  EchoX.Arm({test: (d) => d.type === "B"})(html.span("banana")),
+  EchoX.Arm()(html.span("unknown")),
+);
+```
+
+It is also possible to define switch-like match:
+
+```js
+// Switch-like match.
+EchoX.Match({value: (d) => d.type})(
+  EchoX.Arm({test: "A"})(html.span("apple")),
+  EchoX.Arm({test: "B"})(html.span("banana")),
+  EchoX.Arm()(html.span("unknown")),
+);
+```
+
+<a name="echox-match" href="echox-match">#</a> _EchoX_.**\<Match\>**
+
+The control flow for list rendering. With the _test_ attribute being specified, renders the first child if the _test_ function returns a truthy value, otherwise the second child. With the _test_ attribute not being specified, renders the children of the first _\<Arm\>_ component with the truthy _test_ attribute.
+
+<a name="echox-arm" href="echox-arm">#</a> _EchoX_.**\<Arm\>**
+
+The control flow for defining one outcome for Match control flow. If the _test_ attribute is not specified, it defaults to _() => true_. The children of it will be rendered if it is the first _\<Arm\>_ component with the truthy _test_ attribute for its parent _\<Match\>_ component.
+
 ### List Rendering
 
 ```js
@@ -335,34 +388,6 @@ const List = EchoX.component(
       )
     ),
   ),
-);
-```
-
-### Conditional Rendering
-
-```js
-// Match with two arms.
-EchoX.Match({test: (d) => d.value > 0.5})(
-  html.span()("Yes"),
-  html.span()("No")
-);
-```
-
-```js
-// Match with multiple arms.
-EchoX.Match()(
-  EchoX.Arm({test: (d) => d.type === "A"})(html.span("apple")),
-  EchoX.Arm({test: (d) => d.type === "B"})(html.span("banana")),
-  EchoX.Arm()(html.span("unknown")),
-);
-```
-
-```js
-// Switch-like Match.
-EchoX.Match({value: (d) => d.type})(
-  EchoX.Arm({test: "A"})(html.span("apple")),
-  EchoX.Arm({test: "B"})(html.span("banana")),
-  EchoX.Arm()(html.span("unknown")),
 );
 ```
 
