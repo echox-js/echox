@@ -4,7 +4,7 @@ The fast, 3KB JavaScript framework for "echoing" reactive UI in functional style
 
 - **Fast** - No Compiling, but Fine-tune Reactivity and No Virtual DOM Diff
 - **Small** - Zero Dependencies, 3KB (gzip)
-- **Simple** - 16 APIs, 1 Hour Learning
+- **Simple** - 15 APIs, 1 Hour Learning
 - **Productive** - Structural Code, but Nicely Reusable Logic and Flexible Organization of Concerns
 - **Pragmatic** - No Transpiling, but Readable Template and Fully TS Support
 
@@ -101,15 +101,15 @@ Then it can be removed and disposes allocated resources by [EchoX.unmount](#echo
 EchoX.unmount(document.body);
 ```
 
-<a name="echox-component" href="echox-component">#</a> _EchoX_.**component**([_reactive_,] template\_)
+<a name="echox-component" href="#echox-component">#</a> _EchoX_.**component**([_reactive_,] template\_)
 
 Returns a component with the specified reactive scope and template. If only one argument is specified, returns a component only with template.
 
-<a name="echox-mount" href="echox-mount">#</a> _EchoX_.**mount**(_container_, _template_)
+<a name="echox-mount" href="#echox-mount">#</a> _EchoX_.**mount**(_container_, _template_)
 
 Mounts the specified _template_ into the specified _container_.
 
-<a name="echox-unmount" href="echox-unmount">#</a> _EchoX_.**unmount**(_container_)
+<a name="echox-unmount" href="#echox-unmount">#</a> _EchoX_.**unmount**(_container_)
 
 Unmounts the the specified _container_ with the mounted template.
 
@@ -215,11 +215,11 @@ html.span({
 });
 ```
 
-<a name="echox-cx" href="echox-cx">#</a> _EchoX_.**cx**(_...classObjects_)
+<a name="echox-cx" href="#echox-cx">#</a> _EchoX_.**cx**(_...classObjects_)
 
 Returns a string joined by all the attribute names defined in the specified _classObjects_ with truthy string values.
 
-<a name="echox-css" href="echox-css">#</a> _EchoX_.**css**(_...styleObjects_)
+<a name="echox-css" href="#echox-css">#</a> _EchoX_.**css**(_...styleObjects_)
 
 Returns a string joined by all the attributes names defined in the merged specified _styleObjects_ with truthy string values.
 
@@ -292,11 +292,11 @@ EchoX.Match({value: (d) => d.type})(
 );
 ```
 
-<a name="echox-match" href="echox-match">#</a> _EchoX_.**\<Match\>**
+<a name="echox-match" href="#echox-match">#</a> _EchoX_.**\<Match\>**
 
 The control flow for list rendering. With the _test_ attribute being specified, renders the first child if the _test_ function returns a truthy value, otherwise the second child. With the _test_ attribute not being specified, renders the children of the first _\<Arm\>_ component with the truthy _test_ attribute.
 
-<a name="echox-arm" href="echox-arm">#</a> _EchoX_.**\<Arm\>**
+<a name="echox-arm" href="#echox-arm">#</a> _EchoX_.**\<Arm\>**
 
 The control flow for defining one outcome for Match control flow. If the _test_ attribute is not specified, it defaults to _() => true_. The children of it will be rendered if it is the first _\<Arm\>_ component with the truthy _test_ attribute for its parent _\<Match\>_ component.
 
@@ -393,6 +393,8 @@ const List = EchoX.component(
 
 ### Fragment wrapping
 
+[EchoX.\<Fragment\>](ehcox-fragment) is the control flow to group a list of children without adding extra nodes to DOM.
+
 ```js
 EchoX.component(
   EchoX.Fragment()(
@@ -401,6 +403,10 @@ EchoX.component(
   )
 );
 ```
+
+<a name="echox-fragment" href="#echox-fragment">#</a> _EchoX_.**\<Fragment\>**
+
+The control flow for grouping a list of children without adding extra nodes to DOM.
 
 ### Slot Forwarding
 
@@ -556,15 +562,14 @@ const Counter = EchoX.component(
 
 ## API Index
 
-- [EchoX.**Arm**](#echox-arm) - arms for Match
+- [EchoX.**\<Arm\>**](#echox-arm) - arms for Match
 - [EchoX.**component**](#echox-component) - defining piece of reusable UI
-- [EchoX.**controlFlow**](#echox-controlFlow) - defining a custom control flow
 - [EchoX.**css**](#echox-css) - defining conditional styles
 - [EchoX.**cx**](#echox-cx) - defining conditional class names
-- [EchoX.**For**](#echox-For) - rendering list
-- [EchoX.**Fragment**](#echox-fragment) - rendering nodes without wrapping nodes
+- [EchoX.**\<For\>**](#echox-For) - rendering list
+- [EchoX.**\<Fragment\>**](#echox-fragment) - rendering nodes without wrapping nodes
 - [EchoX.**html**](#echox-html) - describing UI functionally
-- [EchoX.**Match**](#echox-match) - rendering conditionally
+- [EchoX.**\<Match\>**](#echox-match) - rendering conditionally
 - [EchoX.**mount**](#echox-mount) - mounting DOM
 - [EchoX.**reactive**](#echox-reactive) - returning a reactive scope
 - [reactive.**get**](#reactive-get) - receiving props
