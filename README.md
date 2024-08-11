@@ -4,7 +4,7 @@ The fast, 3KB JavaScript framework for "echoing" reactive UI in functional style
 
 - **Fast** - No Compiling, but Fine-tune Reactivity and No Virtual DOM Diff
 - **Small** - Zero Dependencies, 3KB (gzip)
-- **Simple** - 15 APIs, 1 Hour Learning
+- **Simple** - 16 APIs, 1 Hour Learning
 - **Productive** - Structural Code, but Nicely Reusable Logic and Flexible Organization of Concerns
 - **Pragmatic** - No Transpiling, but Readable Template and Fully TS Support
 
@@ -410,6 +410,10 @@ The control flow for grouping a list of children without adding extra nodes to D
 
 ### Slot Forwarding
 
+[EchoX.\<Slot\>](ehcox-Slot) is the control flow to pass a template fragment to a child component, and let the child component render the fragment within its own template.
+
+_\<Slot\>_ is a slot outlet that renders the template specified by the _from_ property. For example, to render the child component from the parent:
+
 ```js
 // Slots from children.
 const Div = EchoX.component(
@@ -428,6 +432,8 @@ const App = EchoX.component(
 );
 ```
 
+The children of _\<Slot\>_ will be rendered if the _from_ property is a falsy value, which is considered as the fallback content:
+
 ```js
 // Slots with fallback content.
 const Div = EchoX.component(
@@ -440,6 +446,8 @@ const Div = EchoX.component(
 
 const App = EchoX.component(Div());
 ```
+
+It also possible to define some named slot to render template props other than _children_:
 
 ```js
 // Named slots.
@@ -460,6 +468,10 @@ const App = EchoX.component(
   }),
 );
 ```
+
+<a name="echox-slot" href="#echox-slot">#</a> _EchoX_.**\<Slot\>**
+
+The control flow for passing a template fragment to a child component, and let the child component render the fragment specified by _from_ property within its own template. If the _from_ property is a falsy value, the children of _\<Slot\>_ will be rendered.
 
 ## Ref Bindings
 
@@ -576,4 +588,5 @@ const Counter = EchoX.component(
 - [reactive.**let**](#reactive-let) - defining a state, derived state, method
 - [reactive.**call**](#reactive-call) - calling a effect
 - [reactive.**join**](#reactive-join) - instantiating a reactive scope
+- [EchoX.**<\Slot\>**](#echox-slot) - pass template to child component
 - [EchoX.**unmount**](#echox-unmount) - destroying DOM and clearing allocated resources
