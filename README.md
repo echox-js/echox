@@ -101,7 +101,7 @@ Then it can be removed and disposes allocated resources by [EchoX.unmount](#echo
 EchoX.unmount(document.body);
 ```
 
-<a name="echox-component" href="#echox-component">#</a> _EchoX_.**component**([_reactive_,] template\_)
+<a name="echox-component" href="#echox-component">#</a> _EchoX_.**component**(_[reactive,] template_)
 
 Returns a component with the specified reactive scope and template. If only one argument is specified, returns a component only with template.
 
@@ -390,6 +390,10 @@ const List = EchoX.component(
   ),
 );
 ```
+
+<a name="echox-for" href="#echox-for">#</a> _EchoX_.**\<For\>**
+
+The control flow for render a list of data.
 
 ### Fragment wrapping
 
