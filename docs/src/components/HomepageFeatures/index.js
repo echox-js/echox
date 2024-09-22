@@ -6,17 +6,12 @@ const FeatureList = [
   {
     title: "Fast",
     Svg: require("@site/static/img/undraw_docusaurus_mountain.svg").default,
-    description: <>No Compiling, but Fine-tune Reactivity and No Virtual DOM Diff</>,
-  },
-  {
-    title: "Simple",
-    Svg: require("@site/static/img/undraw_docusaurus_tree.svg").default,
-    description: <>Zero Dependencies, 3KB (gzip); 16 APIs, 1 Hour Learning</>,
+    description: <>No Compiling, but Fine-tune Reactivity and No Virtual DOM Diff; Zero Dependencies, 3KB (gzip)</>,
   },
   {
     title: "Pragmatic",
-    Svg: require("@site/static/img/undraw_docusaurus_react.svg").default,
-    description: <>No Transpiling, but Readable Template and Fully TS Support</>,
+    Svg: require("@site/static/img/undraw_docusaurus_tree.svg").default,
+    description: <>16 APIs, 1 Hour Learning; No Transpiling, but Readable Template and Fully TS Support</>,
   },
   {
     title: "Productive",
@@ -27,7 +22,7 @@ const FeatureList = [
 
 function Feature({Svg, title, description}) {
   return (
-    <div className={clsx("col col--3")}>
+    <div className={clsx("col col--4")}>
       <div className="text--center">
         <Svg className={styles.featureSvg} role="img" />
       </div>
