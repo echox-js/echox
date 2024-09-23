@@ -18,5 +18,5 @@ sidebar_position: 4
 - [reactive.**let**](./tutorial#reactive-let) - defining a state, derived state, method
 - [reactive.**call**](./tutorial#reactive-call) - calling a effect
 - [reactive.**join**](./tutorial#reactive-join) - instantiating a reactive scope
-- [EchoX.**Slot>**](./tutorial#echox-slot) - pass template to child component
+- [EchoX.**Slot**](./tutorial#echox-slot) - pass template to child component
 - [EchoX.**unmount**](./tutorial#echox-unmount) - destroying DOM and clearing allocated resources
