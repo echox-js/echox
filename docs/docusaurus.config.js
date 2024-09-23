@@ -86,7 +86,7 @@ const config = {
             position: "left",
             label: "Docs",
           },
-          {to: "/blog", label: "Blog", position: "left"},
+          // {to: "/blog", label: "Blog", position: "left"},
           {
             href: "https://github.com/echox-js/echox",
             label: "GitHub",
@@ -122,10 +122,10 @@ const config = {
           {
             title: "More",
             items: [
-              {
-                label: "Blog",
-                to: "/blog",
-              },
+              // {
+              //   label: "Blog",
+              //   to: "/blog",
+              // },
               {
                 label: "GitHub",
                 href: "https://github.com/echox-js/echox",

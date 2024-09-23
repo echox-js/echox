@@ -4,7 +4,7 @@ import styles from "./styles.module.css";
 
 const FeatureList = [
   {
-    title: "Fast",
+    title: "Lightweight",
     Svg: require("@site/static/img/undraw_docusaurus_mountain.svg").default,
     description: <>No Compiling, but Fine-tune Reactivity and No Virtual DOM Diff; Zero Dependencies, 3KB (gzip)</>,
   },
