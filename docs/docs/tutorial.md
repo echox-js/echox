@@ -247,6 +247,8 @@ The control flow for defining one outcome for Match control flow. If the _test_ 
 
 ## List Rendering
 
+The _\<For\>_ component is for rendering a list of datum. The specified _of_ attribute of _\<For\>_ component is the array of data that will be looped over. Each datum in the array will be mapped to the child component of _\<For\>_, with extra parameters provided in expressions. Each parameter is a reactive with _val_ and _index_ attribute.
+
 ```js
 // Render a list.
 const List = EchoX.component(
@@ -258,6 +260,8 @@ const List = EchoX.component(
   ),
 );
 ```
+
+Update a datum in the array will cause rerendering:
 
 ```js
 // Reactive updating.
@@ -274,6 +278,8 @@ const List = EchoX.component(
 );
 ```
 
+Add datum to the array will cause rerendering, such as _Array.prototype.push_:
+
 ```js
 // Reactive appending.
 const List = EchoX.component(
@@ -288,6 +294,8 @@ const List = EchoX.component(
   ),
 );
 ```
+
+Removing a datum from the array will cause rerendering, such as _Array.prototype.splice_:
 
 ```js
 // Reactive removing.
@@ -304,6 +312,8 @@ const List = EchoX.component(
 );
 ```
 
+Reverse the array will cause rerendering:
+
 ```js
 // Reactive reversing.
 const List = EchoX.component(
@@ -318,6 +328,8 @@ const List = EchoX.component(
   ),
 );
 ```
+
+You can use derived state to filter an array reactively:
 
 ```js
 // Reactive filtering.
@@ -338,7 +350,7 @@ const List = EchoX.component(
 
 ### _EchoX_.**\<For\>** {#echox-for}
 
-The control flow for render a list of data.
+The control flow for render a list of data. If the _of_ attribute being specified, _\<For\>_ component will map the specified _array_ to a list of child _templates_ specified as its child component. There will be more extras parameters for child components' expressions. Each extra parameter is a reactive scope with _val_ and _index_ attribute. The _val_ attribute is the datum and _index_ is the index of datum in the array.
 
 ## Fragment wrapping
 
