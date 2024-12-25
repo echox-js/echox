@@ -56,6 +56,8 @@ Unmounts the the specified _container_ with the mounted template.
 
 ## Reactive Defining
 
+Reactive scopes allow reactivity for component: define reactive states, derived states, props and effects. _EchoX.reactive_ returns a new chainable reactive scope and can used as the first parameter for _EchoX.component_. You can call _reactive.let_ to define a reactive state:
+
 ```js
 // Define primitive states.
 const Counter = EchoX.component(
@@ -64,11 +66,13 @@ const Counter = EchoX.component(
 );
 ```
 
+If the reactive state is non-primitive, such as object or array, it should be specified as a function returning the value:
+
 ```js
 // Define non-primitive states.
 const Person = EchoX.component(
   EchoX.reactive().let("person", () => ({name: "Jack", age: 24})),
-  html.div(
+  html.div()(
     html.span()((d) => d.person.name),
     html.span()((d) => d.person.age),
   ),
@@ -267,7 +271,7 @@ Update a datum in the array will cause rerendering:
 // Reactive updating.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
-  html.div(
+  html.div()(
     html.button({onclick: (d) => () => (d.list[0] = 4)}),
     html.ul()(
       EchoX.For({of: (d) => d.list})(
@@ -284,7 +288,7 @@ Add datum to the array will cause rerendering, such as _Array.prototype.push_:
 // Reactive appending.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
-  html.div(
+  html.div()(
     html.button({onclick: (d) => () => (d.list.push(4))}),
     html.ul()(
       EchoX.For({of: (d) => d.list})(
@@ -301,7 +305,7 @@ Removing a datum from the array will cause rerendering, such as _Array.prototype
 // Reactive removing.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
-  html.div(
+  html.div()(
     html.button({onclick: (d) => () => (d.list.splice(1, 1))}),
     html.ul()(
       EchoX.For({of: (d) => d.list})(
@@ -318,7 +322,7 @@ Reverse the array will cause rerendering:
 // Reactive reversing.
 const List = EchoX.component(
   EchoX.reactive().let("list", () => [1, 2, 3]),
-  html.div(
+  html.div()(
     html.button({onclick: (d) => () => (d.list.reverse())}),
     html.ul()(
       EchoX.For({of: (d) => d.list})(
@@ -337,7 +341,7 @@ const List = EchoX.component(
   EchoX.reactive()
     .let("list", () => [1, 2, 3])
     .let("filtered", (d) => list.filter((val) => val % 2)),
-  html.div(
+  html.div()(
     html.button({onclick: (d) => () => (d.list[0] = 4)}),
     html.ul()(
       EchoX.For({of: (d) => d.filtered})(
