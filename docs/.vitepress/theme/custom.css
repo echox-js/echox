@@ -1,0 +1,47 @@
+:root {
+  --vp-home-hero-name-background: -webkit-linear-gradient(315deg, #fb2576 25%, #3f0071);
+  --vp-home-hero-name-color: transparent;
+}
+
+:root {
+  --vp-c-indigo-1: #fb2576;
+  --vp-c-indigo-2: #fb4b8f;
+  --vp-c-indigo-3: #fb73a8;
+}
+
+.VPHome .image {
+  display: none;
+}
+
+.VPHome .container {
+  justify-content: center;
+}
+
+.VPHome .actions {
+  justify-content: center !important;
+}
+
+.VPHome .main {
+  max-width: 100% !important;
+}
+
+.VPHome .tagline {
+  max-width: 100%;
+  text-align: center;
+}
+
+.VPHome .text {
+  max-width: 100%;
+  text-align: center;
+  margin: 24px 0px !important;
+}
+
+.VPHome .name {
+  text-align: center;
+  max-width: 100%;
+}
+
+.VPHome .clip {
+  font-weight: bolder;
+  font-size: 76px;
+}

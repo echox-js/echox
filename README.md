@@ -1,24 +1,31 @@
-# EchoX: UI = f(reactive, template)
+# EchoX: UI = f(reactive, DOM)
 
-The fast, 3KB JavaScript framework for "echoing" reactive UI in functional style.
+<img src="./docs/public/logo.svg" width="100"/>
 
-- **Fast** - No Compiling, but Fine-tune Reactivity and No Virtual DOM Diff
-- **Small** - Zero Dependencies, 3KB (gzip)
-- **Simple** - 16 APIs, 1 Hour Learning
-- **Productive** - Structural Code, but Nicely Reusable Logic and Flexible Organization of Concerns
-- **Pragmatic** - No Transpiling, but Readable Template and Fully TS Support
+The lightweight reactive UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects.
 
-> [!NOTE]
-> The current next branch is implementing the new proposal API for production use. Please refer to the [main branch](https://github.com/echox-js/echox/tree/main) for the current release.
+```js
+import {html, reactive, $} from "echox";
 
-## Resources 📚
+const [scope] = reactive().let("value", 0).join();
 
-- Documentation - https://echox.dev/
-- Introduction - https://echox.dev/docs/intro
-- Getting Started - https://echox.dev/docs/getting-started
-- Tutorial - https://echox.dev/docs/tutorial
-- API Index - https://echox.dev/docs/api-index
+const counter = html.div([
+  html.button({onclick: () => scope.value++}, ["👍"]),
+  html.button({onclick: () => scope.value++}, ["👍"]),
+  html.span([$(() => scope.value)]),
+]);
 
-## License 📄
+document.body.appendChild(counter);
+```
 
-MIT@Bairui SU
+## Pure Functional UI Construction
+
+Build user interfaces with pure function calls, without compilation like JSX, and with full TypeScript support over string-based templates, portable and readable.
+
+## Granular State Observation
+
+Apply fine-grained state observation, allowing independently update, minimizing unnecessary DOM updates and improves performance compared to virtual DOM-based frameworks.
+
+## Lightweight Native DOM Manipulation
+
+Operates directly on the native DOM instead of relying on a virtual DOM, achieving higher performance and lower memory overhead while maintaining simplicity.
