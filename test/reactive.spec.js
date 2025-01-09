@@ -129,7 +129,8 @@ describe("reactive", () => {
     const el2 = document.createElement("div");
     const update1 = vi.fn(() => (el1.textContent = scope.count));
     const update2 = vi.fn(() => (el2.textContent = scope.count));
-    track(update1).track(update2);
+    track(update1);
+    track(update2);
     expect(el1.outerHTML).toBe(`<div>0</div>`);
     expect(el2.outerHTML).toBe(`<div>0</div>`);
     expect(update1).toHaveBeenCalledTimes(1);

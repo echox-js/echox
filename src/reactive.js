@@ -60,7 +60,7 @@ class Reactive {
   }
 }
 
-export function track(effect) {
+export const track = (effect) => {
   const prev = actives;
   const cur = (actives = {setters: new Set(), getters: new Set()});
   let dom;
@@ -75,13 +75,8 @@ export function track(effect) {
       cleanup(d).deps.add(effect); // Try to clean up dependencies when getting the state.
   effect.__dom__ = dom?.nodeType ? dom : {isConnected: true}; // Only DOM nodes are removable.
   return this;
-}
+};
 
-export function $(callback) {
-  callback.__track__ = track;
-  return callback;
-}
+export const $ = (callback) => ((callback.__track__ = track), callback);
 
-export function reactive() {
-  return new Reactive();
-}
+export const reactive = () => new Reactive();
