@@ -77,7 +77,7 @@ export function track(effect) {
   return this;
 }
 
-export function observe(callback) {
+export function $(callback) {
   callback.__track__ = track;
   return callback;
 }

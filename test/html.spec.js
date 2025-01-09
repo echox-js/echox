@@ -1,5 +1,5 @@
 import {test, expect, describe} from "vitest";
-import {html, reactive, observe} from "../src/index.js";
+import {html, reactive, $} from "../src/index.js";
 import {sleep} from "./sleep.js";
 
 describe("template", () => {
@@ -25,9 +25,9 @@ describe("template", () => {
     expect(clicked).toBe(true);
   });
 
-  test("html.[element](props) should observe reactive state to attributes.", async () => {
+  test("html.[element](props) should $ reactive state to attributes.", async () => {
     const [scope] = reactive().let("name", "John").join();
-    const dom = html.div({id: observe(() => scope.name)});
+    const dom = html.div({id: $(() => scope.name)});
     expect(dom.outerHTML).toBe(`<div id="John"></div>`);
 
     scope.name = "Doe";
@@ -35,7 +35,7 @@ describe("template", () => {
     expect(dom.outerHTML).toBe(`<div id="Doe"></div>`);
   });
 
-  test("html.[element](props) should observe reactive state to event listeners.", async () => {
+  test("html.[element](props) should $ reactive state to event listeners.", async () => {
     const [scope] = reactive().let("clicked", true).let("count", 0).join();
     const increment = () => scope.count++;
     const decrement = () => scope.count--;
@@ -46,9 +46,9 @@ describe("template", () => {
     const dom = html.div([
       (counter = html.button(
         {
-          onclick: observe(() => (scope.clicked ? increment : decrement)),
+          onclick: $(() => (scope.clicked ? increment : decrement)),
         },
-        [observe(() => scope.count)],
+        [$(() => scope.count)],
       )),
       (checked = html.button({
         onclick: () => (scope.clicked = !scope.clicked),
@@ -68,9 +68,9 @@ describe("template", () => {
     expect(counter.outerHTML).toBe(`<button>0</button>`);
   });
 
-  test("html.[element](props, children) should observe reactive state to number children", async () => {
+  test("html.[element](props, children) should $ reactive state to number children", async () => {
     const [scope] = reactive().let("count", 0).join();
-    const button = html.button({onclick: () => scope.count++}, [observe(() => scope.count)]);
+    const button = html.button({onclick: () => scope.count++}, [$(() => scope.count)]);
     document.body.append(button);
 
     button.click();
@@ -81,9 +81,9 @@ describe("template", () => {
     document.body.removeChild(button);
   });
 
-  test("html.[element](props, children) should observe reactive state to string children", async () => {
+  test("html.[element](props, children) should $ reactive state to string children", async () => {
     const [scope] = reactive().let("name", "John").join();
-    const div = html.div([observe(() => scope.name)]);
+    const div = html.div([$(() => scope.name)]);
     document.body.append(div);
 
     scope.name = "Doe";
@@ -94,9 +94,9 @@ describe("template", () => {
     document.body.removeChild(div);
   });
 
-  test("html.[element](props, children) should observe reactive state to element children", async () => {
+  test("html.[element](props, children) should $ reactive state to element children", async () => {
     const [scope] = reactive().let("show", true).join();
-    const div = html.div([observe(() => (scope.show ? html.span(["Hello"]) : null))]);
+    const div = html.div([$(() => (scope.show ? html.span(["Hello"]) : null))]);
     document.body.append(div);
 
     scope.show = false;
@@ -111,9 +111,9 @@ describe("template", () => {
     document.body.removeChild(div);
   });
 
-  test("html.[element](props, children) should observe reactive state to multiple children", async () => {
+  test("html.[element](props, children) should $ reactive state to multiple children", async () => {
     const [scope] = reactive().let("count", 0).let("name", "John").join();
-    const div = html.div([observe(() => scope.count), observe(() => scope.name)]);
+    const div = html.div([$(() => scope.count), $(() => scope.name)]);
     document.body.append(div);
 
     scope.count++;
