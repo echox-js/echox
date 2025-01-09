@@ -6,4 +6,4 @@
 
 ## _reactive_.**join()** {#echox-join}
 
-## _EchoX_.**observe(_callback_)** {#echox-$}
+## _EchoX_.**$(_callback_)** {#echox-$}

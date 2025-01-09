@@ -46,22 +46,6 @@ _EchoX.reactive_ returns a reactive scope, where stores the states you defined. 
 
 Please refer to [Applying Reactivity](/reference/applying-reactivity) for more information.
 
-## Styling Conditionally
-
-EchoX also provides two lightweight methods for styling conditionally, which are not the core features and only served as helpers. They are similar to [classnames](https://github.com/JedWatson/classnames) and [clsx](https://github.com/lukeed/clsx).
-
-```js
-EchoX.css({backgroundColor: "red"}, false && {color: "blue"});
-```
-
-```js
-EchoX.cx("a", false && "b", "c");
-```
-
-```js
-EchoX.cx({a: true, b: false, c: true});
-```
-
 ## What's more?
 
 That's all! But maybe server side rendering (SSR) in the future?

@@ -74,7 +74,6 @@ export const track = (effect) => {
     cur.setters.has(d) || // Present circular dependencies.
       cleanup(d).deps.add(effect); // Try to clean up dependencies when getting the state.
   effect.__dom__ = dom?.nodeType ? dom : {isConnected: true}; // Only DOM nodes are removable.
-  return this;
 };
 
 export const $ = (callback) => ((callback.__track__ = track), callback);

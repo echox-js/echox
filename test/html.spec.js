@@ -25,7 +25,7 @@ describe("template", () => {
     expect(clicked).toBe(true);
   });
 
-  test("html.[element](props) should $ reactive state to attributes.", async () => {
+  test("html.[element](props) should bind reactive state to attributes.", async () => {
     const [scope] = reactive().let("name", "John").join();
     const dom = html.div({id: $(() => scope.name)});
     expect(dom.outerHTML).toBe(`<div id="John"></div>`);
@@ -35,7 +35,7 @@ describe("template", () => {
     expect(dom.outerHTML).toBe(`<div id="Doe"></div>`);
   });
 
-  test("html.[element](props) should $ reactive state to event listeners.", async () => {
+  test("html.[element](props) should bind reactive state to event listeners.", async () => {
     const [scope] = reactive().let("clicked", true).let("count", 0).join();
     const increment = () => scope.count++;
     const decrement = () => scope.count--;
@@ -68,7 +68,7 @@ describe("template", () => {
     expect(counter.outerHTML).toBe(`<button>0</button>`);
   });
 
-  test("html.[element](props, children) should $ reactive state to number children", async () => {
+  test("html.[element](props, children) should bind reactive state to number children", async () => {
     const [scope] = reactive().let("count", 0).join();
     const button = html.button({onclick: () => scope.count++}, [$(() => scope.count)]);
     document.body.append(button);
@@ -81,7 +81,7 @@ describe("template", () => {
     document.body.removeChild(button);
   });
 
-  test("html.[element](props, children) should $ reactive state to string children", async () => {
+  test("html.[element](props, children) should bind reactive state to string children", async () => {
     const [scope] = reactive().let("name", "John").join();
     const div = html.div([$(() => scope.name)]);
     document.body.append(div);
@@ -94,7 +94,7 @@ describe("template", () => {
     document.body.removeChild(div);
   });
 
-  test("html.[element](props, children) should $ reactive state to element children", async () => {
+  test("html.[element](props, children) should bind reactive state to element children", async () => {
     const [scope] = reactive().let("show", true).join();
     const div = html.div([$(() => (scope.show ? html.span(["Hello"]) : null))]);
     document.body.append(div);
@@ -111,7 +111,7 @@ describe("template", () => {
     document.body.removeChild(div);
   });
 
-  test("html.[element](props, children) should $ reactive state to multiple children", async () => {
+  test("html.[element](props, children) should bind reactive state to multiple children", async () => {
     const [scope] = reactive().let("count", 0).let("name", "John").join();
     const div = html.div([$(() => scope.count), $(() => scope.name)]);
     document.body.append(div);
