@@ -28,7 +28,6 @@ export default defineConfig({
           items: [
             {text: "Building UI", link: "/reference/building-ui"},
             {text: "Applying Reactivity", link: "/reference/applying-reactivity"},
-            {text: "Styling Conditionally", link: "/reference/styling-conditionally"},
           ],
         },
       ],

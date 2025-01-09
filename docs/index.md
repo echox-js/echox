@@ -19,9 +19,9 @@ hero:
 
 features:
   - title: Pure Functional UI Construction
-    details: Build user interfaces with pure function calls, without compilation like JSX, and with full TypeScript support over string-based templates, portable and readable.
+    details: Build UI with pure function calls, no compilation like JSX, and full TypeScript support over string-based templates, enhancing portability and readability,
   - title: Granular State Observation
-    details: Apply fine-grained state observation, allowing independently update, minimizing unnecessary DOM updates and improves performance compared to virtual DOM-based frameworks.
+    details: Apply fine-grained state observation, allowing independently update, minimizing unnecessary DOM updates and improving performance compared to virtual DOM-based frameworks.
   - title: Lightweight Native DOM Manipulation
-    details: Operates directly on the native DOM instead of relying on a virtual DOM, achieving higher performance and lower memory overhead while maintaining simplicity.
+    details: Operate directly on the native DOM instead of relying on a virtual DOM, achieving higher performance and lower memory overhead while maintaining simplicity.
 ---
