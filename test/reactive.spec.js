@@ -1,5 +1,5 @@
 import {test, expect, describe, vi} from "vitest";
-import {reactive, observe} from "../src/index.js";
+import {reactive, $} from "../src/index.js";
 import {track} from "../src/reactive.js";
 import {sleep} from "./sleep.js";
 
@@ -254,8 +254,8 @@ describe("reactive", () => {
     expect(rx.__states__.count.deps.size).toBe(0);
   });
 
-  test("observe(callback) should return a callback with track.", () => {
-    const callback = observe(() => {});
+  test("$(callback) should return a callback with track.", () => {
+    const callback = $(() => {});
     expect(callback).toBeDefined();
     expect(callback.__track__).toBe(track);
   });
