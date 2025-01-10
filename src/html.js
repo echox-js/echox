@@ -2,7 +2,7 @@ const propSetterCache = {};
 
 const protoOf = Object.getPrototypeOf;
 
-const isBind = (d) => typeof d === "function" && "__track__" in d;
+const isObservable = (d) => typeof d === "function" && "__observe__" in d;
 
 const isObject = (d) => protoOf(d ?? 0) === protoOf({});
 
@@ -31,30 +31,13 @@ const handler = (_, name) => (a, b) => {
         ? propSetter.bind(dom)
         : dom.setAttribute.bind(dom, k);
 
-    if (isBind(v)) v.__track__(() => setter(v()));
+    if (isObservable(v)) v(setter);
     else setter(v);
   }
 
   for (const child of children.flat()) {
-    if (isBind(child)) {
-      // Use a guard node to remember the position to insert the new nodes.
-      const guard = new Text("");
-      dom.append(guard);
-
-      let prevNodes;
-      child.__track__(() => {
-        if (prevNodes) prevNodes.forEach((node) => node.remove());
-        const nodes = [child()].flat().filter(isMountable);
-        for (let i = 0; i < nodes.length; i++) {
-          const n = nodes[i];
-          const node = n?.nodeType ? n : new Text(n);
-          nodes[i] = node;
-          dom.insertBefore(node, guard);
-        }
-        prevNodes = nodes;
-        return guard;
-      });
-    } else if (isMountable(child)) dom.append(child);
+    if (isObservable(child)) child(dom);
+    else if (isMountable(child)) dom.append(child);
   }
 
   return dom;

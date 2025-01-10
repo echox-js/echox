@@ -1,18 +1,10 @@
 <html>
   <script type="module">
-    import * as EchoX from "../src/index.js";
-    const [scope] = EchoX.reactive().let("show", true).join();
+    import {reactive, html, $} from "../src/index.js";
 
-    const div = EchoX.html.div([
-      EchoX.$(() => (scope.show ? EchoX.html.span(["Hello"]) : null)),
-      EchoX.html.button(
-        {
-          onclick: () => (scope.show = !scope.show),
-        },
-        ["Toggle"],
-      ),
-    ]);
+    const [scope] = reactive().let("name", "John").join();
+    const dom = html.div({id: $(() => scope.name)});
 
-    document.body.appendChild(div);
+    document.body.appendChild(dom);
   </script>
 </html>
