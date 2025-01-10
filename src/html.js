@@ -14,6 +14,7 @@ const handler = (_, name) => (a, b) => {
   const dom = document.createElement(name);
 
   for (const [k, v] of Object.entries(props)) {
+    // This is for some attributes like innerHTML, textContent, etc.
     const getPropDescriptor = (proto) =>
       proto ? (Object.getOwnPropertyDescriptor(proto, k) ?? getPropDescriptor(protoOf(proto))) : undefined;
     const cacheKey = name + "," + k;
@@ -36,9 +37,11 @@ const handler = (_, name) => (a, b) => {
 
   for (const child of children.flat()) {
     if (isBind(child)) {
-      let prevNodes;
+      // Use a guard node to remember the position to insert the new nodes.
       const guard = new Text("");
       dom.append(guard);
+
+      let prevNodes;
       child.__track__(() => {
         if (prevNodes) prevNodes.forEach((node) => node.remove());
         const nodes = [child()].flat().filter(isMountable);
