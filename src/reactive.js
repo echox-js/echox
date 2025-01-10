@@ -6,23 +6,26 @@ const disconnect = (state) => (state.deps = new Set([...state.deps].filter((d) =
 
 const flush = () => {
   while (updates.size) {
-    const deps = new Set([...updates].flatMap((s) => [...disconnect(s)])); // Try to clear up dependencies when updating the state.
+    // Try to clear up dependencies when updating the state.
+    const deps = new Set([...updates].flatMap((s) => [...disconnect(s)]));
     updates = new Set();
-    deps.forEach(track); // Track the new dependencies caused by conditional branches.
+
+    // Track the new dependencies caused by conditional branches,
+    // or new keys in arrays.
+    deps.forEach(track);
   }
   updates = null;
 };
 
 const update = (state) => ((updates = schedule(updates, state, flush)), state);
 
-const dispose = () => {
-  for (const d of disposes) disconnect(d);
-  disposes = null;
-};
+const dispose = () => (disposes.forEach(disconnect), (disposes = null));
 
 const schedule = (set, d, f, ms) => (set ?? (setTimeout(f, ms), new Set())).add(d);
 
 const cleanup = (state) => ((disposes = schedule(disposes, state, dispose, GC_CYCLE)), state);
+
+const isWatchable = (d) => Array.isArray(d) || (d && d.constructor === Object);
 
 class Reactive {
   constructor() {
@@ -34,28 +37,60 @@ class Reactive {
     return this;
   }
   join() {
-    const states = this.__states__;
-    const create = (k) => ({val: this._defs[k], deps: new Set()});
-    const scope = new Proxy(
-      {},
-      {
+    const create = (v) => ({val: watch(v)[0], deps: new Set()});
+    const [scope, states] = watch({...this._defs});
+
+    this.__states__ = states; // For testing.
+
+    function watch(obj) {
+      // Only watch arrays and objects.
+      if (!isWatchable(obj)) return [obj];
+
+      // Can't use Object.entries because it doesn't work with arrays.
+      // Can't use Object.keys because it doesn't get the length of the array.
+      const states = Object.fromEntries(Object.getOwnPropertyNames(obj).map((k) => [k, create(obj[k])]));
+
+      const isArray = Array.isArray(obj);
+      const scope = new Proxy(obj, {
         get: (_, k) => {
-          if (!(k in states)) states[k] = create(k);
+          // Can't use `key in states` because array and object will share the same keys,
+          // such constructor, prototype, etc.
+          if (!Object.hasOwn(states, k)) return obj[k];
           const state = states[k];
           actives?.getters?.add(state);
           return state.val;
         },
-        set: (_, k, v) => {
-          if (!(k in states)) states[k] = create(k); // Maybe set the value before accessing the state.
+        set: (target, k, v) => {
+          if (!Object.hasOwn(states, k)) {
+            // Array may add more keys when the length has changed,
+            // such as array.push, make sure to track the new keys.
+            // This works because `array.push` will set the length,
+            // and trigger flush, which will retrack the new keys.
+            // This will not work with regular objects, so it can't
+            // automatically track new keys.
+            if (isArray && Number.isInteger(+k)) states[k] = create(v);
+
+            // !!!Can't add else here, I'm not sure why...
+            return (target[k] = v), true;
+          }
+
           const state = states[k];
-          actives?.setters?.add(state); // For circular dependencies.
+
+          // For circular dependencies.
+          actives?.setters?.add(state);
+
+          // Update the state if the value changes.
           if (state.val === v) return true;
-          state.val = v;
           if (state.deps.size) update(state);
+          state.val = v;
+
           return true;
         },
-      },
-    );
+      });
+
+      return [scope, states];
+    }
+
     return [scope];
   }
 }
