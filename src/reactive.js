@@ -60,6 +60,7 @@ class Reactive {
   }
 }
 
+// Exports for testing.
 export const track = (effect) => {
   const prev = actives;
   const cur = (actives = {setters: new Set(), getters: new Set()});

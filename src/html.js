@@ -6,8 +6,10 @@ const isBind = (d) => typeof d === "function" && "__track__" in d;
 
 const isObject = (d) => protoOf(d ?? 0) === protoOf({});
 
+const isMountable = (d) => d || d === 0;
+
 const handler = (_, name) => (a, b) => {
-  const [props, children] = isObject(a) ? [a, b ?? []] : [{}, [a].flat()];
+  const [props, children] = isObject(a) ? [a, b ?? []] : [{}, a ?? []];
 
   const dom = document.createElement(name);
 
@@ -32,16 +34,24 @@ const handler = (_, name) => (a, b) => {
     else setter(v);
   }
 
-  for (const child of children) {
+  for (const child of children.flat()) {
     if (isBind(child)) {
-      let old;
+      let prevNodes;
+      const guard = new Text("");
+      dom.append(guard);
       child.__track__(() => {
-        old?.remove();
-        old = child();
-        dom.append((old = old?.nodeType ? old : new Text(old ?? "")));
-        return old;
+        if (prevNodes) prevNodes.forEach((node) => node.remove());
+        const nodes = [child()].flat().filter(isMountable);
+        for (let i = 0; i < nodes.length; i++) {
+          const n = nodes[i];
+          const node = n?.nodeType ? n : new Text(n);
+          nodes[i] = node;
+          dom.insertBefore(node, guard);
+        }
+        prevNodes = nodes;
+        return guard;
       });
-    } else if (child) dom.append(child);
+    } else if (isMountable(child)) dom.append(child);
   }
 
   return dom;
