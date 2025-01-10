@@ -1,15 +1,9 @@
 import {test, expect, describe, vi} from "vitest";
-import {reactive, $} from "../src/index.js";
+import {reactive} from "../src/index.js";
 import {track} from "../src/reactive.js";
 import {sleep} from "./sleep.js";
 
 describe("reactive", () => {
-  test("$(callback) should return a callback with track.", () => {
-    const callback = $(() => {});
-    expect(callback).toBeDefined();
-    expect(callback.__track__).toBe(track);
-  });
-
   test("reactive() should return a reactive scope with defaults.", () => {
     const rx = reactive();
     expect(rx).toBeDefined();
@@ -302,7 +296,6 @@ describe("reactive", () => {
     await sleep(0);
     expect(el.textContent).toBe("1,2,3,4");
     expect(update).toHaveBeenCalledTimes(2);
-
 
     scope.list[3] = 5;
     await sleep(0);

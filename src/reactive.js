@@ -27,6 +27,10 @@ const cleanup = (state) => ((disposes = schedule(disposes, state, dispose, GC_CY
 
 const isWatchable = (d) => Array.isArray(d) || (d && d.constructor === Object);
 
+const isMountable = (d) => d || d === 0;
+
+const observe = (d) => ((d.__observe__ = true), d);
+
 class Reactive {
   constructor() {
     this._defs = {};
@@ -112,6 +116,33 @@ export const track = (effect) => {
   effect.__dom__ = dom?.nodeType ? dom : {isConnected: true}; // Only DOM nodes are removable.
 };
 
-export const $ = (callback) => ((callback.__track__ = track), callback);
+const attr = (callback, setter) => track(() => setter(callback()));
+
+const child = (callback, dom) => {
+  // Use a guard node to remember the position to insert new nodes.
+  const guard = new Text("");
+  dom.append(guard);
+
+  let prevNodes;
+
+  return track(() => {
+    if (prevNodes) prevNodes.forEach((node) => node.remove());
+    const nodes = [callback()].flat().filter(isMountable);
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      const node = n?.nodeType ? n : new Text(n);
+      nodes[i] = node;
+      dom.insertBefore(node, guard);
+    }
+    prevNodes = nodes;
+    return guard;
+  });
+};
+
+export const $ = (callback) =>
+  observe((context) => {
+    if (typeof context === "function") return attr(callback, context);
+    return child(callback, context);
+  });
 
 export const reactive = () => new Reactive();
