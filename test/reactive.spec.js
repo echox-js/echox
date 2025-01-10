@@ -4,6 +4,12 @@ import {track} from "../src/reactive.js";
 import {sleep} from "./sleep.js";
 
 describe("reactive", () => {
+  test("$(callback) should return a callback with track.", () => {
+    const callback = $(() => {});
+    expect(callback).toBeDefined();
+    expect(callback.__track__).toBe(track);
+  });
+
   test("reactive() should return a reactive scope with defaults.", () => {
     const rx = reactive();
     expect(rx).toBeDefined();
@@ -195,7 +201,7 @@ describe("reactive", () => {
     expect(increment).toHaveBeenCalledTimes(2);
   });
 
-  test("reactive should remove deps without mounted DOMs when updating state.", async () => {
+  test("reactive() should remove deps without mounted DOMs when updating state.", async () => {
     const rx = reactive().let("count", 0);
     const [scope] = rx.join();
 
@@ -219,7 +225,7 @@ describe("reactive", () => {
     expect(rx.__states__.count.deps.size).toBe(0);
   });
 
-  test("reactive should not remove deps with non-DOMs when updating state.", async () => {
+  test("reactive() should not remove deps with non-DOMs when updating state.", async () => {
     const rx = reactive().let("count", 0);
     const [scope] = rx.join();
 
@@ -232,7 +238,7 @@ describe("reactive", () => {
     expect(rx.__states__.count.deps.size).toBe(1);
   });
 
-  test("reactive should remove effect with disconnected DOM after 1s when getting the state.", async () => {
+  test("reactive() should remove effect with disconnected DOM after 1s when getting the state.", async () => {
     const rx = reactive().let("count", 0);
     const [scope] = rx.join();
 
@@ -255,9 +261,268 @@ describe("reactive", () => {
     expect(rx.__states__.count.deps.size).toBe(0);
   });
 
-  test("$(callback) should return a callback with track.", () => {
-    const callback = $(() => {});
-    expect(callback).toBeDefined();
-    expect(callback.__track__).toBe(track);
+  test("reactive() should track nested object properties.", async () => {
+    const [scope] = reactive()
+      .let("user", {name: "John", info: {age: 25}})
+      .join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = `${scope.user.name} is ${scope.user.info.age}`;
+    });
+    track(update);
+
+    expect(el.textContent).toBe("John is 25");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.user.name = "Jane";
+    await sleep(0);
+    expect(el.textContent).toBe("Jane is 25");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.user.info.age = 30;
+    await sleep(0);
+    expect(el.textContent).toBe("Jane is 30");
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+
+  test("reactive() should track array push and pop operations.", async () => {
+    const [scope] = reactive().let("list", [1, 2, 3]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.list.join(",");
+    });
+    track(update);
+
+    expect(el.textContent).toBe("1,2,3");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list.push(4);
+    await sleep(0);
+    expect(el.textContent).toBe("1,2,3,4");
+    expect(update).toHaveBeenCalledTimes(2);
+
+
+    scope.list[3] = 5;
+    await sleep(0);
+    expect(el.textContent).toBe("1,2,3,5");
+    expect(update).toHaveBeenCalledTimes(3);
+
+    scope.list.pop();
+    await sleep(0);
+    expect(el.textContent).toBe("1,2,3");
+    expect(update).toHaveBeenCalledTimes(4);
+  });
+
+  test("reactive() should track array length changes.", async () => {
+    const [scope] = reactive().let("list", [1, 2, 3]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = String(scope.list.length);
+    });
+    track(update);
+
+    expect(el.textContent).toBe("3");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list.push(4);
+    await sleep(0);
+    expect(el.textContent).toBe("4");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.list.length = 2;
+    await sleep(0);
+    expect(el.textContent).toBe("2");
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+
+  test("reactive() should track array index assignments.", async () => {
+    const [scope] = reactive().let("list", [1, 2, 3]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.list[1];
+    });
+    track(update);
+
+    expect(el.textContent).toBe("2");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list[1] = 5;
+    await sleep(0);
+    expect(el.textContent).toBe("5");
+    expect(update).toHaveBeenCalledTimes(2);
+  });
+
+  test("reactive() should track array splice and reverse operations.", async () => {
+    const [scope] = reactive().let("list", [1, 2, 3]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.list.join(",");
+    });
+    track(update);
+
+    expect(el.textContent).toBe("1,2,3");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list.splice(1, 1, 4, 5);
+    await sleep(0);
+    expect(el.textContent).toBe("1,4,5,3");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.list.reverse();
+    await sleep(0);
+    expect(el.textContent).toBe("3,5,4,1");
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+
+  test("reactive() should track nested array updates.", async () => {
+    const [scope] = reactive()
+      .let("data", {
+        items: [
+          [1, 2],
+          [3, 4],
+        ],
+      })
+      .join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.data.items.map((arr) => arr.join("-")).join(",");
+    });
+    track(update);
+
+    expect(el.textContent).toBe("1-2,3-4");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.data.items[0].push(5);
+    await sleep(0);
+    expect(el.textContent).toBe("1-2-5,3-4");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.data.items[1] = [6, 7];
+    await sleep(0);
+    expect(el.textContent).toBe("1-2-5,6-7");
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+
+  test("reactive() should track array unshift and shift operations.", async () => {
+    const [scope] = reactive().let("list", [1, 2, 3]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.list.join(",");
+    });
+    track(update);
+
+    expect(el.textContent).toBe("1,2,3");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list.unshift(0);
+    await sleep(0);
+    expect(el.textContent).toBe("0,1,2,3");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.list.shift();
+    await sleep(0);
+    expect(el.textContent).toBe("1,2,3");
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+
+  test("reactive() should track array sort operations.", async () => {
+    const [scope] = reactive().let("list", [3, 1, 4, 1, 5]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.list.join(",");
+    });
+    track(update);
+
+    expect(el.textContent).toBe("3,1,4,1,5");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list.sort();
+    await sleep(0);
+    expect(el.textContent).toBe("1,1,3,4,5");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.list.sort((a, b) => b - a);
+    await sleep(0);
+    expect(el.textContent).toBe("5,4,3,1,1");
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+
+  test("reactive() should track array fill operations.", async () => {
+    const [scope] = reactive().let("list", [1, 2, 3, 4, 5]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.list.join(",");
+    });
+    track(update);
+
+    expect(el.textContent).toBe("1,2,3,4,5");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list.fill(0, 2, 4);
+    await sleep(0);
+    expect(el.textContent).toBe("1,2,0,0,5");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.list.fill(9);
+    await sleep(0);
+    expect(el.textContent).toBe("9,9,9,9,9");
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+
+  test("reactive() should track array copyWithin operations.", async () => {
+    const [scope] = reactive().let("list", [1, 2, 3, 4, 5]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.list.join(",");
+    });
+    track(update);
+
+    expect(el.textContent).toBe("1,2,3,4,5");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list.copyWithin(0, 3);
+    await sleep(0);
+    expect(el.textContent).toBe("4,5,3,4,5");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.list.copyWithin(2, 0, 2);
+    await sleep(0);
+    expect(el.textContent).toBe("4,5,4,5,5");
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+
+  test("reactive() should track multiple array operations in sequence.", async () => {
+    const [scope] = reactive().let("list", [1, 2, 3]).join();
+
+    const el = document.createElement("div");
+    const update = vi.fn(() => {
+      el.textContent = scope.list.join(",");
+    });
+    track(update);
+
+    expect(el.textContent).toBe("1,2,3");
+    expect(update).toHaveBeenCalledTimes(1);
+
+    scope.list.push(4);
+    scope.list.unshift(0);
+    await sleep(0);
+    expect(el.textContent).toBe("0,1,2,3,4");
+    expect(update).toHaveBeenCalledTimes(2);
+
+    scope.list.sort((a, b) => b - a);
+    scope.list.fill(9, 1, 4);
+    await sleep(0);
+    expect(el.textContent).toBe("4,9,9,9,0");
+    expect(update).toHaveBeenCalledTimes(3);
   });
 });

@@ -1,11 +1,11 @@
-const isObject = (d) => d && typeof d === "object" && !Array.isArray(d);
+const isPlainObject = (d) => d && d.constructor === Object;
 
 const kebabCase = (string) => string.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, "$1-$2").toLowerCase();
 
 export const css = (...styles) =>
   styles
     .reverse()
-    .filter(isObject)
+    .filter(isPlainObject)
     .flatMap(Object.entries)
     .map(([k, v]) => `${kebabCase(k)}: ${v}`)
     .join(";");
@@ -13,7 +13,7 @@ export const css = (...styles) =>
 export const cx = (...names) =>
   names
     .flatMap((d) =>
-      isObject(d)
+      isPlainObject(d)
         ? Object.entries(d)
             .filter(([, v]) => v)
             .map(([k]) => k)
