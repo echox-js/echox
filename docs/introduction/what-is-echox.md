@@ -42,7 +42,7 @@ const dom = html.div([
 ]);
 ```
 
-_EchoX.reactive_ returns a reactive scope, where stores the states you defined. Then you can bind states with the attributes or child nodes of DOMs using _EchoX.observe_. This is the _reactive_ the philosophy.
+_EchoX.reactive_ returns a reactive scope, where stores the states you defined. Then you can bind states with the attributes or child nodes of DOMs using _EchoX.observe_. This is the _reactive_ in the philosophy.
 
 Please refer to [Applying Reactivity](/reference/applying-reactivity) for more information.
 
