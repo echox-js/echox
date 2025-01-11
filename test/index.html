@@ -1,10 +1,24 @@
 <html>
   <script type="module">
-    import {reactive, html, $} from "../src/index.js";
+    import {reactive, html, $, cond} from "../src/index.js";
 
-    const [scope] = reactive().let("name", "John").join();
-    const dom = html.div({id: $(() => scope.name)});
+    const [scope] = reactive().let("outer", true).let("inner", true).join();
 
-    document.body.appendChild(dom);
+    const div = html.div([
+      cond(
+        () => scope.outer,
+        () =>
+          cond(
+            () => scope.inner,
+            () => html.span(["Both"]),
+            () => html.span(["Outer only"]),
+          ),
+        () => html.span(["None"]),
+      ),
+    ]);
+
+    window.scope = scope;
+
+    document.body.appendChild(div);
   </script>
 </html>
