@@ -118,13 +118,13 @@ export const track = (effect) => {
   effect.__dom__ = dom?.nodeType ? dom : {isConnected: true}; // Only DOM nodes are removable.
 };
 
-const mount = (dom, guard, value) => {
+const mount = (dom, virtual, value) => {
   const nodes = [value].flat().filter(isMountable);
   for (let i = 0; i < nodes.length; i++) {
     const n = nodes[i];
     const node = n?.nodeType ? n : new Text(n);
     nodes[i] = node;
-    dom.insertBefore(node, guard);
+    dom.insertBefore(node, virtual);
   }
   return nodes;
 };
@@ -133,15 +133,15 @@ const attr = (callback, setter) => track(() => setter(callback()));
 
 const child = (callback, dom) => {
   // The virtual parent for nodes of the callback.
-  const guard = new Text("");
-  dom.append(guard);
+  const virtual = new Text("");
+  dom.append(virtual);
 
   let prevNodes = [];
 
   return track(() => {
     prevNodes.forEach((node) => node.remove());
-    prevNodes = mount(dom, guard, callback());
-    return guard;
+    prevNodes = mount(dom, virtual, callback());
+    return virtual;
   });
 };
 
@@ -152,19 +152,19 @@ export const $ = (callback) =>
   });
 
 export const cond = (predict, renderT, renderF = () => null) =>
-  observe((dom, left, after) => {
+  observe((dom, right, after) => {
     // The virtual parent for nodes of true and false branches.
-    const trueGuard = new Text("");
-    const falseGuard = new Text("");
-    dom.insertBefore(trueGuard, left);
-    dom.insertBefore(falseGuard, left);
+    const truthy = new Text("");
+    const falsy = new Text("");
+    dom.insertBefore(truthy, right);
+    dom.insertBefore(falsy, right);
 
     let prev;
     let prevNodes = [];
 
     track(() => {
       // Only update when the virtual parent is displayed.
-      if (left?.__hide__ === true) return;
+      if (right?.__hide__ === true) return;
 
       // Only update when the prediction changes.
       const cur = predict();
@@ -174,29 +174,20 @@ export const cond = (predict, renderT, renderF = () => null) =>
       // Remove the previous nodes without diffing.
       prevNodes.forEach((node) => node.remove());
 
-      // Update nodes, guards based on the prediction.
+      // Update nodes, virtual based on the prediction.
       let value;
-      let guard;
-      if (cur) {
-        trueGuard.__hide__ = false;
-        falseGuard.__hide__ = true;
-        value = renderT();
-        guard = trueGuard;
-      } else {
-        trueGuard.__hide__ = true;
-        falseGuard.__hide__ = false;
-        value = renderF();
-        guard = falseGuard;
-      }
+      let virtual;
+      if (cur) (truthy.__hide__ = false), (falsy.__hide__ = true), (value = renderT()), (virtual = truthy);
+      else (truthy.__hide__ = true), (falsy.__hide__ = false), (value = renderF()), (virtual = falsy);
 
       // If the value is observable, update the previous nodes every time it changes.
-      if (isObservable(value)) value(dom, guard, (n) => (prevNodes = n));
-      else prevNodes = mount(dom, guard, value);
+      if (isObservable(value)) value(dom, virtual, (n) => (prevNodes = n));
+      else prevNodes = mount(dom, virtual, value);
 
       // Hook for updating the previous nodes.
       after?.(prevNodes);
 
-      return guard;
+      return virtual;
     });
 
     return prevNodes;
