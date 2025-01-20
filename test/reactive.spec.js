@@ -1,5 +1,6 @@
 import {test, expect, describe, vi} from "vitest";
-import {reactive, $, cond, html} from "../src/index.js";
+import {reactive, $, html} from "../src/index.js";
+import {cond} from "../src/reactive.js";
 import {track} from "../src/reactive.js";
 import {sleep} from "./sleep.js";
 
