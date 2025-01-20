@@ -2,7 +2,7 @@
 
 **EchoX** is The 2kB lightweight reactive UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects especially.
 
-The philosophy for EchoX is **UI = f(reactive, DOM)**, please keep reading to find out why! Also, EchoX focus on simplicity, so there are only [7 APIs](/introduction/api-index) for now!
+The philosophy for EchoX is **UI = f(reactive, DOM)**, please keep reading to find out why! Also, EchoX focus on simplicity, so there are only few [APIs](/introduction/api-index) for now!
 
 ## Building UI
 
@@ -16,7 +16,7 @@ const dom = html.span({style: "font-size: 10"}, ["hello World"]);
 container.appendChild(dom);
 ```
 
-This is the _DOM_ the philosophy. Also, You can also can create nested structures using _html_. For example, let's create a counter:
+This is the _DOM_ in the philosophy. Also, You can also can create nested structures using _html_. For example, let's create a counter:
 
 ```js
 const dom = html.div([
@@ -26,11 +26,13 @@ const dom = html.div([
 ]);
 ```
 
-Please refer to [Building UI](/reference/building-ui) from more information. **But If you only want a static DOM, this is all you need to know how about EchoX**! Otherwise, just keep reading...
+Please refer to [Building UI](/reference/building-ui) from more information.
+
+**If you only want a static DOM, this is all you need to know how about EchoX**! Otherwise, keep reading!
 
 ## Applying Reactivity
 
-EchoX exports two methods _reactive_ and _observe_ for reactivity. For example, let's make the counter interactive:
+EchoX exports two methods _reactive_ and _$_ for reactivity. For example, let's make the counter interactive:
 
 ```js
 const [scope] = EchoX.reactive().let("value", 0).join();
@@ -42,7 +44,7 @@ const dom = html.div([
 ]);
 ```
 
-_EchoX.reactive_ returns a reactive scope, where stores the states you defined. Then you can bind states with the attributes or child nodes of DOMs using _EchoX.observe_. This is the _reactive_ in the philosophy.
+_EchoX.reactive_ returns a reactive scope, where stores the states you defined. Then you can bind states with the attributes or child nodes of DOMs using _EchoX.$_. This is the _reactive_ in the philosophy.
 
 Please refer to [Applying Reactivity](/reference/applying-reactivity) for more information.
 
