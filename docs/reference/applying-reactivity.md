@@ -7,5 +7,3 @@
 ## _reactive_.**join()** {#echox-join}
 
 ## _EchoX_.**$(_callback_)** {#echox-$}
-
-## _EchoX_.**cond(_predict, trueExpr, falseExpr_)** {#echox-cond}

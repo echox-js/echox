@@ -1,7 +1,5 @@
 # API Index
 
-Only 7 APIs to learn!
-
 ## Building UI
 
 Building user interfaces with pure function calls.
@@ -16,4 +14,3 @@ Applying fine-grained state observation.
 - [_reactive_.**let**](/reference/applying-reactivity#reactive-let) - declare a state.
 - [_reactive_.**join**](/reference/applying-reactivity#reactive-join) - get the states from the reactive scope.
 - [_EchoX_.**$**](/reference/applying-reactivity#echox-$) - define a reactive callback.
-- [_EchoX_.**cond**](/reference/applying-reactivity#echox-cond) - render conditionally.
