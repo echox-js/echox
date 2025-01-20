@@ -36,12 +36,13 @@
   margin: 24px 0px !important;
 }
 
-.VPHome .name {
+.VPHome h1 {
   text-align: center;
-  max-width: 100%;
+  max-width: 100% !important;
 }
 
 .VPHome .clip {
-  font-weight: bolder;
+  font-weight: 900;
   font-size: 76px;
+  max-width: 100% !important;
 }
