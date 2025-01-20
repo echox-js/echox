@@ -44,5 +44,6 @@
 .VPHome .clip {
   font-weight: 900;
   font-size: 76px;
+  width: 100% !important;
   max-width: 100% !important;
 }
