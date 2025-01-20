@@ -3,7 +3,7 @@ import terser from "@rollup/plugin-terser";
 const config = {
   input: "src/index.js",
   output: {
-    file: "dist/echox.js",
+    file: "dist/echox.umd.js",
     name: "EchoX",
     format: "umd",
   },
@@ -15,7 +15,7 @@ export default [
     ...config,
     output: {
       ...config.output,
-      file: "dist/echox.min.js",
+      file: "dist/echox.umd.min.js",
     },
     plugins: [terser()],
   },
