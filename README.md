@@ -1,4 +1,4 @@
-# EchoX: UI = f(reactive, DOM)
+# EchoX: UI = f(DOM, reactive)
 
 <img src="./docs/public/logo.svg" width="100"/>
 
@@ -18,14 +18,12 @@ const counter = html.div([
 document.body.appendChild(counter);
 ```
 
-## Pure Functional UI Construction
+## Resources 📚
 
-Build user interfaces with pure function calls, without compilation like JSX, and with full TypeScript support over string-based templates, portable and readable.
+- Documentation - https://echox.dev/
+- Features - https://echox.dev/introduction/what-is-echox
+- Motivation - https://echox.dev/introduction/why-is-echox
 
-## Granular State Observation
+## License 📄
 
-Apply fine-grained state observation, allowing independently update, minimizing unnecessary DOM updates and improves performance compared to virtual DOM-based frameworks.
-
-## Lightweight Native DOM Manipulation
-
-Operates directly on the native DOM instead of relying on a virtual DOM, achieving higher performance and lower memory overhead while maintaining simplicity.
+MIT@Bairui SU
