@@ -4,7 +4,8 @@
 
 Building user interfaces with pure function calls.
 
-- [_EchoX_.**html**](/reference/building-ui#echox-html) - create a DOM with the specified attributes and child nodes.
+- [_EchoX_.**html**](/reference/building-ui#echox-html) - create a HTML DOM with the specified attributes and child nodes.
+- [_EchoX_.**svg**](/reference/building-ui#echox-svg) - create a SVG node with the specified attributes and child nodes.
 
 ## Applying Reactivity
 
