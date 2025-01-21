@@ -1,4 +1,4 @@
-export {html} from "./html.js";
+export {html, svg} from "./dom.js";
 export {
   reactive,
   $,

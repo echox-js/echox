@@ -8,10 +8,10 @@ const isObject = (d) => protoOf(d ?? 0) === protoOf({});
 
 const isMountable = (d) => d || d === 0;
 
-const handler = (_, name) => (a, b) => {
+const handler = (ns) => (_, name) => (a, b) => {
   const [props, children] = isObject(a) ? [a, b ?? []] : [{}, a ?? []];
 
-  const dom = document.createElement(name);
+  const dom = ns ? document.createElementNS(ns, name) : document.createElement(name);
 
   for (const [k, v] of Object.entries(props)) {
     // This is for some attributes like innerHTML, textContent, etc.
@@ -43,4 +43,6 @@ const handler = (_, name) => (a, b) => {
   return dom;
 };
 
-export const html = new Proxy({}, {get: handler});
+export const html = new Proxy({}, {get: handler()});
+
+export const svg = new Proxy({}, {get: handler("http://www.w3.org/2000/svg")});

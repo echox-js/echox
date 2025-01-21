@@ -1,11 +1,16 @@
 import {test, expect, describe} from "vitest";
-import {html, reactive, $} from "../src/index.js";
+import {html, svg, reactive, $} from "../src/index.js";
 import {sleep} from "./sleep.js";
 
-describe("html", () => {
+describe("DOM", () => {
   test("tag([props], children) should create specified element.", () => {
     const dom = html.div({id: "hello"}, ["Hello, world!", html.button(["Click me!"]), html.span()]);
     expect(dom.outerHTML).toBe(`<div id="hello">Hello, world!<button>Click me!</button><span></span></div>`);
+  });
+
+  test("tag([props], children) should create specified SVG element.", () => {
+    const dom = svg.circle({cx: 50, cy: 50, r: 40});
+    expect(dom.outerHTML).toBe(`<circle cx="50" cy="50" r="40"></circle>`);
   });
 
   test("tag([props], children) should handle falsy values in children.", () => {
