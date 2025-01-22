@@ -10,7 +10,11 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       {text: "Docs", link: "/introduction/what-is-echox"},
-      {text: "Blogs", link: "/blog/index"},
+      // {text: "Blogs", link: "/blog/index"},
+      {
+        text: "Examples",
+        items: [{text: "SVG", link: "https://observablehq.com/d/975d1bd7e1cb0e2b"}],
+      },
     ],
     sidebar: {
       "/": [
