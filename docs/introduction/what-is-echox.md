@@ -35,7 +35,7 @@ Please refer to [Building UI](/reference/building-ui) from more information.
 EchoX exports two methods _reactive_ and _$_ for reactivity. For example, let's make the counter interactive:
 
 ```js
-const [scope] = EchoX.reactive().let("value", 0).join();
+const scope = EchoX.reactive().let("value", 0).join();
 
 const dom = html.div([
   html.button({onclick: () => scope.value++}, ["👍"]),

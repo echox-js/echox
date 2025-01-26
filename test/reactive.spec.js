@@ -13,12 +13,12 @@ describe("reactive", () => {
   });
 
   test("reactive.let(key, value) should define a reactive state.", () => {
-    const [scope] = reactive().let("count", 0).join();
+    const scope = reactive().let("count", 0).join();
     expect(scope.count).toBe(0);
   });
 
   test("reactive.let(key, value) should define multiple reactive states.", () => {
-    const [scope] = reactive().let("count", 0).let("name", "John").join();
+    const scope = reactive().let("count", 0).let("name", "John").join();
     expect(scope.count).toBe(0);
     expect(scope.name).toBe("John");
   });
@@ -29,19 +29,19 @@ describe("reactive", () => {
   });
 
   test("reactive.let(key, value) should be able to update state without reactive.join().", () => {
-    const [scope] = reactive().let("count", 0).join();
+    const scope = reactive().let("count", 0).join();
     expect(scope.count).toBe(0);
     scope.count++;
     expect(scope.count).toBe(1);
   });
 
   test("reactive.join() should return a reactive scope.", () => {
-    const [scope] = reactive().let("count", 0).join();
+    const scope = reactive().let("count", 0).join();
     expect(scope.count).toBe(0);
   });
 
   test("track(callback) should call callback at next animation frame.", async () => {
-    const [scope] = reactive().let("count", 0).join();
+    const scope = reactive().let("count", 0).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => (el.textContent = scope.count));
@@ -64,7 +64,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should not call callback when state is not updated.", async () => {
-    const [scope] = reactive().let("count", 0).join();
+    const scope = reactive().let("count", 0).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => (el.textContent = scope.count));
@@ -80,7 +80,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should merge multiple updates into one.", async () => {
-    const [scope] = reactive().let("count", 0).join();
+    const scope = reactive().let("count", 0).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => (el.textContent = scope.count));
@@ -98,7 +98,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should track multiple states.", async () => {
-    const [scope] = reactive().let("count", 0).let("name", "John").join();
+    const scope = reactive().let("count", 0).let("name", "John").join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => (el.textContent = `${scope.name} ${scope.count}`));
@@ -124,7 +124,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should track multiple callbacks.", async () => {
-    const [scope] = reactive().let("count", 0).join();
+    const scope = reactive().let("count", 0).join();
 
     const el1 = document.createElement("div");
     const el2 = document.createElement("div");
@@ -146,7 +146,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should track new deps caused by conditionally branches.", async () => {
-    const [scope] = reactive().let("count", 0).let("name", "jack").join();
+    const scope = reactive().let("count", 0).let("name", "jack").join();
 
     const span = document.createElement("span");
     const update = vi.fn(() => {
@@ -173,7 +173,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should prevent circular dependencies", async () => {
-    const [scope] = reactive().let("count", 0).let("checked", false).join();
+    const scope = reactive().let("count", 0).let("checked", false).join();
 
     const toggle = vi.fn(() => (scope.checked = !scope.checked));
     const toggleTracked = () => track(toggle);
@@ -198,7 +198,7 @@ describe("reactive", () => {
 
   test("reactive() should remove deps without mounted DOMs when updating state.", async () => {
     const rx = reactive().let("count", 0);
-    const [scope] = rx.join();
+    const scope = rx.join();
 
     const el = document.createElement("div");
     document.body.appendChild(el);
@@ -222,7 +222,7 @@ describe("reactive", () => {
 
   test("reactive() should not remove deps with non-DOMs when updating state.", async () => {
     const rx = reactive().let("count", 0);
-    const [scope] = rx.join();
+    const scope = rx.join();
 
     const update = vi.fn(() => scope.count);
     track(update);
@@ -235,7 +235,7 @@ describe("reactive", () => {
 
   test("reactive() should remove effect with disconnected DOM after 1s when getting the state.", async () => {
     const rx = reactive().let("count", 0);
-    const [scope] = rx.join();
+    const scope = rx.join();
 
     const el = document.createElement("div");
     document.body.appendChild(el);
@@ -257,7 +257,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track nested object properties.", async () => {
-    const [scope] = reactive()
+    const scope = reactive()
       .let("user", {name: "John", info: {age: 25}})
       .join();
 
@@ -282,7 +282,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track array push and pop operations.", async () => {
-    const [scope] = reactive().let("list", [1, 2, 3]).join();
+    const scope = reactive().let("list", [1, 2, 3]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -310,7 +310,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track array length changes.", async () => {
-    const [scope] = reactive().let("list", [1, 2, 3]).join();
+    const scope = reactive().let("list", [1, 2, 3]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -333,7 +333,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track array index assignments.", async () => {
-    const [scope] = reactive().let("list", [1, 2, 3]).join();
+    const scope = reactive().let("list", [1, 2, 3]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -351,7 +351,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track array splice and reverse operations.", async () => {
-    const [scope] = reactive().let("list", [1, 2, 3]).join();
+    const scope = reactive().let("list", [1, 2, 3]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -374,7 +374,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track nested array updates.", async () => {
-    const [scope] = reactive()
+    const scope = reactive()
       .let("data", {
         items: [
           [1, 2],
@@ -404,7 +404,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track array unshift and shift operations.", async () => {
-    const [scope] = reactive().let("list", [1, 2, 3]).join();
+    const scope = reactive().let("list", [1, 2, 3]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -427,7 +427,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track array sort operations.", async () => {
-    const [scope] = reactive().let("list", [3, 1, 4, 1, 5]).join();
+    const scope = reactive().let("list", [3, 1, 4, 1, 5]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -450,7 +450,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track array fill operations.", async () => {
-    const [scope] = reactive().let("list", [1, 2, 3, 4, 5]).join();
+    const scope = reactive().let("list", [1, 2, 3, 4, 5]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -473,7 +473,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track array copyWithin operations.", async () => {
-    const [scope] = reactive().let("list", [1, 2, 3, 4, 5]).join();
+    const scope = reactive().let("list", [1, 2, 3, 4, 5]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -496,7 +496,7 @@ describe("reactive", () => {
   });
 
   test("reactive() should track multiple array operations in sequence.", async () => {
-    const [scope] = reactive().let("list", [1, 2, 3]).join();
+    const scope = reactive().let("list", [1, 2, 3]).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => {
@@ -521,7 +521,7 @@ describe("reactive", () => {
   });
 
   test("cond() should render content based on condition.", async () => {
-    const [scope] = reactive().let("show", true).join();
+    const scope = reactive().let("show", true).join();
     const div = html.div([
       cond(
         () => scope.show,
@@ -541,7 +541,7 @@ describe("reactive", () => {
   });
 
   test("cond() should handle falsy fallback.", async () => {
-    const [scope] = reactive().let("show", true).join();
+    const scope = reactive().let("show", true).join();
     const div = html.div([
       cond(
         () => scope.show,
@@ -560,7 +560,7 @@ describe("reactive", () => {
   });
 
   test("cond() should track dependencies in condition.", async () => {
-    const [scope] = reactive().let("count", 0).let("threshold", 3).join();
+    const scope = reactive().let("count", 0).let("threshold", 3).join();
 
     const div = html.div([
       cond(
@@ -585,7 +585,7 @@ describe("reactive", () => {
   });
 
   test("cond() should track dependencies in render functions.", async () => {
-    const [scope] = reactive().let("show", true).let("text", "Hello").join();
+    const scope = reactive().let("show", true).let("text", "Hello").join();
 
     const div = html.div([
       cond(
@@ -614,7 +614,7 @@ describe("reactive", () => {
   });
 
   test("cond() should handle nested conditions.", async () => {
-    const [scope] = reactive().let("outer", true).let("inner", true).join();
+    const scope = reactive().let("outer", true).let("inner", true).join();
 
     const div = html.div([
       cond(
@@ -652,7 +652,7 @@ describe("reactive", () => {
   });
 
   test("cond() should optimize renders for unchanged conditions.", async () => {
-    const [scope] = reactive().let("show", true).let("unrelated", 0).join();
+    const scope = reactive().let("show", true).let("unrelated", 0).join();
 
     const renderTrue = vi.fn(() => html.span(["Visible"]));
     const renderFalse = vi.fn(() => html.span(["Hidden"]));

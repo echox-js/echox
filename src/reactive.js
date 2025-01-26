@@ -97,7 +97,7 @@ class Reactive {
       return [scope, states];
     }
 
-    return [scope];
+    return scope;
   }
 }
 

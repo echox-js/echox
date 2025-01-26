@@ -7,7 +7,7 @@ The lightweight reactive UI framework for declarative DOM manipulation, alternat
 ```js
 import {html, reactive, $} from "echox";
 
-const [scope] = reactive().let("value", 0).join();
+const scope = reactive().let("value", 0).join();
 
 const counter = html.div([
   html.button({onclick: () => scope.value++}, ["👍"]),

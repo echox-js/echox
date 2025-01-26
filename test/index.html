@@ -2,7 +2,7 @@
   <script type="module">
     import {reactive, html, $, cond} from "../src/index.js";
 
-    const [scope] = reactive().let("outer", true).let("inner", true).join();
+    const scope = reactive().let("outer", true).let("inner", true).join();
 
     const div = html.div([
       cond(
