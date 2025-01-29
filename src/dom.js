@@ -1,3 +1,5 @@
+// Inspired by https://github.com/vanjs-org/van/blob/main/src/van.js
+
 const propSetterCache = {};
 
 const protoOf = Object.getPrototypeOf;
@@ -8,7 +10,7 @@ const isObject = (d) => protoOf(d ?? 0) === protoOf({});
 
 const isMountable = (d) => d || d === 0;
 
-const handler = (ns) => (_, name) => (a, b) => {
+const create = (ns, name, a, b) => {
   const [props, children] = isObject(a) ? [a, b ?? []] : [{}, a ?? []];
 
   const dom = ns ? document.createElementNS(ns, name) : document.createElement(name);
@@ -43,6 +45,6 @@ const handler = (ns) => (_, name) => (a, b) => {
   return dom;
 };
 
-export const html = new Proxy({}, {get: handler()});
+const handler = (ns) => ({get: (_, name) => create.bind(undefined, ns, name)});
 
-export const svg = new Proxy({}, {get: handler("http://www.w3.org/2000/svg")});
+export const html = new Proxy((ns) => new Proxy(create, handler(ns)), handler());
