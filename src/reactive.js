@@ -27,8 +27,6 @@ const cleanup = (state) => ((disposes = schedule(disposes, state, dispose, GC_CY
 
 const isWatchable = (d) => Array.isArray(d) || (d && d.constructor === Object);
 
-const isObservable = (d) => typeof d === "function" && "__observe__" in d;
-
 const isMountable = (d) => d || d === 0;
 
 const observe = (d) => ((d.__observe__ = true), d);
@@ -149,48 +147,6 @@ export const $ = (callback) =>
   observe((context) => {
     if (typeof context === "function") return attr(callback, context);
     return child(callback, context);
-  });
-
-export const cond = (predict, renderT, renderF = () => null) =>
-  observe((dom, right, after) => {
-    // The virtual parent for nodes of true and false branches.
-    const truthy = new Text("");
-    const falsy = new Text("");
-    dom.insertBefore(truthy, right);
-    dom.insertBefore(falsy, right);
-
-    let prev;
-    let prevNodes = [];
-
-    track(() => {
-      // Only update when the virtual parent is displayed.
-      if (right?.__hide__ === true) return;
-
-      // Only update when the prediction changes.
-      const cur = predict();
-      if (prev === cur) return;
-      prev = cur;
-
-      // Remove the previous nodes without diffing.
-      prevNodes.forEach((node) => node.remove());
-
-      // Update nodes, virtual based on the prediction.
-      let value;
-      let virtual;
-      if (cur) (truthy.__hide__ = false), (falsy.__hide__ = true), (value = renderT()), (virtual = truthy);
-      else (truthy.__hide__ = true), (falsy.__hide__ = false), (value = renderF()), (virtual = falsy);
-
-      // If the value is observable, update the previous nodes every time it changes.
-      if (isObservable(value)) value(dom, virtual, (n) => (prevNodes = n));
-      else prevNodes = mount(dom, virtual, value);
-
-      // Hook for updating the previous nodes.
-      after?.(prevNodes);
-
-      return virtual;
-    });
-
-    return prevNodes;
   });
 
 export const reactive = () => new Reactive();
