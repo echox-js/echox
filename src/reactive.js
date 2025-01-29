@@ -27,8 +27,6 @@ const schedule = (set, d, f, ms) => (set ?? (setTimeout(f, ms), new Set())).add(
 
 const cleanup = (state) => ((disposes = schedule(disposes, state, dispose, GC_CYCLE)), state);
 
-const isWatchable = (d) => Array.isArray(d) || (d && d.constructor === Object);
-
 const isMountable = (d) => d || d === 0;
 
 const observe = (d) => ((d.__observe__ = true), d);
@@ -43,59 +41,33 @@ class Reactive {
     return this;
   }
   join() {
-    const create = (v) => ({val: watch(v)[0], deps: new Set()});
-    const [scope, states] = watch({...this._defs});
+    const create = (val) => ({val, deps: new Set()});
+    const states = Object.fromEntries(Object.entries(this._defs).map(([k, v]) => [k, create(v)]));
 
     this.__states__ = states; // For testing.
 
-    function watch(obj) {
-      // Only watch arrays and objects.
-      if (!isWatchable(obj)) return [obj];
+    const scope = new Proxy(Object.create(null), {
+      get: (_, k) => {
+        if (!Object.hasOwn(states, k)) return obj[k];
+        const state = states[k];
+        actives?.getters?.add(state);
+        return state.val;
+      },
+      set: (target, k, v) => {
+        if (!Object.hasOwn(states, k)) return (target[k] = v), true;
+        const state = states[k];
 
-      // Can't use Object.entries because it doesn't work with arrays.
-      // Can't use Object.keys because it doesn't get the length of the array.
-      const states = Object.fromEntries(Object.getOwnPropertyNames(obj).map((k) => [k, create(obj[k])]));
+        // For circular dependencies.
+        actives?.setters?.add(state);
 
-      const isArray = Array.isArray(obj);
-      const scope = new Proxy(obj, {
-        get: (_, k) => {
-          // Can't use `key in states` because array and object will share the same keys,
-          // such constructor, prototype, etc.
-          if (!Object.hasOwn(states, k)) return obj[k];
-          const state = states[k];
-          actives?.getters?.add(state);
-          return state.val;
-        },
-        set: (target, k, v) => {
-          if (!Object.hasOwn(states, k)) {
-            // Array may add more keys when the length has changed,
-            // such as array.push, make sure to track the new keys.
-            // This works because `array.push` will set the length,
-            // and trigger flush, which will re-track the new keys.
-            // This will not work with regular objects, so it can't
-            // automatically track new keys.
-            if (isArray && Number.isInteger(+k)) states[k] = create(v);
+        // Update the state if the value changes.
+        if (state.val === v) return true;
+        if (state.deps.size) update(state);
+        state.val = v;
 
-            // !!!Can't add else here, I'm not sure why...
-            return (target[k] = v), true;
-          }
-
-          const state = states[k];
-
-          // For circular dependencies.
-          actives?.setters?.add(state);
-
-          // Update the state if the value changes.
-          if (state.val === v) return true;
-          if (state.deps.size) update(state);
-          state.val = v;
-
-          return true;
-        },
-      });
-
-      return [scope, states];
-    }
+        return true;
+      },
+    });
 
     return [scope];
   }
