@@ -1,3 +1,5 @@
+// Inspired by https://github.com/vanjs-org/van/blob/main/src/van.js
+
 let actives, disposes, updates;
 
 const GC_CYCLE = 1000;

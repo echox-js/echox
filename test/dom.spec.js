@@ -1,5 +1,5 @@
 import {test, expect, describe} from "vitest";
-import {html, svg, reactive, $} from "../src/index.js";
+import {html, reactive, $} from "../src/index.js";
 import {sleep} from "./sleep.js";
 
 describe("DOM", () => {
@@ -9,6 +9,7 @@ describe("DOM", () => {
   });
 
   test("tag([props], children) should create specified SVG element.", () => {
+    const svg = html("http://www.w3.org/2000/svg");
     const dom = svg.circle({cx: 50, cy: 50, r: 40});
     expect(dom.outerHTML).toBe(`<circle cx="50" cy="50" r="40"></circle>`);
   });
