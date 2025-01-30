@@ -47,8 +47,8 @@ class Reactive {
     this.__states__ = states; // For testing.
 
     const scope = new Proxy(Object.create(null), {
-      get: (_, k) => {
-        if (!Object.hasOwn(states, k)) return obj[k];
+      get: (target, k) => {
+        if (!Object.hasOwn(states, k)) return target[k];
         const state = states[k];
         actives?.getters?.add(state);
         return state.val;
@@ -90,37 +90,40 @@ export const track = (effect) => {
   effect.__dom__ = dom?.nodeType ? dom : {isConnected: true}; // Only DOM nodes are removable.
 };
 
-const mount = (dom, virtual, value) => {
+const mount = (dom, next, value) => {
   const nodes = [value].flat().filter(isMountable);
   for (let i = 0; i < nodes.length; i++) {
     const n = nodes[i];
     const node = n?.nodeType ? n : new Text(n);
     nodes[i] = node;
-    dom.insertBefore(node, virtual);
+    dom.insertBefore(node, next);
   }
   return nodes;
 };
 
 const attr = (callback, setter) => track(() => setter(callback()));
 
-const child = (callback, dom) => {
-  // The virtual parent for nodes of the callback.
-  const virtual = new Text("");
-  dom.append(virtual);
-
-  let prevNodes = [];
-
+const child = (callback, dom, prevNodes) => {
   return track(() => {
+    // Find the next sibling node.
+    let nextNodes = prevNodes;
+    while ((nextNodes = nextNodes._next) && nextNodes.length === 0) {}
+    const next = nextNodes?.[0] ?? null;
+
+    // Remove the previous nodes and insert the new nodes in place.
     prevNodes.forEach((node) => node.remove());
-    prevNodes = mount(dom, virtual, callback());
-    return virtual;
+    const newNodes = mount(dom, next, callback());
+    let i = 0;
+    for (; i < newNodes.length; i++) prevNodes[i] = newNodes[i];
+    for (; i < prevNodes.length; i++) prevNodes[i] = null; // Clear the rest.
+    prevNodes.length = newNodes.length;
   });
 };
 
 export const $ = (callback) =>
-  observe((context) => {
+  observe((context, nodes) => {
     if (typeof context === "function") return attr(callback, context);
-    return child(callback, context);
+    return child(callback, context, nodes);
   });
 
 export const reactive = () => new Reactive();

@@ -37,9 +37,16 @@ const create = (ns, name, a, b) => {
     else setter(v);
   }
 
-  for (const child of children.flat()) {
-    if (isObservable(child)) child(dom);
-    else if (isMountable(child)) dom.append(child);
+  let preNodes = null;
+  const flatted = children.flat(Infinity);
+  for (let i = 0; i < flatted.length; i++) {
+    // Use nodes for their virtual parent, to find the next sibling.
+    const nodes = [];
+    const child = flatted[i];
+    if (preNodes) preNodes._next = nodes;
+    if (isObservable(child)) child(dom, nodes);
+    else if (isMountable(child)) nodes.push(child), dom.append(child);
+    preNodes = nodes;
   }
 
   return dom;
