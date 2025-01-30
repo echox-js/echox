@@ -11,6 +11,7 @@
   },
   "rules": {
     "no-dupe-keys": "off",
-    "no-constant-condition": "off"
+    "no-constant-condition": "off",
+    "no-empty": "off"
   }
 }

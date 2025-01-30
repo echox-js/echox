@@ -140,6 +140,42 @@ describe("DOM", () => {
     await sleep(0);
     expect(div.outerHTML).toBe(`<div><span>Static</span><span>Static2</span></div>`);
 
+    scope.show = true;
+    await sleep(0);
+    expect(div.outerHTML).toBe(`<div><span>Static</span><span>Dynamic</span><span>Static2</span></div>`);
+
+    document.body.removeChild(div);
+  });
+
+  test("tag(props, children) should update multiple mixed static and reactive children.", async () => {
+    const [scope] = reactive().let("show", true).let("show2", true).join();
+    const div = html.div([
+      html.span(["Static"]),
+      $(() => (scope.show ? html.span(["Dynamic"]) : null)),
+      $(() => (scope.show2 ? html.span(["Dynamic2"]) : null)),
+      html.span(["Static2"]),
+    ]);
+    document.body.append(div);
+
+    expect(div.outerHTML).toBe(
+      `<div><span>Static</span><span>Dynamic</span><span>Dynamic2</span><span>Static2</span></div>`,
+    );
+
+    scope.show = false;
+    scope.show2 = false;
+    await sleep(0);
+    expect(div.outerHTML).toBe(`<div><span>Static</span><span>Static2</span></div>`);
+
+    scope.show = true;
+    await sleep(0);
+    expect(div.outerHTML).toBe(`<div><span>Static</span><span>Dynamic</span><span>Static2</span></div>`);
+
+    scope.show2 = true;
+    await sleep(0);
+    expect(div.outerHTML).toBe(
+      `<div><span>Static</span><span>Dynamic</span><span>Dynamic2</span><span>Static2</span></div>`,
+    );
+
     document.body.removeChild(div);
   });
 
