@@ -1,4 +1,4 @@
-# EchoX: UI = f(DOM, reactive)
+# EchoX: UI = f(DOM, Reactive)
 
 <img src="./docs/public/logo.svg" width="100"/>
 
