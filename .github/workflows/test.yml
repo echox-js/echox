@@ -14,8 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
-      - run: pnpm --frozen-lockfile install
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile 
       - run: pnpm test
       - run: pnpm prepublishOnly
       - run: pnpm docs:build
