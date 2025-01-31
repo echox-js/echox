@@ -30,11 +30,15 @@ const cleanup = (state) => ((disposes = schedule(disposes, state, dispose, GC_CY
 
 const isMountable = (d) => d || d === 0;
 
+const isFunction = (d) => typeof d === "function";
+
 const observe = (d) => ((d.__observe__ = true), d);
 
 class Reactive {
   constructor() {
     this._defs = {};
+    this._effects = [];
+    this._disposes = [];
     this.__states__ = {}; // For testing.
   }
   let(k, v) {
@@ -43,6 +47,10 @@ class Reactive {
   }
   derive(k, f) {
     this._defs[k] = f;
+    return this;
+  }
+  observe(effect) {
+    this._effects.push(effect);
     return this;
   }
   join() {
@@ -75,7 +83,16 @@ class Reactive {
       },
     });
 
-    return [scope];
+    for (const effect of this._effects) {
+      track(() => {
+        const dispose = effect(scope);
+        isFunction(dispose) && this._disposes.push(dispose);
+      });
+    }
+
+    const dispose = () => this._disposes.forEach((d) => d());
+
+    return [scope, dispose];
   }
 }
 
