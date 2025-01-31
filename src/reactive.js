@@ -83,6 +83,8 @@ class Reactive {
       },
     });
 
+    // Initialize the scope.
+    for (const key in this._defs) scope[key];
     for (const effect of this._effects) {
       track(() => {
         const dispose = effect(scope);
