@@ -27,12 +27,65 @@ describe("reactive", () => {
     expect(rx.let("count", 0)).toBe(rx);
   });
 
-  test("reactive.let(key, value) should be able to update state without reactive.join().", () => {
+  test("reactive.let(key, value) should be able to update state with reactive.join().", () => {
     const [scope] = reactive().let("count", 0).join();
     expect(scope.count).toBe(0);
     scope.count++;
     expect(scope.count).toBe(1);
   });
+
+  test("reactive.drive(key, fn) should return itself.", () => {
+    const rx = reactive();
+    expect(rx.derive("double", (s) => s.count * 2)).toBe(rx);
+  });
+
+  test("reactive.derive(key, fn) should define a derived state.", async () => {
+    const [scope] = reactive()
+      .let("count", 0)
+      .derive("double", (s) => s.count * 2)
+      .join();
+
+    expect(scope.double).toBe(0);
+    scope.count++;
+    await sleep(0);
+    expect(scope.double).toBe(2);
+  });
+
+  test("reactive.derive(key, fn) should only update one time when deps update.", async () => {
+    const double = vi.fn((s) => s.count * 2);
+    const [scope] = reactive().let("count", 0).derive("double", double).join();
+    scope.count++;
+    scope.count++;
+    await sleep(0);
+    expect(double).toHaveBeenCalledTimes(0);
+    expect(scope.double).toBe(4);
+    expect(double).toHaveBeenCalledTimes(1);
+  });
+
+  test("reactive.derive(key, fn) should define chained states.", async () => {
+    const [scope] = reactive()
+      .let("count", 0)
+      .derive("double", (s) => s.count * 2)
+      .derive("triple", (s) => s.double * 3)
+      .join();
+
+    expect(scope.triple).toBe(0);
+    scope.count++;
+    await sleep(0);
+    expect(scope.triple).toBe(6);
+  });
+
+  test("reactive.derive(key, fn) don't care about the order of definitions.", async () => {
+    const [scope] = reactive()
+      .derive("double", (s) => s.count * 2)
+      .let("count", 0)
+      .join();
+
+    expect(scope.double).toBe(0);
+    scope.count++;
+    await sleep(0);
+    expect(scope.double).toBe(2);
+  })
 
   test("reactive.join() should return a reactive scope.", () => {
     const [scope] = reactive().let("count", 0).join();

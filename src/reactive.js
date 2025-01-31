@@ -3,6 +3,7 @@
 let actives, disposes, updates;
 
 const GC_CYCLE = 1000;
+const UNSET = Symbol("UNSET");
 
 const disconnect = (state) => (state.deps = new Set([...state.deps].filter((d) => d.__dom__?.isConnected)));
 
@@ -37,11 +38,15 @@ class Reactive {
     this.__states__ = {}; // For testing.
   }
   let(k, v) {
-    this._defs[k] = v;
+    this._defs[k] = () => v;
+    return this;
+  }
+  derive(k, f) {
+    this._defs[k] = f;
     return this;
   }
   join() {
-    const create = (val) => ({val, deps: new Set()});
+    const create = (val) => ({raw: val, val: UNSET, deps: new Set()});
     const states = Object.fromEntries(Object.entries(this._defs).map(([k, v]) => [k, create(v)]));
 
     this.__states__ = states; // For testing.
@@ -50,6 +55,7 @@ class Reactive {
       get: (target, k) => {
         if (!Object.hasOwn(states, k)) return target[k];
         const state = states[k];
+        if (state.val === UNSET) track(() => (scope[k] = state.raw(scope)));
         actives?.getters?.add(state);
         return state.val;
       },
