@@ -9,7 +9,7 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      {text: "Docs", link: "/introduction/what-is-echox"},
+      {text: "Docs", link: "/what-is-echox"},
       // {text: "Blogs", link: "/blog/index"},
     ],
     sidebar: {
@@ -17,10 +17,10 @@ export default defineConfig({
         {
           text: "Introduction",
           items: [
-            {text: "What is EchoX", link: "/introduction/what-is-echox"},
-            {text: "Why is EchoX", link: "/introduction/why-is-echox"},
-            {text: "Getting Started", link: "/introduction/getting-started"},
-            {text: "API Index", link: "/introduction/api-index"},
+            {text: "What is EchoX", link: "/what-is-echox"},
+            {text: "Why is EchoX", link: "/why-is-echox"},
+            {text: "Getting Started", link: "/getting-started"},
+            {text: "API Index", link: "/api-index"},
           ],
         },
         {

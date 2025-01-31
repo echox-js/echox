@@ -1,8 +1,8 @@
 # What is EchoX?
 
-**EchoX** is The 2kB lightweight reactive UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects especially.
+**EchoX** is The lightweight reactive UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects especially.
 
-The philosophy for EchoX is **UI = f(DOM, Reactive)**, please keep reading to find out why! Also, EchoX focus on simplicity, so there are only few [APIs](/introduction/api-index) for now!
+The philosophy for EchoX is **UI = f(DOM, Reactive)**, please keep reading to find out why! Also, EchoX focus on simplicity, so there are only few [APIs](/api-index) for now!
 
 ## Building UI
 

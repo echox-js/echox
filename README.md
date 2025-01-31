@@ -25,8 +25,8 @@ document.body.appendChild(counter);
 ## Resources 📚
 
 - Documentation - https://echox.dev/
-- Features - https://echox.dev/introduction/what-is-echox
-- Motivation - https://echox.dev/introduction/why-is-echox
+- Features - https://echox.dev/what-is-echox
+- Motivation - https://echox.dev/why-is-echox
 
 ## License 📄
 
