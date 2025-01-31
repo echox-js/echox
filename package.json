@@ -26,11 +26,10 @@
     "test:js": "vitest",
     "test:lint": "eslint src test",
     "test:format": "prettier --check src test",
-    "build": "rm -rf dist && rollup -c",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "rm -rf dist && rollup -c"
   },
   "sideEffects": false,
   "devDependencies": {
