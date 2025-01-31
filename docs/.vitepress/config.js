@@ -26,8 +26,8 @@ export default defineConfig({
         {
           text: "Reference",
           items: [
-            {text: "Building UI", link: "/reference/building-ui"},
-            {text: "Applying Reactivity", link: "/reference/applying-reactivity"},
+            {text: "EchoX DOM", link: "/echox-dom"},
+            {text: "EchoX Reactive", link: "/echox-reactive"},
           ],
         },
       ],

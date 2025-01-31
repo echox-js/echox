@@ -26,7 +26,7 @@ const dom = html.div([
 ]);
 ```
 
-Please refer to [Building UI](/reference/building-ui) from more information.
+Please refer to [EchoX DOM](/echox-dom) from more information.
 
 **If you only want a static DOM, this is all you need to know how about EchoX**! Otherwise, keep reading!
 
@@ -35,18 +35,23 @@ Please refer to [Building UI](/reference/building-ui) from more information.
 EchoX exports two methods _reactive_ and _$_ for reactivity. For example, let's make the counter interactive:
 
 ```js
-const [scope] = EchoX.reactive().let("value", 0).join();
+const [scope] = ex
+  .reactive()
+  .let("value", 0)
+  .derive("double", (d) => d.value * 2)
+  .observe((d) => console.log(d.value, d.double))
+  .join();
 
 const dom = html.div([
   html.button({onclick: () => scope.value++}, ["👍"]),
-  html.button({onclick: () => scope.value++}, ["👍"]),
-  html.span([EchoX.$(() => scope.value)]),
+  html.button({onclick: () => scope.value--}, ["👍"]),
+  html.span([ex.$(() => scope.double)]),
 ]);
 ```
 
 _EchoX.reactive_ returns a reactive scope, where stores the states you defined. Then you can bind states with the attributes or child nodes of DOMs using _EchoX.$_. This is the _reactive_ in the philosophy.
 
-Please refer to [Applying Reactivity](/reference/applying-reactivity) for more information.
+Please refer to [EchoX Reactive](/echox-reactive) for more information.
 
 ## What's more?
 
