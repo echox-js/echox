@@ -4,7 +4,7 @@ layout: home
 
 hero:
   name: "UI = f(DOM, Reactive)"
-  text: The 2kB lightweight reactive UI framework for declarative DOM manipulation
+  text: The lightweight reactive UI framework for declarative DOM manipulation
   tagline: Alternative to React, Vue and jQuery for small projects especially
   image:
     src: /logo.svg
