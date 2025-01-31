@@ -9,6 +9,7 @@ describe("reactive", () => {
     expect(rx).toBeDefined();
     expect(rx._defs).toEqual({});
     expect(rx.__states__).toEqual({});
+    expect(rx._effects).toEqual([]);
   });
 
   test("reactive.let(key, value) should define a reactive state.", () => {
@@ -85,7 +86,62 @@ describe("reactive", () => {
     scope.count++;
     await sleep(0);
     expect(scope.double).toBe(2);
-  })
+  });
+
+  test("reactive.observe(effect) should return itself.", () => {
+    const rx = reactive();
+    expect(rx.observe(() => {})).toBe(rx);
+  });
+
+  test("reactive.observe(effect) should not call the effect before joining.", () => {
+    let count = 0;
+    reactive().observe(() => (count = 1));
+    expect(count).toBe(0);
+  });
+
+  test("reactive.observe(effect) should call the effect immediately after joining.", () => {
+    let count = 0;
+    reactive()
+      .observe(() => (count = 1))
+      .join();
+    expect(count).toBe(1);
+  });
+
+  test("reactive.observe(effect) should call when states update", async () => {
+    const effect = vi.fn((s) => s.count);
+    const [scope] = reactive().let("count", 0).observe(effect).join();
+    scope.count++;
+    scope.count++;
+    scope.count++;
+    await sleep(0);
+    expect(effect).toHaveBeenCalledTimes(2);
+  });
+
+  test("reactive.observe(effect) should only collect functional disposes.", () => {
+    const rx = reactive();
+    rx.observe(() => 1)
+      .observe(() => "string")
+      .observe(() => {})
+      .observe(() => null)
+      .observe(() => ({}))
+      .observe(() => () => {})
+      .join();
+    expect(rx._disposes.length).toBe(1);
+  });
+
+  test("reactive.observe(effect) should dispose resources", async () => {
+    const d = vi.fn(() => {});
+    const d1 = vi.fn(() => {});
+    const [, dispose] = reactive()
+      .observe(() => d)
+      .observe(() => d1)
+      .join();
+    expect(d).toHaveBeenCalledTimes(0);
+    expect(d1).toHaveBeenCalledTimes(0);
+    dispose();
+    expect(d).toHaveBeenCalledTimes(1);
+    expect(d1).toHaveBeenCalledTimes(1);
+  });
 
   test("reactive.join() should return a reactive scope.", () => {
     const [scope] = reactive().let("count", 0).join();
