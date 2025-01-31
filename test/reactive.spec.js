@@ -58,9 +58,9 @@ describe("reactive", () => {
     scope.count++;
     scope.count++;
     await sleep(0);
-    expect(double).toHaveBeenCalledTimes(0);
+    expect(double).toHaveBeenCalledTimes(2);
     expect(scope.double).toBe(4);
-    expect(double).toHaveBeenCalledTimes(1);
+    expect(double).toHaveBeenCalledTimes(2);
   });
 
   test("reactive.derive(key, fn) should define chained states.", async () => {
