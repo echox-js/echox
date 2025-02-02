@@ -132,7 +132,7 @@ describe("reactive", () => {
   test("reactive.observe(effect) should dispose resources", async () => {
     const d = vi.fn(() => {});
     const d1 = vi.fn(() => {});
-    const [, dispose] = reactive()
+    const [, , dispose] = reactive()
       .observe(() => d)
       .observe(() => d1)
       .join();

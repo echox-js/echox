@@ -9,5 +9,3 @@
 ## _reactive_.**observe(_effect_)** {#reactive-observe}
 
 ## _reactive_.**join()** {#reactive-join}
-
-## _EchoX_.**$(_callback_)** {#$}
