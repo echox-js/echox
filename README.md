@@ -5,7 +5,7 @@
 The lightweight reactive UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects.
 
 ```js
-import {html, reactive, $} from "echox";
+import {html, reactive} from "echox";
 
 const [state, use] = reactive()
   .let("value", 0)

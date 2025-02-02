@@ -32,7 +32,7 @@ Please refer to [EchoX DOM](/echox-dom) from more information.
 
 ## Applying Reactivity
 
-EchoX exports two methods _reactive_ and _$_ for reactivity. For example, let's make the counter interactive:
+EchoX exports one method _reactive_ for reactivity. For example, let's make the counter interactive:
 
 ```js
 const [scope, use] = ex
@@ -49,7 +49,7 @@ const dom = html.div([
 ]);
 ```
 
-_EchoX.reactive_ returns a reactive scope, where stores the states you defined. Then you can bind states with the attributes or child nodes of DOMs using _EchoX.$_. This is the _reactive_ in the philosophy.
+_EchoX.reactive_ returns a reactive scope, where stores the states you defined. Then you can bind states with the attributes or child nodes of DOMs using _use_. This is the _reactive_ in the philosophy.
 
 Please refer to [EchoX Reactive](/echox-reactive) for more information.
 

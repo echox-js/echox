@@ -1,24 +1,5 @@
 <html>
   <script type="module">
-    import {reactive, html, $, cond} from "../src/index.js";
-
-    const [scope] = reactive().let("outer", true).let("inner", true).join();
-
-    const div = html.div([
-      cond(
-        () => scope.outer,
-        () =>
-          cond(
-            () => scope.inner,
-            () => html.span(["Both"]),
-            () => html.span(["Outer only"]),
-          ),
-        () => html.span(["None"]),
-      ),
-    ]);
-
-    window.scope = scope;
-
-    document.body.appendChild(div);
+    import * as cm from "../src/index.js";
   </script>
 </html>

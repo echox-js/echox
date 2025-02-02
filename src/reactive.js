@@ -32,6 +32,8 @@ const isMountable = (d) => d || d === 0;
 
 const isFunction = (d) => typeof d === "function";
 
+const isString = (d) => typeof d === "string";
+
 const observe = (d) => ((d.__observe__ = true), d);
 
 class Reactive {
@@ -94,7 +96,7 @@ class Reactive {
 
     const dispose = () => this._disposes.forEach((d) => d());
 
-    const use = (d) => $(typeof d === "string" ? () => scope[d] : typeof d === "function" ? d : () => d);
+    const use = (d) => $(isString(d) ? () => scope[d] : isFunction(d) ? d : () => d);
 
     return [scope, use, dispose];
   }
