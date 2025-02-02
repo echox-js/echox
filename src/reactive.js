@@ -94,7 +94,9 @@ class Reactive {
 
     const dispose = () => this._disposes.forEach((d) => d());
 
-    return [scope, dispose];
+    const use = (d) => $(typeof d === "string" ? () => scope[d] : typeof d === "function" ? d : () => d);
+
+    return [scope, use, dispose];
   }
 }
 
@@ -145,7 +147,7 @@ const child = (callback, dom, prevNodes) => {
   });
 };
 
-export const $ = (callback) =>
+const $ = (callback) =>
   observe((context, nodes) => {
     if (typeof context === "function") return attr(callback, context);
     return child(callback, context, nodes);

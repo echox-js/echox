@@ -7,16 +7,16 @@ The lightweight reactive UI framework for declarative DOM manipulation, alternat
 ```js
 import {html, reactive, $} from "echox";
 
-const [scope] = reactive()
+const [state, use] = reactive()
   .let("value", 0)
   .derive("double", (d) => d.value * 2)
   .observe((d) => console.log(d.value, d.double))
   .join();
 
 const counter = html.div([
-  html.button({onclick: () => scope.value++}, ["👍"]),
-  html.button({onclick: () => scope.value--}, ["👍"]),
-  html.span([$(() => scope.double)]),
+  html.button({onclick: () => state.value++}, ["👍"]),
+  html.button({onclick: () => state.value--}, ["👍"]),
+  html.span([use("value")]),
 ]);
 
 document.body.appendChild(counter);
