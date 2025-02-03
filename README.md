@@ -18,7 +18,7 @@ const [state, use] = reactive()
 
 const counter = html.div([
   html.button({onclick: () => state.value++}, ["👍"]),
-  html.button({onclick: () => state.value--}, ["👍"]),
+  html.button({onclick: () => state.value--}, ["👎"]),
   html.span([use("value")]),
 ]);
 

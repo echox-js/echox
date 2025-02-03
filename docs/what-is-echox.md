@@ -21,7 +21,7 @@ This is the _DOM_ in the philosophy. Also, You can also can create nested struct
 ```js
 const dom = html.div([
   html.button({style: "background: red"}, ["👍"]),
-  html.button({style: "background: red"}, ["👍"]),
+  html.button({style: "background: red"}, ["👎"]),
   html.span([0]),
 ]);
 ```
@@ -44,7 +44,7 @@ const [scope, use] = ex
 
 const dom = html.div([
   html.button({onclick: () => scope.value++}, ["👍"]),
-  html.button({onclick: () => scope.value--}, ["👍"]),
+  html.button({onclick: () => scope.value--}, ["👎"]),
   html.span([use("double")]),
 ]);
 ```
