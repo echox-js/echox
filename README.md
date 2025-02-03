@@ -2,6 +2,9 @@
 
 <img src="./docs/public/logo.svg" width="100"/>
 
+> [!NOTE]
+> Work in progress. The APIs are not stable right now.
+
 The lightweight reactive UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects.
 
 ```js
