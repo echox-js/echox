@@ -2,10 +2,10 @@
 
 ## _EchoX_.**reactive()** {#reactive}
 
-## _reactive_.**let(_key, value_)** {#reactive-let}
+## _reactive_.**state(_key, value_)** {#reactive-state}
 
-## _reactive_.**derive(_key, define_)** {#reactive-derive}
+## _reactive_.**computed(_key, define_)** {#reactive-computed}
 
-## _reactive_.**observe(_effect_)** {#reactive-observe}
+## _reactive_.**effect(_effect_)** {#reactive-effect}
 
 ## _reactive_.**join()** {#reactive-join}

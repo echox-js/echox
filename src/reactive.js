@@ -44,15 +44,15 @@ export class Reactive {
     this._disposes = [];
     this.__states__ = {}; // For testing.
   }
-  let(k, v) {
+  state(k, v) {
     this._defs[k] = () => v;
     return this;
   }
-  derive(k, f) {
+  computed(k, f) {
     this._defs[k] = f;
     return this;
   }
-  observe(effect) {
+  effect(effect) {
     this._effects.push(effect);
     return this;
   }

@@ -37,7 +37,7 @@ describe("DOM", () => {
   });
 
   test("tag([props], children) should update reactive nodes' attributes.", async () => {
-    const [scope, use] = reactive().let("name", "John").join();
+    const [scope, use] = reactive().state("name", "John").join();
     const dom = html.div({id: use("name")});
     expect(dom.outerHTML).toBe(`<div id="John"></div>`);
 
@@ -48,8 +48,8 @@ describe("DOM", () => {
 
   test("tag(props, children) should remove old reactive event listener when updating.", async () => {
     const [scope, use] = reactive()
-      .let("count", 0)
-      .let("handler", () => scope.count++)
+      .state("count", 0)
+      .state("handler", () => scope.count++)
       .join();
 
     const button = html.button({
@@ -70,7 +70,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update reactive number children.", async () => {
-    const [scope, use] = reactive().let("count", 0).join();
+    const [scope, use] = reactive().state("count", 0).join();
     const span = html.span([use("count")]);
     document.body.append(span);
 
@@ -82,7 +82,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update reactive string children.", async () => {
-    const [scope, use] = reactive().let("name", "John").join();
+    const [scope, use] = reactive().state("name", "John").join();
     const span = html.span([use("name")]);
     document.body.append(span);
 
@@ -95,7 +95,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update reactive DOM children.", async () => {
-    const [scope, use] = reactive().let("show", true).join();
+    const [scope, use] = reactive().state("show", true).join();
     const div = html.div([use(() => (scope.show ? html.span(["Hello"]) : null))]);
     document.body.append(div);
 
@@ -112,7 +112,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update multiple reactive DOM children.", async () => {
-    const [scope, use] = reactive().let("count", 0).let("name", "John").join();
+    const [scope, use] = reactive().state("count", 0).state("name", "John").join();
     const div = html.div([use("count"), use("name")]);
     document.body.append(div);
 
@@ -126,7 +126,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update mixed static and reactive children.", async () => {
-    const [scope, use] = reactive().let("show", true).join();
+    const [scope, use] = reactive().state("show", true).join();
     const div = html.div([
       html.span(["Static"]),
       use(() => (scope.show ? html.span(["Dynamic"]) : null)),
@@ -148,7 +148,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update multiple mixed static and reactive children.", async () => {
-    const [scope, use] = reactive().let("show", true).let("show2", true).join();
+    const [scope, use] = reactive().state("show", true).state("show2", true).join();
     const div = html.div([
       html.span(["Static"]),
       use(() => (scope.show ? html.span(["Dynamic"]) : null)),
@@ -180,7 +180,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update nodes when children change.", async () => {
-    const [scope, use] = reactive().let("items", [1, 2, 3]).join();
+    const [scope, use] = reactive().state("items", [1, 2, 3]).join();
     const list = html.div([use(() => scope.items.map((i) => html.span([i])))]);
     document.body.append(list);
 
@@ -194,7 +194,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should handle nested reactive updates.", async () => {
-    const [scope, use] = reactive().let("show", true).let("items", ["a", "b"]).join();
+    const [scope, use] = reactive().state("show", true).state("items", ["a", "b"]).join();
 
     const div = html.div([use(() => (scope.show ? scope.items.map((item) => html.span([item])) : null))]);
     document.body.append(div);
@@ -213,7 +213,7 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should handle array updates with different lengths", async () => {
-    const [scope, use] = reactive().let("items", [1, 2]).join();
+    const [scope, use] = reactive().state("items", [1, 2]).join();
     const list = html.div([use(() => scope.items.map((i) => html.span([i])))]);
     document.body.append(list);
 
