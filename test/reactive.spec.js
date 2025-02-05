@@ -1,9 +1,13 @@
 import {test, expect, describe, vi} from "vitest";
 import {reactive} from "../src/index.js";
-import {track} from "../src/reactive.js";
+import {track, Reactive} from "../src/reactive.js";
 import {sleep} from "./sleep.js";
 
 describe("reactive", () => {
+  test("reactive.prototype should be Reactive.prototype.", () => {
+    expect(reactive.prototype).toBe(Reactive.prototype);
+  });
+
   test("reactive() should return a reactive scope with defaults.", () => {
     const rx = reactive();
     expect(rx).toBeDefined();
