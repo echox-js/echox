@@ -37,9 +37,9 @@ EchoX exports one method _reactive_ for reactivity. For example, let's make the 
 ```js
 const [scope, use] = ex
   .reactive()
-  .let("value", 0)
-  .derive("double", (d) => d.value * 2)
-  .observe((d) => console.log(d.value, d.double))
+  .state("value", 0)
+  .computed("double", (d) => d.value * 2)
+  .effect((d) => console.log(d.value, d.double))
   .join();
 
 const dom = html.div([

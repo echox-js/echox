@@ -11,9 +11,9 @@ The lightweight reactive UI framework for declarative DOM manipulation, alternat
 import {html, reactive} from "echox";
 
 const [state, use] = reactive()
-  .let("value", 0)
-  .derive("double", (d) => d.value * 2)
-  .observe((d) => console.log(d.value, d.double))
+  .state("value", 0)
+  .computed("double", (d) => d.value * 2)
+  .effect((d) => console.log(d.value, d.double))
   .join();
 
 const counter = html.div([
