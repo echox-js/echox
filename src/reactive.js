@@ -36,7 +36,8 @@ const isString = (d) => typeof d === "string";
 
 const observe = (d) => ((d.__observe__ = true), d);
 
-class Reactive {
+// Exports for testing.
+export class Reactive {
   constructor() {
     this._defs = {};
     this._effects = [];
@@ -156,3 +157,5 @@ const $ = (callback) =>
   });
 
 export const reactive = () => new Reactive();
+
+reactive.prototype = Reactive.prototype;
