@@ -1,7 +1,7 @@
 {
   "name": "echox",
   "description": "The lightweight UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "author": {
     "name": "Bairui SU",
     "email": "subairui@icloud.com"
