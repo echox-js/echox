@@ -34,7 +34,16 @@ const isFunction = (d) => typeof d === "function";
 
 const isString = (d) => typeof d === "string";
 
+const isObject = (d) => Object(d) === d;
+
+const isObservable = (d) => isFunction(d) && "__observe__" in d;
+
 const observe = (d) => ((d.__observe__ = true), d);
+
+const remove = (node) => {
+  node.dispose?.();
+  node.remove();
+};
 
 // Exports for testing.
 export class Reactive {
@@ -64,7 +73,7 @@ export class Reactive {
 
     const dispose = () => this._disposes.forEach((d) => d());
 
-    const select = (d) => $(isString(d) ? () => scope[d] : isFunction(d) ? d : () => d);
+    const select = (d) => $(isString(d) ? () => scope[d] : isFunction(d) ? () => d(scope) : () => d);
 
     const scope = new Proxy(Object.create(null), {
       get: (target, k) => {
@@ -145,7 +154,7 @@ const child = (callback, dom, prevNodes) => {
     const next = nextNodes?.[0] ?? null;
 
     // Remove the previous nodes and insert the new nodes in place.
-    prevNodes.forEach((node) => node.remove());
+    prevNodes.forEach(remove);
     const newNodes = mount(dom, next, callback());
     let i = 0;
     for (; i < newNodes.length; i++) prevNodes[i] = newNodes[i];
@@ -156,9 +165,40 @@ const child = (callback, dom, prevNodes) => {
 
 const $ = (callback) =>
   observe((context, nodes) => {
+    if (!context) return callback(); // For props
     if (typeof context === "function") return attr(callback, context);
     return child(callback, context, nodes);
   });
+
+export function component(define) {
+  return (a, b) => {
+    const [options, children] = isObject(a) ? [a, b ?? []] : [{}, a ?? []];
+
+    let state;
+    const reactive = () => {
+      const rx = new Reactive();
+      const old = rx.join.bind(rx);
+      rx.join = () => (state = old());
+      return rx;
+    };
+
+    // Convert the options into reactive props.
+    const rx = new Reactive();
+    for (const [key, value] of Object.entries(options)) rx.state(key, value);
+    rx.state("children", children);
+
+    // Update props when options change.
+    const props = rx.join();
+    for (const [key, value] of Object.entries(options)) {
+      if (isObservable(value)) track(() => (props[key] = value()));
+    }
+
+    const node = define(props, reactive);
+    node.dispose = () => state?.dispose();
+
+    return node;
+  };
+}
 
 export const reactive = () => new Reactive();
 

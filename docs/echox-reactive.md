@@ -1,6 +1,6 @@
 # EchoX Reactive
 
-## _EchoX_.**reactive()** {#reactive}
+## **reactive()** {#reactive}
 
 ## _reactive_.**state(_key, value_)** {#reactive-state}
 
@@ -9,3 +9,5 @@
 ## _reactive_.**effect(_effect_)** {#reactive-effect}
 
 ## _reactive_.**join()** {#reactive-join}
+
+## **component()** {#component}
