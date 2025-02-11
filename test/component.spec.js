@@ -102,4 +102,25 @@ describe("component", () => {
     node.dispose();
     expect(mock).toHaveBeenCalledTimes(1);
   });
+
+  test("component should dispose multiple compositions after calling dispose method.", async () => {
+    const mock1 = vi.fn(() => {});
+    const mock2 = vi.fn(() => {});
+
+    const Dispose = component((props, reactive) => {
+      reactive()
+        .effect(() => mock1)
+        .join();
+
+      reactive()
+        .effect(() => mock2)
+        .join();
+      return html.div(["hello world"]);
+    });
+
+    const node = Dispose();
+    node.dispose();
+    expect(mock1).toHaveBeenCalledTimes(1);
+    expect(mock2).toHaveBeenCalledTimes(1);
+  });
 });

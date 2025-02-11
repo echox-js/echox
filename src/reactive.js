@@ -173,12 +173,16 @@ const $ = (callback) =>
 export function component(define) {
   return (a, b) => {
     const [options, children] = isObject(a) ? [a, b ?? []] : [{}, a ?? []];
+    const states = [];
 
-    let state;
     const reactive = () => {
       const rx = new Reactive();
       const old = rx.join.bind(rx);
-      rx.join = () => (state = old());
+      rx.join = () => {
+        const state = old();
+        states.push(state);
+        return state;
+      };
       return rx;
     };
 
@@ -194,7 +198,7 @@ export function component(define) {
     }
 
     const node = define(props, reactive);
-    node.dispose = () => state?.dispose();
+    node.dispose = () => states.forEach((state) => state.dispose?.());
 
     return node;
   };
