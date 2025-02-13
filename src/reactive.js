@@ -71,14 +71,15 @@ export class Reactive {
 
     this.__states__ = states; // For testing.
 
-    const dispose = () => this._disposes.forEach((d) => d());
-
-    const select = (d) => $(isString(d) ? () => scope[d] : isFunction(d) ? () => d(scope) : () => d);
+    const builtin = {
+      dispose: () => this._disposes.forEach((d) => d()),
+      select: (d) => $(isString(d) ? () => scope[d] : isFunction(d) ? () => d(scope) : () => d),
+      map: (key, callback) => $(() => scope[key].map(callback)),
+    };
 
     const scope = new Proxy(Object.create(null), {
       get: (target, k) => {
-        if (k === "select") return select;
-        if (k === "dispose") return dispose;
+        if (k in builtin) return builtin[k];
         if (!Object.hasOwn(states, k)) return target[k];
         const state = states[k];
         if (state.val === UNSET) track(() => (scope[k] = state.raw(scope)));
@@ -86,7 +87,7 @@ export class Reactive {
         return state.val;
       },
       set: (target, k, v) => {
-        if (k === "select" || k === "dispose") return false;
+        if (k in builtin) return false;
 
         if (!Object.hasOwn(states, k)) return (target[k] = v), true;
         const state = states[k];
