@@ -234,4 +234,23 @@ describe("DOM", () => {
 
     document.body.removeChild(list);
   });
+
+  test("state.update(array, callback) should update array nodes with reactive updates.", async () => {
+    const state = reactive().state("items", [1, 2, 3]).join();
+    const list = html.div([state.map("items", (i) => html.span([i]))]);
+    document.body.append(list);
+
+    expect(list.outerHTML).toBe(`<div><span>1</span><span>2</span><span>3</span></div>`);
+
+    state.update("items", (items) => {
+      items.shift();
+      items.push(4);
+      items[1] = 5;
+    });
+
+    await sleep(0);
+    expect(list.outerHTML).toBe(`<div><span>2</span><span>5</span><span>4</span></div>`);
+
+    document.body.removeChild(list);
+  });
 });
