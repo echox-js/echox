@@ -36,6 +36,8 @@ const isString = (d) => typeof d === "string";
 
 const isObject = (d) => Object(d) === d;
 
+const isArray = Array.isArray;
+
 const isObservable = (d) => isFunction(d) && "__observe__" in d;
 
 const observe = (d) => ((d.__observe__ = true), d);
@@ -75,6 +77,12 @@ export class Reactive {
       dispose: () => this._disposes.forEach((d) => d()),
       select: (d) => $(isString(d) ? () => scope[d] : isFunction(d) ? () => d(scope) : () => d),
       map: (key, callback) => $(() => scope[key].map(callback)),
+      // TODO: Add object.
+      update: (key, callback) => {
+        const value = scope[key];
+        if (isArray(value)) callback(scope[key]), (scope[key] = [...value]);
+        scope[key] = value;
+      },
     };
 
     const scope = new Proxy(Object.create(null), {
