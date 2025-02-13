@@ -33,7 +33,7 @@ const create = (ns, name, a, b) => {
         ? propSetter.bind(dom)
         : dom.setAttribute.bind(dom, k);
 
-    if (isObservable(v)) v(setter);
+    if (isObservable(v)) v((v) => (setter(v), dom));
     else setter(v);
   }
 

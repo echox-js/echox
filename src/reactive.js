@@ -144,6 +144,7 @@ const mount = (dom, next, value) => {
   return nodes;
 };
 
+// TODO: test memory leak
 const attr = (callback, setter) => track(() => setter(callback()));
 
 const child = (callback, dom, prevNodes) => {
@@ -160,6 +161,10 @@ const child = (callback, dom, prevNodes) => {
     for (; i < newNodes.length; i++) prevNodes[i] = newNodes[i];
     for (; i < prevNodes.length; i++) prevNodes[i] = null; // Clear the rest.
     prevNodes.length = newNodes.length;
+
+    // TODO: test
+    // TODO: track component instead of the first node.
+    return newNodes[0]; // Return the first node for tracking.
   });
 };
 
