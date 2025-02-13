@@ -39,11 +39,15 @@ describe("DOM", () => {
   test("tag([props], children) should update reactive nodes' attributes.", async () => {
     const state = reactive().state("name", "John").join();
     const dom = html.div({id: state.select("name")});
+    document.body.append(dom);
+
     expect(dom.outerHTML).toBe(`<div id="John"></div>`);
 
     state.name = "Doe";
     await sleep(0);
     expect(dom.outerHTML).toBe(`<div id="Doe"></div>`);
+
+    document.body.removeChild(dom);
   });
 
   test("tag(props, children) should remove old reactive event listener when updating.", async () => {
