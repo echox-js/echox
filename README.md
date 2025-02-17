@@ -8,7 +8,7 @@
 The lightweight reactive UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects.
 
 ```js
-import {html, reactive} from "echox";
+import {HTML, reactive} from "echox";
 
 const [state] = reactive()
   .state("value", 0)
@@ -16,10 +16,10 @@ const [state] = reactive()
   .effect((d) => console.log(d.value, d.double))
   .join();
 
-const counter = html.div([
-  html.button({onclick: () => state.value++}, ["👍"]),
-  html.button({onclick: () => state.value--}, ["👎"]),
-  html.span([() => state.double]),
+const counter = HTML.div([
+  HTML.button({onclick: () => state.value++}, ["👍"]),
+  HTML.button({onclick: () => state.value--}, ["👎"]),
+  HTML.span([() => state.double]),
 ]);
 
 document.body.appendChild(counter);

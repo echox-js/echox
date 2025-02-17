@@ -24,11 +24,11 @@ import * as ex from "echox";
 
 In vanilla HTML, EchoX can be imported as an ES module, say from jsDelivr:
 
-```html
+```HTML
 <script type="module">
   import * as ex from "https://cdn.jsdelivr.net/npm/echox/+esm";
 
-  const dom = ex.html.div(["hello world"]);
+  const dom = ex.HTML.div(["hello world"]);
 
   document.body.append(dom);
 </script>
@@ -38,10 +38,10 @@ In vanilla HTML, EchoX can be imported as an ES module, say from jsDelivr:
 
 EchoX is also available as a UMD bundle for legacy browsers.
 
-```html
+```HTML
 <script src="https://cdn.jsdelivr.net/npm/echox"></script>
 <script>
-  const dom = ex.html.div(["hello world"]);
+  const dom = ex.HTML.div(["hello world"]);
 
   document.body.append(dom);
 </script>
