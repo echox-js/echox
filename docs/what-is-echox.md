@@ -35,7 +35,7 @@ Please refer to [EchoX DOM](/echox-dom) from more information.
 EchoX exports one method _reactive_ for reactivity. For example, let's make the counter interactive:
 
 ```js
-const [state] = ex
+const [scope] = ex
   .reactive()
   .state("value", 0)
   .computed("double", (d) => d.value * 2)
