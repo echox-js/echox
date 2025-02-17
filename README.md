@@ -10,7 +10,7 @@ The lightweight reactive UI framework for declarative DOM manipulation, alternat
 ```js
 import {html, reactive} from "echox";
 
-const state = reactive()
+const [state] = reactive()
   .state("value", 0)
   .computed("double", (d) => d.value * 2)
   .effect((d) => console.log(d.value, d.double))
@@ -19,7 +19,7 @@ const state = reactive()
 const counter = html.div([
   html.button({onclick: () => state.value++}, ["👍"]),
   html.button({onclick: () => state.value--}, ["👎"]),
-  html.span([state.select("value")]),
+  html.span([() => state.double]),
 ]);
 
 document.body.appendChild(counter);
