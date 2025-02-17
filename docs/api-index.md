@@ -4,7 +4,7 @@
 
 Building user interfaces with pure function calls.
 
-- [**html**](/echox-dom#html) - create a HTML DOM with the specified attributes and child nodes.
+- [**HTML**](/echox-dom#HTML) - create a HTML DOM with the specified attributes and child nodes.
 
 ## Applying Reactivity
 

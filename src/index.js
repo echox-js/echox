@@ -188,4 +188,4 @@ const handler = (ns) => ({get: (_, name) => create.bind(undefined, ns, name)});
 
 export const reactive = () => new Reactive();
 
-export const html = new Proxy((ns) => new Proxy(create, handler(ns)), handler());
+export const HTML = new Proxy((ns) => new Proxy(create, handler(ns)), handler());

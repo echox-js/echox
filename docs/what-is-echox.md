@@ -6,23 +6,23 @@ The philosophy for EchoX is **UI = f(DOM, Reactive)**, please keep reading to fi
 
 ## Building UI
 
-EchoX provides a declarative way to building user interfaces with pure function calls. A _html_ proxy object exported to **create native DOM directly**. For example, to create a hello world message:
+EchoX provides a declarative way to building user interfaces with pure function calls. A _HTML_ proxy object exported to **create native DOM directly**. For example, to create a hello world message:
 
 ```js
 // The dom variable is a native DOM, not a virtual dom!!!
-const dom = html.span({style: "font-size: 10"}, ["hello World"]);
+const dom = HTML.span({style: "font-size: 10"}, ["hello World"]);
 
 // So you can directly append dom to the DOM tree!
 container.appendChild(dom);
 ```
 
-This is the _DOM_ in the philosophy. Also, You can also can create nested structures using _html_. For example, let's create a counter:
+This is the _DOM_ in the philosophy. Also, You can also can create nested structures using _HTML_. For example, let's create a counter:
 
 ```js
-const dom = html.div([
-  html.button({style: "background: red"}, ["👍"]),
-  html.button({style: "background: red"}, ["👎"]),
-  html.span([0]),
+const dom = HTML.div([
+  HTML.button({style: "background: red"}, ["👍"]),
+  HTML.button({style: "background: red"}, ["👎"]),
+  HTML.span([0]),
 ]);
 ```
 
@@ -42,10 +42,10 @@ const [state] = ex
   .effect((d) => console.log(d.value, d.double))
   .join();
 
-const dom = html.div([
-  html.button({onclick: () => scope.value++}, ["👍"]),
-  html.button({onclick: () => scope.value--}, ["👎"]),
-  html.span([() => state.double]),
+const dom = HTML.div([
+  HTML.button({onclick: () => scope.value++}, ["👍"]),
+  HTML.button({onclick: () => scope.value--}, ["👎"]),
+  HTML.span([() => state.double]),
 ]);
 ```
 

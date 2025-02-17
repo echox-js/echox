@@ -1,3 +1,3 @@
 # EchoX DOM
 
-## **html.[tagName](_[attributes,] children_)** {#html}
+## **HTML.[tagName](_[attributes,] children_)** {#HTML}
