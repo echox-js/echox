@@ -37,8 +37,8 @@ describe("DOM", () => {
   });
 
   test("tag([props], children) should update reactive nodes' attributes.", async () => {
-    const state = reactive().state("name", "John").join();
-    const dom = html.div({id: state.select("name")});
+    const [state] = reactive().state("name", "John").join();
+    const dom = html.div({id: () => state.name});
     document.body.append(dom);
 
     expect(dom.outerHTML).toBe(`<div id="John"></div>`);
@@ -50,32 +50,9 @@ describe("DOM", () => {
     document.body.removeChild(dom);
   });
 
-  test("tag(props, children) should remove old reactive event listener when updating.", async () => {
-    const state = reactive()
-      .state("count", 0)
-      .state("handler", () => state.count++)
-      .join();
-
-    const button = html.button({
-      onclick: state.select("handler"),
-    });
-    document.body.append(button);
-
-    button.click();
-    expect(state.count).toBe(1);
-
-    state.handler = () => (state.count += 2);
-    await sleep(0);
-
-    button.click();
-    expect(state.count).toBe(3);
-
-    document.body.removeChild(button);
-  });
-
   test("tag(props, children) should update reactive number children.", async () => {
-    const state = reactive().state("count", 0).join();
-    const span = html.span([state.select("count")]);
+    const [state] = reactive().state("count", 0).join();
+    const span = html.span([() => state.count]);
     document.body.append(span);
 
     state.count = 1;
@@ -86,8 +63,8 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update reactive string children.", async () => {
-    const state = reactive().state("name", "John").join();
-    const span = html.span([state.select("name")]);
+    const [state] = reactive().state("name", "John").join();
+    const span = html.span([() => state.name]);
     document.body.append(span);
 
     state.name = "Doe";
@@ -99,8 +76,8 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update reactive DOM children.", async () => {
-    const state = reactive().state("show", true).join();
-    const div = html.div([state.select((d) => (d.show ? html.span(["Hello"]) : null))]);
+    const [state] = reactive().state("show", true).join();
+    const div = html.div([() => (state.show ? html.span(["Hello"]) : null)]);
     document.body.append(div);
 
     state.show = false;
@@ -116,8 +93,8 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update multiple reactive DOM children.", async () => {
-    const state = reactive().state("count", 0).state("name", "John").join();
-    const div = html.div([state.select("count"), state.select("name")]);
+    const [state] = reactive().state("count", 0).state("name", "John").join();
+    const div = html.div([() => state.count, () => state.name]);
     document.body.append(div);
 
     state.count++;
@@ -130,10 +107,10 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update mixed static and reactive children.", async () => {
-    const state = reactive().state("show", true).join();
+    const [state] = reactive().state("show", true).join();
     const div = html.div([
       html.span(["Static"]),
-      state.select((d) => (d.show ? html.span(["Dynamic"]) : null)),
+      () => (state.show ? html.span(["Dynamic"]) : null),
       html.span(["Static2"]),
     ]);
     document.body.append(div);
@@ -152,11 +129,11 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update multiple mixed static and reactive children.", async () => {
-    const state = reactive().state("show", true).state("show2", true).join();
+    const [state] = reactive().state("show", true).state("show2", true).join();
     const div = html.div([
       html.span(["Static"]),
-      state.select((d) => (d.show ? html.span(["Dynamic"]) : null)),
-      state.select((d) => (d.show2 ? html.span(["Dynamic2"]) : null)),
+      () => (state.show ? html.span(["Dynamic"]) : null),
+      () => (state.show2 ? html.span(["Dynamic2"]) : null),
       html.span(["Static2"]),
     ]);
     document.body.append(div);
@@ -184,8 +161,8 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should update nodes when children change.", async () => {
-    const state = reactive().state("items", [1, 2, 3]).join();
-    const list = html.div([state.map("items", (i) => html.span([i]))]);
+    const [state] = reactive().state("items", [1, 2, 3]).join();
+    const list = html.div([() => state.items.map((i) => html.span([i]))]);
     document.body.append(list);
 
     expect(list.outerHTML).toBe(`<div><span>1</span><span>2</span><span>3</span></div>`);
@@ -198,10 +175,9 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should handle nested reactive updates.", async () => {
-    const state = reactive().state("show", true).state("items", ["a", "b"]).join();
+    const [state] = reactive().state("show", true).state("items", ["a", "b"]).join();
 
-    // TODO: Test with select.map.
-    const div = html.div([state.select((d) => (d.show ? d.items.map((item) => html.span([item])) : null))]);
+    const div = html.div([() => (state.show ? state.items.map((item) => html.span([item])) : null)]);
     document.body.append(div);
 
     expect(div.outerHTML).toBe(`<div><span>a</span><span>b</span></div>`);
@@ -218,8 +194,8 @@ describe("DOM", () => {
   });
 
   test("tag(props, children) should handle array updates with different lengths", async () => {
-    const state = reactive().state("items", [1, 2]).join();
-    const list = html.div([state.map("items", (i) => html.span([i]))]);
+    const [state] = reactive().state("items", [1, 2]).join();
+    const list = html.div([() => state.items.map((i) => html.span([i]))]);
     document.body.append(list);
 
     expect(list.outerHTML).toBe(`<div><span>1</span><span>2</span></div>`);
@@ -231,25 +207,6 @@ describe("DOM", () => {
     state.items = [7];
     await sleep(0);
     expect(list.outerHTML).toBe(`<div><span>7</span></div>`);
-
-    document.body.removeChild(list);
-  });
-
-  test("state.update(array, callback) should update array nodes with reactive updates.", async () => {
-    const state = reactive().state("items", [1, 2, 3]).join();
-    const list = html.div([state.map("items", (i) => html.span([i]))]);
-    document.body.append(list);
-
-    expect(list.outerHTML).toBe(`<div><span>1</span><span>2</span><span>3</span></div>`);
-
-    state.update("items", (items) => {
-      items.shift();
-      items.push(4);
-      items[1] = 5;
-    });
-
-    await sleep(0);
-    expect(list.outerHTML).toBe(`<div><span>2</span><span>5</span><span>4</span></div>`);
 
     document.body.removeChild(list);
   });
