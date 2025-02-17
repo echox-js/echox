@@ -1,13 +1,8 @@
 import {test, expect, describe, vi} from "vitest";
-import {reactive} from "../src/index.js";
-import {track, Reactive} from "../src/reactive.js";
+import {reactive, track} from "../src/index.js";
 import {sleep} from "./sleep.js";
 
 describe("reactive", () => {
-  test("reactive.prototype should be Reactive.prototype.", () => {
-    expect(reactive.prototype).toBe(Reactive.prototype);
-  });
-
   test("reactive() should return a reactive state with defaults.", () => {
     const rx = reactive();
     expect(rx).toBeDefined();
@@ -17,12 +12,12 @@ describe("reactive", () => {
   });
 
   test("reactive.state(key, value) should define a reactive state.", () => {
-    const state = reactive().state("count", 0).join();
+    const [state] = reactive().state("count", 0).join();
     expect(state.count).toBe(0);
   });
 
   test("reactive.state(key, value) should define multiple reactive states.", () => {
-    const state = reactive().state("count", 0).state("name", "John").join();
+    const [state] = reactive().state("count", 0).state("name", "John").join();
     expect(state.count).toBe(0);
     expect(state.name).toBe("John");
   });
@@ -33,7 +28,7 @@ describe("reactive", () => {
   });
 
   test("reactive.state(key, value) should be able to update state with reactive.join().", () => {
-    const state = reactive().state("count", 0).join();
+    const [state] = reactive().state("count", 0).join();
     expect(state.count).toBe(0);
     state.count++;
     expect(state.count).toBe(1);
@@ -45,7 +40,7 @@ describe("reactive", () => {
   });
 
   test("reactive.computed(key, fn) should define a derived state.", async () => {
-    const state = reactive()
+    const [state] = reactive()
       .state("count", 0)
       .computed("double", (s) => s.count * 2)
       .join();
@@ -58,17 +53,17 @@ describe("reactive", () => {
 
   test("reactive.computed(key, fn) should only update one time when deps update.", async () => {
     const double = vi.fn((s) => s.count * 2);
-    const state = reactive().state("count", 0).computed("double", double).join();
+    const [state] = reactive().state("count", 0).computed("double", double).join();
     state.count++;
     state.count++;
     await sleep(0);
-    expect(double).toHaveBeenCalledTimes(2);
+    expect(double).toHaveBeenCalledTimes(0);
     expect(state.double).toBe(4);
-    expect(double).toHaveBeenCalledTimes(2);
+    expect(double).toHaveBeenCalledTimes(1);
   });
 
   test("reactive.computed(key, fn) should define chained states.", async () => {
-    const state = reactive()
+    const [state] = reactive()
       .state("count", 0)
       .computed("double", (s) => s.count * 2)
       .computed("triple", (s) => s.double * 3)
@@ -81,7 +76,7 @@ describe("reactive", () => {
   });
 
   test("reactive.computed(key, fn) don't care about the order of definitions.", async () => {
-    const state = reactive()
+    const [state] = reactive()
       .computed("double", (s) => s.count * 2)
       .state("count", 0)
       .join();
@@ -113,7 +108,7 @@ describe("reactive", () => {
 
   test("reactive.effect(effect) should call when states update", async () => {
     const effect = vi.fn((s) => s.count);
-    const state = reactive().state("count", 0).effect(effect).join();
+    const [state] = reactive().state("count", 0).effect(effect).join();
     state.count++;
     state.count++;
     state.count++;
@@ -136,36 +131,24 @@ describe("reactive", () => {
   test("reactive.effect(effect) should dispose resources", async () => {
     const d = vi.fn(() => {});
     const d1 = vi.fn(() => {});
-    const state = reactive()
+    const [, dispose] = reactive()
       .effect(() => d)
       .effect(() => d1)
       .join();
     expect(d).toHaveBeenCalledTimes(0);
     expect(d1).toHaveBeenCalledTimes(0);
-    state.dispose();
+    dispose();
     expect(d).toHaveBeenCalledTimes(1);
     expect(d1).toHaveBeenCalledTimes(1);
   });
 
   test("reactive.join() should return a reactive state.", () => {
-    const state = reactive().state("count", 0).join();
+    const [state] = reactive().state("count", 0).join();
     expect(state.count).toBe(0);
   });
 
-  test("reactive should not define a state with select and dispose keys.", () => {
-    const state = reactive().state("select", 0).state("dispose", 0).join();
-    expect(state.select).not.toBe(0);
-    expect(state.dispose).not.toBe(0);
-  });
-
-  test("reactive should not override the select and dispose keys.", () => {
-    const state = reactive().join();
-    expect(() => (state.select = 0)).toThrow();
-    expect(() => (state.dispose = 0)).toThrow();
-  });
-
   test("track(callback) should call callback at next animation frame.", async () => {
-    const state = reactive().state("count", 0).join();
+    const [state] = reactive().state("count", 0).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => (el.textContent = state.count));
@@ -188,7 +171,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should not call callback when state is not updated.", async () => {
-    const state = reactive().state("count", 0).join();
+    const [state] = reactive().state("count", 0).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => (el.textContent = state.count));
@@ -204,7 +187,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should merge multiple updates into one.", async () => {
-    const state = reactive().state("count", 0).join();
+    const [state] = reactive().state("count", 0).join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => (el.textContent = state.count));
@@ -222,7 +205,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should track multiple states.", async () => {
-    const state = reactive().state("count", 0).state("name", "John").join();
+    const [state] = reactive().state("count", 0).state("name", "John").join();
 
     const el = document.createElement("div");
     const update = vi.fn(() => (el.textContent = `${state.name} ${state.count}`));
@@ -248,7 +231,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should track multiple callbacks.", async () => {
-    const state = reactive().state("count", 0).join();
+    const [state] = reactive().state("count", 0).join();
 
     const el1 = document.createElement("div");
     const el2 = document.createElement("div");
@@ -270,7 +253,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should track new deps caused by conditionally branches.", async () => {
-    const state = reactive().state("count", 0).state("name", "jack").join();
+    const [state] = reactive().state("count", 0).state("name", "jack").join();
 
     const span = document.createElement("span");
     const update = vi.fn(() => {
@@ -297,7 +280,7 @@ describe("reactive", () => {
   });
 
   test("track(callback) should prevent circular dependencies", async () => {
-    const state = reactive().state("count", 0).state("checked", false).join();
+    const [state] = reactive().state("count", 0).state("checked", false).join();
 
     const toggle = vi.fn(() => (state.checked = !state.checked));
     const toggleTracked = () => track(toggle);
@@ -322,7 +305,7 @@ describe("reactive", () => {
 
   test("reactive() should remove deps without mounted DOMs when updating state.", async () => {
     const rx = reactive().state("count", 0);
-    const state = rx.join();
+    const [state] = rx.join();
 
     const el = document.createElement("div");
     document.body.appendChild(el);
@@ -346,7 +329,7 @@ describe("reactive", () => {
 
   test("reactive() should not remove deps with non-DOMs when updating state.", async () => {
     const rx = reactive().state("count", 0);
-    const state = rx.join();
+    const [state] = rx.join();
 
     const update = vi.fn(() => state.count);
     track(update);
@@ -359,7 +342,7 @@ describe("reactive", () => {
 
   test("reactive() should remove effect with disconnected DOM after 1s when getting the state.", async () => {
     const rx = reactive().state("count", 0);
-    const state = rx.join();
+    const [state] = rx.join();
 
     const el = document.createElement("div");
     document.body.appendChild(el);
