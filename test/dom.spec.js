@@ -1,10 +1,16 @@
 import {test, expect, describe} from "vitest";
-import {HTML, reactive} from "../src/index.js";
+import {HTML, reactive, set} from "../src/index.js";
 import {sleep} from "./sleep.js";
 
 describe("DOM", () => {
   test("tag([props], children) should create specified element.", () => {
     const dom = HTML.div({id: "hello"}, ["Hello, world!", HTML.button(["Click me!"]), HTML.span()]);
+    expect(dom.outerHTML).toBe(`<div id="hello">Hello, world!<button>Click me!</button><span></span></div>`);
+  });
+
+  test("set(dom, [props], children) should update specified element.", () => {
+    const dom = HTML.div();
+    set(dom, {id: "hello"}, ["Hello, world!", HTML.button(["Click me!"]), HTML.span()]);
     expect(dom.outerHTML).toBe(`<div id="hello">Hello, world!<button>Click me!</button><span></span></div>`);
   });
 
