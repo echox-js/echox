@@ -131,9 +131,17 @@ const mount = (dom, next, value) => {
 };
 
 const create = (ns, name, a, b) => {
-  const [props, children] = isStrictObject(a) ? [a, b ?? []] : [{}, a ?? []];
-
   const dom = ns ? document.createElementNS(ns, name) : document.createElement(name);
+  set(dom, a, b);
+  return dom;
+};
+
+const handler = (ns) => ({get: (_, name) => create.bind(undefined, ns, name)});
+
+// TODO: test
+export function set(dom, a, b) {
+  const [props, children] = isStrictObject(a) ? [a, b ?? []] : [{}, a ?? []];
+  const name = dom.tagName.toLowerCase();
 
   for (const [k, v] of Object.entries(props)) {
     // This is for some attributes like innerHTML, textContent, etc.
@@ -180,11 +188,7 @@ const create = (ns, name, a, b) => {
     }
     prevNodes = nodes;
   }
-
-  return dom;
-};
-
-const handler = (ns) => ({get: (_, name) => create.bind(undefined, ns, name)});
+}
 
 export const reactive = () => new Reactive();
 
