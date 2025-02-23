@@ -14,7 +14,7 @@
   "unpkg": "dist/echox.umd.min.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/echox-js/echox.git"
+    "url": "https://github.com/blinkblinkhq/echox.git"
   },
   "files": [
     "dist",

@@ -5,7 +5,8 @@ export default defineConfig({
   title: "EchoX",
   description: "UI = f(reactive, template)",
   cleanUrls: true,
-  head: [["link", {rel: "icon", type: "image/svg+xml", href: "/logo.svg"}]],
+  head: [["link", {rel: "icon", type: "image/png", href: "/logo.png"}]],
+  appearance: false,
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -33,12 +34,12 @@ export default defineConfig({
       ],
       "/blog/": [],
     },
-    socialLinks: [{icon: "github", link: "https://github.com/echox-js/echox"}],
+    socialLinks: [{icon: "github", link: "https://github.com/blinkblinkhq/echox"}],
     footer: {
       message: "Released under the MIT License.",
       copyright: `Copyright © 2025-${new Date().getUTCFullYear()} Bairui SU`,
     },
-    logo: "/logo.svg",
+    logo: "/logo.png",
     search: {
       provider: "local",
     },

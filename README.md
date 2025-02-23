@@ -1,6 +1,6 @@
 # EchoX: UI = f(DOM, Reactive)
 
-<img src="./docs/public/logo.svg" width="100"/>
+<img src="./docs/public/logo.png" width="100"/>
 
 > [!NOTE]
 > Work in progress. The APIs are not stable right now.
