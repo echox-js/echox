@@ -28,8 +28,8 @@ document.body.appendChild(counter);
 ## Resources 📚
 
 - Documentation - https://echox.dev/
-- Features - https://echox.dev/what-is-echox
-- Motivation - https://echox.dev/why-is-echox
+- Features - https://echox.dev/docs/what-is-echox
+- Motivation - https://echox.dev/docs/why-is-echox
 
 ## License 📄
 
