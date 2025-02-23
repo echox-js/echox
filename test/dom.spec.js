@@ -8,6 +8,13 @@ describe("DOM", () => {
     expect(dom.outerHTML).toBe(`<div id="hello">Hello, world!<button>Click me!</button><span></span></div>`);
   });
 
+  test("tag([props], children) should create specified element with styles.", () => {
+    const dom = HTML.div({id: "hello", style: {color: "red", fontSize: "100px"}});
+    expect(dom.outerHTML).toBe(`<div id="hello" style="color: red; font-size: 100px;"></div>`);
+    expect(dom.style.color).toBe("red");
+    expect(dom.style.fontSize).toBe("100px");
+  });
+
   test("set(dom, [props], children) should update specified element.", () => {
     const dom = HTML.div();
     set(dom, {id: "hello"}, ["Hello, world!", HTML.button(["Click me!"]), HTML.span()]);
@@ -52,6 +59,21 @@ describe("DOM", () => {
     state.name = "Doe";
     await sleep(0);
     expect(dom.outerHTML).toBe(`<div id="Doe"></div>`);
+
+    document.body.removeChild(dom);
+  });
+
+  test("tag([props], children) should update reactive nodes' styles.", async () => {
+    const [state] = reactive().state("color", "red").join();
+    const dom = HTML.div({style: {color: () => state.color, fontSize: "100px"}});
+    document.body.append(dom);
+
+    expect(dom.outerHTML).toBe(`<div style="color: red; font-size: 100px;"></div>`);
+
+    state.color = "blue";
+
+    await sleep(0);
+    expect(dom.outerHTML).toBe(`<div style="color: blue; font-size: 100px;"></div>`);
 
     document.body.removeChild(dom);
   });

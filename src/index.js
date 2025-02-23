@@ -12,7 +12,7 @@ const protoOf = Object.getPrototypeOf;
 
 const isFunction = (d) => typeof d === "function";
 
-const isStrictObject = (d) => d && protoOf(d) === protoOf({});
+const isObjectLiteral = (d) => d && protoOf(d) === protoOf({});
 
 const isMountable = (d) => d || d === 0;
 
@@ -38,6 +38,8 @@ const dispose = () => (disposes.forEach(disconnect), (disposes = null));
 const schedule = (set, d, f, ms) => (set ?? (setTimeout(f, ms), new Set())).add(d);
 
 const cleanup = (state) => ((disposes = schedule(disposes, state, dispose, GC_CYCLE)), state);
+
+const lowerFist = (s) => s[0].toLowerCase() + s.slice(1);
 
 // Exports for testing.
 export class Reactive {
@@ -140,20 +142,29 @@ const handler = (ns) => ({get: (_, name) => create.bind(undefined, ns, name)});
 
 // TODO: test
 export function set(dom, a, b) {
-  const [props, children] = isStrictObject(a) ? [a, b ?? []] : [{}, a ?? []];
+  const [props, children] = isObjectLiteral(a) ? [a, b ?? []] : [{}, a ?? []];
   const name = dom.tagName.toLowerCase();
 
   for (const [k, v] of Object.entries(props)) {
-    // This is for some attributes like innerHTML, textContent, etc.
-    const getPropDescriptor = (proto) =>
-      proto ? (Object.getOwnPropertyDescriptor(proto, k) ?? getPropDescriptor(protoOf(proto))) : undefined;
+    // Event listeners, no reactive.
+    if (k.startsWith("on")) return dom.addEventListener(k.slice(2), v);
+
+    // Style object.
+    if (k.startsWith("style") && isObjectLiteral(v)) {
+      for (const [k, s] of Object.entries(v)) {
+        if (isFunction(s)) track(() => ((dom.style[lowerFist(k)] = s()), dom));
+        else dom.style[lowerFist(k)] = s;
+      }
+      return;
+    }
+
+    // Attributes and properties, such as innerHTML, textContent, etc.
+    const get = (proto) => (proto ? (Object.getOwnPropertyDescriptor(proto, k) ?? get(protoOf(proto))) : undefined);
     const cacheKey = name + "," + k;
-    const propSetter = (propSetterCache[cacheKey] ??= getPropDescriptor(protoOf(dom))?.set ?? 0);
-
+    const propSetter = (propSetterCache[cacheKey] ??= get(protoOf(dom))?.set ?? 0);
     const setter = propSetter ? propSetter.bind(dom) : dom.setAttribute.bind(dom, k);
-
     if (!isFunction(v)) setter(v);
-    else k.startsWith("on") ? dom.addEventListener(k.slice(2), v) : track(() => (setter(v()), dom));
+    else track(() => (setter(v()), dom));
   }
 
   let prevNodes = null;
