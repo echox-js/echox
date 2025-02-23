@@ -1,12 +1,12 @@
 :root {
-  --vp-home-hero-name-background: -webkit-linear-gradient(315deg, #fb2576 25%, #3f0071);
+  --vp-home-hero-name-background: -webkit-linear-gradient(315deg, black 25%, black);
   --vp-home-hero-name-color: transparent;
 }
 
 :root {
-  --vp-c-indigo-1: #fb2576;
-  --vp-c-indigo-2: #fb4b8f;
-  --vp-c-indigo-3: #fb73a8;
+  --vp-c-indigo-1: #000;
+  --vp-c-indigo-2: #222;
+  --vp-c-indigo-3: #333;
 }
 
 .VPHome .image {
