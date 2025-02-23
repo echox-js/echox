@@ -12,10 +12,10 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /getting-started
+      link: /docs/getting-started
     - theme: alt
       text: What is EchoX?
-      link: /what-is-echox
+      link: /docs/what-is-echox
 
 features:
   - title: Pure Functional UI Construction

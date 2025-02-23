@@ -2,7 +2,7 @@
 
 **EchoX** is The lightweight reactive UI framework for declarative DOM manipulation, alternative to React, Vue and jQuery for small projects especially.
 
-The philosophy for EchoX is **UI = f(DOM, Reactive)**, please keep reading to find out why! Also, EchoX focus on simplicity, so there are only few [APIs](/api-index) for now!
+The philosophy for EchoX is **UI = f(DOM, Reactive)**, please keep reading to find out why! Also, EchoX focus on simplicity, so there are only few [APIs](/docs/api-index) for now!
 
 ## Building UI
 
@@ -26,7 +26,7 @@ const dom = HTML.div([
 ]);
 ```
 
-Please refer to [EchoX DOM](/echox-dom) from more information.
+Please refer to [EchoX DOM](/docs/echox-dom) from more information.
 
 **If you only want a static DOM, this is all you need to know how about EchoX**! Otherwise, keep reading!
 
@@ -51,7 +51,7 @@ const dom = HTML.div([
 
 _EchoX.reactive_ returns a reactive scope, where stores the states you defined. Then you can bind states with the attributes or child nodes of DOMs using _use_. This is the _reactive_ in the philosophy.
 
-Please refer to [EchoX Reactive](/echox-reactive) for more information.
+Please refer to [EchoX Reactive](/docs/echox-reactive) for more information.
 
 ## What's more?
 
